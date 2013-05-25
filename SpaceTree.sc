@@ -44,9 +44,9 @@ parses to
 
 
 SpaceTree {
-  *parse {
+  *asArray {
     arg filename,maxindent=64; // TODO: make this dynamic but go easy on the mallocs
-    var file,line,levels,indent,lastindent,line_as_integer;
+    var file,line,levels,indent,lastindent;
     levels=Array.newClear(maxindent);
     lastindent = 0;
     file=File.open(filename, "r");
@@ -61,14 +61,13 @@ SpaceTree {
       if (indent > maxindent) {
         throw("Can only indent up to " ++ maxindent ++ " indentations");
       };
-
+line.postln;
       line = line.stripWhiteSpace;
-      if (""==line, {
-        line = nil;
-      },{
-        line_as_integer = line.asInteger;
-        line = if ( line_as_integer > 0, line_as_integer, line.asSymbol );
-      });
+      line = case
+        {line==""} {nil}
+        {false == "[^0-9]".matchRegexp(line)} {line.asInteger;}
+        {line.asSymbol}
+      ;
 
       case
       { indent < lastindent } {
@@ -81,11 +80,13 @@ SpaceTree {
       }
       { indent > lastindent } {
         levels[indent] = [];
-      };
-      levels[indent]=levels[indent].add(line);
+      };      levels[indent]=levels[indent].add(line);
       lastindent = indent;
     };
     ^levels[0];
+  }
+
+  asAudioFile {
   }
 }
 
