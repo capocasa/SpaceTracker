@@ -51,7 +51,7 @@ SpaceTree {
   ;
 
   var
-    filename,
+    <>filename,
     levels
   ;
 
