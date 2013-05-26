@@ -44,49 +44,89 @@ parses to
 
 
 SpaceTree {
-  *asArray {
-    arg filename,maxindent=64; // TODO: make this dynamic but go easy on the mallocs
-    var file,line,levels,indent,lastindent;
-    levels=Array.newClear(maxindent);
-    lastindent = 0;
-    file=File.open(filename, "r");
-    
-    while ({ (line=file.getLine).notNil }) {
 
-      indent = 0;
-      while ({line[indent] == $ }) {
-        indent = indent + 1;
-      };
+  classvar
+    whitespace = " \t\r\n",
+    maxindent = 64 
+  ;
 
+  var
+    filename,
+    levels
+  ;
+
+  *new {
+    arg arg_filename;
+    ^super.new.init(arg_filename);
+  }
+
+  init {
+    arg arg_filename;
+    filename = arg_filename;
+  }
+
+  asArray {
+    var levels;
+    levels=Array.newClear(maxindent); // TODO: make this dynamic but go easy on the mallocs
+    this.parse({
+      arg line, indent, lastindent;
       if (indent > maxindent) {
         throw("Can only indent up to " ++ maxindent ++ " indentations");
       };
-line.postln;
-      line = line.stripWhiteSpace;
-      line = case
-        {line==""} {nil}
-        {false == "[^0-9]".matchRegexp(line)} {line.asInteger;}
-        {line.asSymbol}
-      ;
-
       case
+      { indent == lastindent } {
+        // no change of indent level, do nothing
+      }
       { indent < lastindent } {
+        // indent got smaller
         for (lastindent-1, indent, {
           arg i;
           levels[i] = levels[i].add(levels[i+1]);
         });
       }
-      { indent == lastindent } {
-      }
       { indent > lastindent } {
+        // indent got larger
         levels[indent] = [];
-      };      levels[indent]=levels[indent].add(line);
-      lastindent = indent;
-    };
+      };
+      levels[indent]=levels[indent].add(line);
+    });
     ^levels[0];
   }
 
-  asAudioFile {
+  parse {
+    arg callback;
+    var file,line,indent,lastindent,change;
+    lastindent = 0;
+    file=File.open(filename, "r");
+    while ({ (line=file.getLine).notNil }) {
+      indent = this.getIndent(line);
+      line = this.parseLine(line);
+      callback.value(line, indent, lastindent);
+      lastindent = indent;
+    };
+    file.close;
+  }
+
+  getIndent {
+    arg line;
+    var indent;
+    indent = 0;
+    while ({line[indent] == $ }) {
+      indent = indent + 1;
+    };
+    ^indent;
+  }
+
+  parseLine {
+    arg line;
+    line=line.findRegexp("[^ \t\r\n]+").collect({|r|r[1]}).collect({|token|
+      case
+        {false == "[^0-9]".matchRegexp(token)} {token.asInteger;}
+        {token.asSymbol}
+      ;
+    });
+    ^switch(line.size, 0, nil, 1, line[0], line);
   }
 }
+
 
