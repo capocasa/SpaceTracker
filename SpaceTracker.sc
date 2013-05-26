@@ -20,6 +20,8 @@ SpaceTracker {
     <>mods,
     <>notes,
     <>octaves,
+    <>treeClass,
+    <>soundClass,
     chunksize = 1024
   ;
 
@@ -31,8 +33,8 @@ SpaceTracker {
   ;
 
   *new {
-    arg filename, polyphony;
-    ^super.new.init(filename, polyphony);
+    arg filename;
+    ^super.new.init(filename);
   }
 
   *initClass {
@@ -116,19 +118,20 @@ SpaceTracker {
       $8 -> 10,
       $9 -> 11
     ];
+  
+    treeClass = SpaceTree;
+    soundClass = SoundFile;
   }
 
   init {
     arg arg_filename, arg_polyphony;
     filename = arg_filename;
-    polyphony = arg_polyphony;
   }
 
   asSoundFile {
-    arg treeClass = SpaceTree, soundClass = SoundFile;
     var space, sound, tmp, chunk, counter;
 
-    space = treeClass.new;
+    space = treeClass.new(filename);
 
     sound = soundClass.new
       .headerFormat_(headerFormat)
@@ -136,24 +139,20 @@ SpaceTracker {
       .numChannels_(polyphony);
     tmp = this.tmpFileName;
     sound.openWrite(tmp);
-      
+    
     chunk = FloatArray.new(chunksize * polyphony);
     
     counter = 0;
 
     space.parse({
       arg line, indent, lastindent;
-      var i;
-      
-      i = 0;
-      while (i < polyphony) {
+      if (line.notNil) {
         line = this.numerize(line);
-
-        i = i + 1;
-        counter = counter + 1;
-      }
-      
+        sound.writeData(line)
+      };
     });
+
+    tmp.postln;
   }
 
   numerize {
@@ -161,10 +160,7 @@ SpaceTracker {
 
     var
       time,
-      note,
-      samples,
-      size,
-      i
+      note
     ;
 
     time = line[0];
@@ -186,7 +182,7 @@ SpaceTracker {
   }
 
   tmpFileName {
-    ^Platform.defaultTempDir +/+ filename +/+ headerFormat.lowercase;
+    ^Platform.defaultTempDir +/+ filename.basename ++ $. ++ headerFormat.toLower;
   }
 
   map {
