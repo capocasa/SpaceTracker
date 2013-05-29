@@ -129,7 +129,12 @@ SpaceTracker {
   }
 
   asSoundFile {
+    arg soundfile;
     var space, sound, tmp, chunk, counter;
+
+    if (soundfile.isNil) {
+      soundfile = this.tmpFileName;
+    };
 
     space = treeClass.new(filename);
 
@@ -137,8 +142,7 @@ SpaceTracker {
       .headerFormat_(headerFormat)
       .sampleFormat_(sampleFormat)
       .numChannels_(polyphony);
-    tmp = this.tmpFileName;
-    sound.openWrite(tmp);
+    sound.openWrite(soundfile);
     
     chunk = FloatArray.new(chunksize * polyphony);
     
@@ -151,8 +155,9 @@ SpaceTracker {
         sound.writeData(line)
       };
     });
-
-    tmp.postln;
+  
+    sound.close;
+    ^soundfile;
   }
 
   numerize {
