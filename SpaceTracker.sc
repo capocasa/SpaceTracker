@@ -17,16 +17,14 @@ SpaceTracker {
 
   classvar
     <>map,
-    <>mods,
-    <>notes,
-    <>octaves,
+    <>lengths,
     <>treeClass,
     <>soundClass,
     chunksize = 1024
   ;
 
   var
-    <>filename,
+    <>treefile,
     <>server,
     <>headerFormat="AIFF",
     <>sampleFormat="float",
@@ -35,13 +33,15 @@ SpaceTracker {
   ;
 
   *new {
-    arg filename;
-    ^super.newCopyArgs(filename).init;
+    arg treefile;
+    ^super.newCopyArgs(treefile).init;
   }
 
   *initClass {
 
-    map = TwoWayIdentityDictionary[
+    map = IdentityDictionary.new;
+
+    map[\drum] = TwoWayIdentityDictionary[
       35 -> \kicker,
       36 -> \kick,
       37 -> \rim,
@@ -91,36 +91,72 @@ SpaceTracker {
       81 -> \trii
     ];
 
-    mods = TwoWayIdentityDictionary[
-      $b -> -1,
-      $x ->  1,
-      $c -> -2,
-      $y ->  2,
-    ];
+    map[\note] = {
+      arg note, reverse;
+      var mods,tones,octaves;
+      mods = TwoWayIdentityDictionary[
+        $b -> -1,
+        $x ->  1,
+        $c -> -2,
+        $y ->  2,
+      ];
 
-    notes = TwoWayIdentityDictionary[
-      $c -> 0,
-      $d -> 1,
-      $e -> 2,
-      $f -> 3,
-      $g -> 4,
-      $a -> 5,
-      $b -> 6
-    ];
+      tones = TwoWayIdentityDictionary[
+        $c -> 0,
+        $d -> 1,
+        $e -> 2,
+        $f -> 3,
+        $g -> 4,
+        $a -> 5,
+        $b -> 6
+      ];
   
-    octaves = TwoWayIdentityDictionary[
-      $0 -> 2,
-      $1 -> 3,
-      $2 -> 4,
-      $3 -> 5,
-      $4 -> 6,
-      $5 -> 7,
-      $6 -> 8,
-      $7 -> 9,
-      $8 -> 10,
-      $9 -> 11
-    ];
+      octaves = TwoWayIdentityDictionary[
+        $0 -> 2,
+        $1 -> 3,
+        $2 -> 4,
+        $3 -> 5,
+        $4 -> 6,
+        $5 -> 7,
+        $6 -> 8,
+        $7 -> 9,
+        $8 -> 10,
+        $9 -> 11
+      ];
+    
+
+      if(reverse,{
+        var octave, tone, mod, semi;
+        semi = Scale.major.semitones;
+        tone = (note % 12).asFloat;
+        octave = ((note - tone)/12).asInteger;
+        mod = if(semi.indexOf(tone).isNil,1,0);
+        tone = (tone-mod).asFloat;
+        tone = semi.indexOf(tone);
+        tone= map[\note].getID(tone);
+        octave=map[\octave].getID(octave);
+        mod=map[\mod].getID(mod)?"";
+        ^tone++octave++mod;
+      },{
+        var string;
+        string = note.asString.toLower;
+        if ("^[a-g][0-9]?[bxcy]?$".matchRegexp(string), {
+          var octave, tone, mod;
+          tone = tones.at(note[0]);
+          octave = octaves.at(note[1]);
+          mod = mods.at(note[2]) ? 0;
+          ^ 12 * octave + tone + mod;
+        },{
+          "Could not understand the notation for the note value".throw;
+        });
+      });
+    };
   
+    lengths = IdentityDictionary.new;
+
+    lengths[\drum] = 11;
+    lengths[\note] = 3;
+
     treeClass = SpaceTree;
     soundClass = SoundFile;
   }
@@ -130,25 +166,50 @@ SpaceTracker {
   }
 
   *fromSoundFile {
-    arg treefile, soundfile;
-    var sound, tree;
-    sound = soundClass.new.openRead(soundfile);
-    polyphony = sound.numChannels;
+    arg treefile, soundfile, naming=\note;
+    ^this.new(treefile).fromSoundFile(soundfile,naming);
+  }
 
-    if(PathName.new(filename).exists) { filename + "exists".throw };
-    tree = File.open(filename, "a");
+  fromSoundFile {
+    arg soundfile, naming=\note;
+    var sound, tracker, tree, line, samples;
+    sound = soundClass.new;
+    sound.openRead(soundfile);
     
+    if(File.exists(treefile)) { (treefile + "exists").throw };
+    
+    polyphony = sound.numChannels;
+    
+    tree = SpaceTree.new(treefile);
+    
+    samples = FloatArray.newClear(polyphony);
+    
+    while ({
+      sound.readData(samples);
+      samples.size > 0;
+    }, {
+      line = this.formatNote(samples, naming);
+      tree.write(line, [3,lengths.at(naming)]);
+    });
+
     sound.close;
   }
 
   *fromBuffer {
     arg treefile, buffer, action;
+    ^this.class.new(treefile).fromBuffer;
+  }
+
+  fromBuffer {
+    arg treefile, buffer, action;
     var soundfile, tracker;
     soundfile = this.tmpFileName;
+    tracker = this.class.new(treefile);
     buffer.write(soundfile, headerFormat, sampleFormat, -1, 0, false, {
-      tracker = this.class.fromSoundFile(soundfile);
+      tracker.fromSoundFile(soundfile);
       action.value(tracker);
     });
+    ^tracker;
   }
 
   toSoundFile {
@@ -159,7 +220,7 @@ SpaceTracker {
       soundfile = this.tmpFileName;
     };
 
-    space = treeClass.new(filename);
+    space = treeClass.new(treefile);
 
     sound = soundClass.new
       .headerFormat_(headerFormat)
@@ -167,14 +228,14 @@ SpaceTracker {
       .numChannels_(polyphony);
     sound.openWrite(soundfile);
     
-    chunk = FloatArray.new(chunksize * polyphony);
+    chunk = FloatArray.new(chunksize - (chunksize % polyphony));
     
     counter = 0;
 
     space.parse({
       arg line, indent, lastindent;
       if (line.notNil) {
-        line = this.numerize(line);
+        line = this.unformat(line);
         sound.writeData(line)
       };
     });
@@ -184,14 +245,52 @@ SpaceTracker {
   }
 
   toBuffer {
-    var soundfile, action;
-    soundfile = this.asSoundFile;
+    arg action;
+    var soundfile;
+    soundfile = this.toSoundFile;
     ^Buffer.read(server, soundfile, 0, -1, action);
   }
 
   /* These are not part of the public interace and might change */
 
-  timify {
+  format {
+    arg samples, naming;
+    var time, note, line;
+  
+    line = Array.newFrom(samples);
+
+    time = line[0];
+    note = line[1];
+
+    time = this.formatTime(time);
+    note = this.formatNote(note, naming);
+  
+    line[0] = time;
+    line[1] = note;
+    ^line;
+  }
+  
+  unformat {
+    arg line, naming;
+
+    var
+      time,
+      note
+    ;
+
+    time = line[0];
+    time = this.unformatTime(time);
+
+    note = line[1];
+    note = this.unformatNote(note, naming);
+
+    line[0] = time;
+    line[1] = note;
+
+    ^FloatArray.newFrom(line);
+  }
+  
+  formatTime {
     arg time;
     var attempt;
     attempt = 1;
@@ -199,7 +298,8 @@ SpaceTracker {
       arg break;
       for (1, maxnote, {
         attempt = attempt * 2;
-        if (attempt.asInteger==attempt) {
+        time = time * 2;
+        if (time.asInteger==time) {
           break.value;
         };
       });
@@ -210,62 +310,42 @@ SpaceTracker {
     };
     ^time;
   }
-
-  namify {
-    arg note, naming;
-    switch(
-      naming,
-      \drum, {
-        note = map.getID(\drum) ? note;
-      },
-      \note, {
-        note = this.str(note);
-      },{
-        // do nothing
-      }
-    );
-    ^note;
-  }
-
-  notify {
-    arg samples, naming = \note;
-    var time, note;
   
-    time = samples[0];
-    note = samples[1];
-
-    time = this.timify(time);
-    note = this.namify(note);
-  
-    samples[0] = time;
-    samples[1] = note;
-    ^samples;
-  }
-
-  numerize {
-    arg line;
-
-    var
-      time,
-      note
-    ;
-
-    time = line[0];
-    time = case
+  unformatTime {
+    arg time;
+    ^case
       { time.class == Integer } { 1/time  }
       { time }
     ;
+  }
 
-    note = line[1];
-    note = case
-      { note.class==Symbol } { this.map(note) }
-      { note }
-    ;
+  formatNote {
+    arg note, naming;
+    var mapper;
+    mapper = map[naming];
 
-    line[0] = time;
-    line[1] = note;
+    ^switch(mapper.class,
+    TwoWayIdentityDictionary, {
+      mapper.at(note.asInteger);
+    },
+    Function, {
+      mapper.value(note: note, reverse: false);
+    });
+  }
 
-    ^FloatArray.newFrom(line);
+  unformatNote {
+    arg note, naming;
+    var mapper;
+
+    mapper = map[naming];
+
+    ^switch(mapper.class,
+    TwoWayIdentityDictionary, {
+      mapper.getID(note);
+    },
+    Function, {
+      mapper.value(note: note, reverse: true);
+    });
   }
 
   tmpName {
@@ -276,36 +356,5 @@ SpaceTracker {
   tmpFileName {
     ^Platform.defaultTempDir +/+ this.tmpName ++ $. ++ headerFormat.toLower;
   }
-
-  map {
-    arg symbol;
-    var string,result;
-    
-    // Try for drum map
-    result = map.getID(symbol);
-    if (result.notNil) {^result};
- 
-    string = symbol.asString.toLower;
-
-    if ("^[a-g][0-9]?[bxcy]?$".matchRegexp(string)) {^this.int(string)};
-
-    "Could not understand the notation for the note value".throw;
-  }
-
-  int {
-    arg note;
-    var octave, tone, modd;
-    tone = notes.at(note[0]);
-    octave = octaves.at(note[1]);
-    modd = mods.at(note[2]) ? 0;
-    ^ 12 * octave + tone + modd;
-  }
-
-  str {
-    arg note;
-    var octave, tone, modd;
-    ^ notes.getID(tone)++octaves.getID(octave)++(mods.getID(modd)?"");
-  }
-
 }
 

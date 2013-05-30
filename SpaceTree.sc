@@ -127,6 +127,19 @@ SpaceTree {
     });
     ^switch(line.size, 0, nil, 1, line[0], line);
   }
+
+  write {
+    arg line, lengths = nil;
+    var file;
+    lengths.do({
+      arg length, i;
+      line[i] = line[i].asString.padRight(length);
+    });
+    line = line.join(" ");
+    file = File.open(filename, "a");
+    file.write(line++"\n");
+    file.close;
+  }
 }
 
 
