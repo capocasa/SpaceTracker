@@ -27,14 +27,16 @@ SpaceTracker {
 
   var
     <>filename,
+    <>server,
     <>headerFormat="AIFF",
     <>sampleFormat="float",
-    <>polyphony = 4
+    <>polyphony = 4,
+    <>maxnote = 7 // 7th power of 2 is 128, so shortest note specified by integer is 1/128th
   ;
 
   *new {
     arg filename;
-    ^super.new.init(filename);
+    ^super.newCopyArgs.init;
   }
 
   *initClass {
@@ -124,8 +126,28 @@ SpaceTracker {
   }
 
   init {
-    arg arg_filename, arg_polyphony;
-    filename = arg_filename;
+    server=Server.default;
+  }
+
+  load {
+    var soundfile;
+    soundfile = this.asSoundFile;
+    ^Buffer.new(server, soundfile, 0, -1, bufnum);
+  }
+
+  writeBuffer {
+    arg buffer;
+  }
+
+  *writeSoundFile {
+    arg soundfile;
+    var sound;
+    sound = soundClass.new.openRead(soundfile);
+    polyphony = sound.numChannels;
+    
+    
+    
+    sound.close;
   }
 
   asSoundFile {
@@ -158,6 +180,57 @@ SpaceTracker {
   
     sound.close;
     ^soundfile;
+  }
+
+  timify {
+    arg time;
+    var attempt;
+    attempt = 1;
+    block {
+      arg break;
+      for (1, maxnote, {
+        attempt = attempt * 2;
+        if (attempt.asInteger==attempt) {
+          break.value;
+        };
+      });
+    };
+    if (attempt > 1) {
+      // if time is a multiple of 2, interpret as note (4 = quarter note, etc)
+      time = attempt;
+    };
+    ^time;
+  }
+
+  namify {
+    arg note, naming;
+    switch(
+      naming,
+      \drum, {
+        note = map.getID(\drum) ? note;
+      },
+      \note, {
+        note = this.str(note);
+      },{
+        // do nothing
+      }
+    );
+    ^note;
+  }
+
+  notify {
+    arg samples, naming = \note;
+    var time, note;
+  
+    time = samples[0];
+    note = samples[1];
+
+    time = this.timify(time);
+    note = this.namify(note);
+  
+    samples[0] = time;
+    samples[1] = note;
+    ^samples;
   }
 
   numerize {
@@ -212,6 +285,12 @@ SpaceTracker {
     octave = octaves.at(note[1]);
     modd = mods.at(note[2]) ? 0;
     ^ 12 * octave + tone + modd;
+  }
+
+  str {
+    arg note;
+    var octave, tone, modd;
+    ^ notes.getID(tone)++octaves.getID(octave)++(mods.getID(modd)?"");
   }
 
 }
