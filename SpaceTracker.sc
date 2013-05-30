@@ -129,18 +129,8 @@ SpaceTracker {
     server=Server.default;
   }
 
-  load {
-    var soundfile;
-    soundfile = this.asSoundFile;
-    ^Buffer.new(server, soundfile);
-  }
-
-  writeBuffer {
-    arg buffer;
-  }
-
-  writeSoundFile {
-    arg soundfile;
+  *fromSoundFile {
+    arg treefile, soundfile;
     var sound, tree;
     sound = soundClass.new.openRead(soundfile);
     polyphony = sound.numChannels;
@@ -151,7 +141,17 @@ SpaceTracker {
     sound.close;
   }
 
-  asSoundFile {
+  *fromBuffer {
+    arg treefile, buffer, action;
+    var soundfile, tracker;
+    soundfile = this.tmpFileName;
+    buffer.write(soundfile, headerFormat, sampleFormat, -1, 0, false, {
+      tracker = this.class.fromSoundFile(soundfile);
+      action.value(tracker);
+    });
+  }
+
+  toSoundFile {
     arg soundfile;
     var space, sound, tmp, chunk, counter;
 
@@ -182,6 +182,14 @@ SpaceTracker {
     sound.close;
     ^soundfile;
   }
+
+  toBuffer {
+    var soundfile, action;
+    soundfile = this.asSoundFile;
+    ^Buffer.read(server, soundfile, 0, -1, action);
+  }
+
+  /* These are not part of the public interace and might change */
 
   timify {
     arg time;
