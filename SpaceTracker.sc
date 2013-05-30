@@ -36,7 +36,7 @@ SpaceTracker {
 
   *new {
     arg filename;
-    ^super.newCopyArgs.init;
+    ^super.newCopyArgs(filename).init;
   }
 
   *initClass {
@@ -132,20 +132,21 @@ SpaceTracker {
   load {
     var soundfile;
     soundfile = this.asSoundFile;
-    ^Buffer.new(server, soundfile, 0, -1, bufnum);
+    ^Buffer.new(server, soundfile);
   }
 
   writeBuffer {
     arg buffer;
   }
 
-  *writeSoundFile {
+  writeSoundFile {
     arg soundfile;
-    var sound;
+    var sound, tree;
     sound = soundClass.new.openRead(soundfile);
     polyphony = sound.numChannels;
-    
-    
+
+    if(PathName.new(filename).exists) { filename + "exists".throw };
+    tree = File.open(filename, "a");
     
     sound.close;
   }
@@ -259,8 +260,13 @@ SpaceTracker {
     ^FloatArray.newFrom(line);
   }
 
+  tmpName {
+    arg length = 12;
+    ^"abcdefghijklmnopqrstuvwxyz".scramble.copyRange(0,12);
+  }
+
   tmpFileName {
-    ^Platform.defaultTempDir +/+ filename.basename ++ $. ++ headerFormat.toLower;
+    ^Platform.defaultTempDir +/+ this.tmpName ++ $. ++ headerFormat.toLower;
   }
 
   map {
