@@ -16,7 +16,8 @@ only be good for the artistic quality of music written with it.
 SpaceTracker {
 
   classvar
-    <>map,
+    <>mappers,
+    <>naming,
     <>lengths,
     <>treeClass,
     <>soundClass,
@@ -39,9 +40,9 @@ SpaceTracker {
 
   *initClass {
 
-    map = IdentityDictionary.new;
+    mappers = IdentityDictionary.new;
 
-    map[\drum] = TwoWayIdentityDictionary[
+    mappers[\drum] = TwoWayIdentityDictionary[
       35 -> \kicker,
       36 -> \kick,
       37 -> \rim,
@@ -91,7 +92,7 @@ SpaceTracker {
       81 -> \trii
     ];
 
-    map[\note] = {
+    mappers[\note] = {
       arg note, reverse;
       var mods,tones,octaves;
       mods = TwoWayIdentityDictionary[
@@ -126,18 +127,6 @@ SpaceTracker {
     
 
       if(reverse,{
-        var octave, tone, mod, semi;
-        semi = Scale.major.semitones;
-        tone = (note % 12).asFloat;
-        octave = ((note - tone)/12).asInteger;
-        mod = if(semi.indexOf(tone).isNil,1,0);
-        tone = (tone-mod).asFloat;
-        tone = semi.indexOf(tone);
-        tone= map[\note].getID(tone);
-        octave=map[\octave].getID(octave);
-        mod=map[\mod].getID(mod)?"";
-        ^tone++octave++mod;
-      },{
         var string;
         string = note.asString.toLower;
         if ("^[a-g][0-9]?[bxcy]?$".matchRegexp(string), {
@@ -145,10 +134,22 @@ SpaceTracker {
           tone = tones.at(note[0]);
           octave = octaves.at(note[1]);
           mod = mods.at(note[2]) ? 0;
-          ^ 12 * octave + tone + mod;
+          12 * octave + tone + mod;
         },{
           "Could not understand the notation for the note value".throw;
         });
+      },{
+        var octave, tone, mod, semi;
+        semi = Scale.major.semitones;
+        tone = (note % 12).asFloat;
+        octave = ((note - tone)/12).asInteger;
+        mod = if(semi.indexOf(tone).isNil,1,0);
+        tone = (tone-mod).asFloat;
+        tone = semi.indexOf(tone);
+        tone= tones.getID(tone);
+        octave=octaves.getID(octave);
+        mod=mods.getID(mod)?"";
+        tone++octave++mod;
       });
     };
   
@@ -163,15 +164,16 @@ SpaceTracker {
 
   init {
     server=Server.default;
+    naming = treefile.splitext[1].asSymbol;
   }
 
   *fromSoundFile {
-    arg treefile, soundfile, naming=\note;
-    ^this.new(treefile).fromSoundFile(soundfile,naming);
+    arg treefile, soundfile, naming;
+    ^this.new(treefile).naming_(naming).fromSoundFile(soundfile);
   }
 
   fromSoundFile {
-    arg soundfile, naming=\note;
+    arg soundfile;
     var sound, tracker, tree, line, samples;
     sound = soundClass.new;
     sound.openRead(soundfile);
@@ -188,7 +190,7 @@ SpaceTracker {
       sound.readData(samples);
       samples.size > 0;
     }, {
-      line = this.formatNote(samples, naming);
+      line = this.formatNote(samples);
       tree.write(line, [3,lengths.at(naming)]);
     });
 
@@ -196,8 +198,8 @@ SpaceTracker {
   }
 
   *fromBuffer {
-    arg treefile, buffer, action;
-    ^this.class.new(treefile).fromBuffer;
+    arg treefile, buffer, action, naming;
+    ^this.class.new(treefile).naming_(naming).fromBuffer;
   }
 
   fromBuffer {
@@ -254,7 +256,7 @@ SpaceTracker {
   /* These are not part of the public interace and might change */
 
   format {
-    arg samples, naming;
+    arg samples;
     var time, note, line;
   
     line = Array.newFrom(samples);
@@ -263,7 +265,7 @@ SpaceTracker {
     note = line[1];
 
     time = this.formatTime(time);
-    note = this.formatNote(note, naming);
+    note = this.formatNote(note);
   
     line[0] = time;
     line[1] = note;
@@ -271,7 +273,7 @@ SpaceTracker {
   }
   
   unformat {
-    arg line, naming;
+    arg line;
 
     var
       time,
@@ -282,7 +284,7 @@ SpaceTracker {
     time = this.unformatTime(time);
 
     note = line[1];
-    note = this.unformatNote(note, naming);
+    note = this.unformatNote(note);
 
     line[0] = time;
     line[1] = note;
@@ -320,10 +322,10 @@ SpaceTracker {
   }
 
   formatNote {
-    arg note, naming;
+    arg note;
     var mapper;
-    mapper = map[naming];
 
+    mapper = mappers[naming];
     ^switch(mapper.class,
     TwoWayIdentityDictionary, {
       mapper.at(note.asInteger);
@@ -334,10 +336,10 @@ SpaceTracker {
   }
 
   unformatNote {
-    arg note, naming;
+    arg note;
     var mapper;
 
-    mapper = map[naming];
+    mapper = mappers[naming];
 
     ^switch(mapper.class,
     TwoWayIdentityDictionary, {
