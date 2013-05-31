@@ -168,8 +168,8 @@ SpaceTracker {
   }
 
   *fromSoundFile {
-    arg treefile, soundfile, naming;
-    ^this.new(treefile).naming_(naming).fromSoundFile(soundfile);
+    arg treefile, soundfile;
+    ^this.new(treefile).fromSoundFile(soundfile);
   }
 
   fromSoundFile {
@@ -190,7 +190,7 @@ SpaceTracker {
       sound.readData(samples);
       samples.size > 0;
     }, {
-      line = this.formatNote(samples);
+      line = this.format(samples);
       tree.write(line, [3,lengths.at(naming)]);
     });
 
@@ -315,7 +315,8 @@ SpaceTracker {
   
   unformatTime {
     arg time;
-    ^case
+  
+  ^case
       { time.class == Integer } { 1/time  }
       { time }
     ;
@@ -324,7 +325,6 @@ SpaceTracker {
   formatNote {
     arg note;
     var mapper;
-
     mapper = mappers[naming];
     ^switch(mapper.class,
     TwoWayIdentityDictionary, {

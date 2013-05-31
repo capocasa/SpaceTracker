@@ -98,11 +98,16 @@ SpaceTree {
     var file,line,indent,lastindent,change;
     lastindent = 0;
     file=File.open(filename, "r");
-    while ({ (line=file.getLine).notNil }) {
-      indent = this.getIndent(line);
-      line = this.parseLine(line);
-      callback.value(line, indent, lastindent);
-      lastindent = indent;
+    block {
+      arg break;
+      while ({ (line=file.getLine).notNil }) {
+        indent = this.getIndent(line);
+        line = this.formatLine(line);
+        if (true==callback.value(line, indent, lastindent)) {
+          break.value;
+        };
+        lastindent = indent;
+      };
     };
     file.close;
   }
@@ -117,7 +122,7 @@ SpaceTree {
     ^indent;
   }
 
-  parseLine {
+  formatLine {
     arg line;
     line=line.findRegexp("[^ \t\r\n]+").collect({|r|r[1]}).collect({|token|
       case
