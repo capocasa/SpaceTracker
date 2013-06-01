@@ -174,24 +174,41 @@ SpaceTracker {
 
   fromSoundFile {
     arg soundfile;
-    var sound, tracker, tree, line, samples;
+    var sound, tracker, tree, line, samples, numChannels, cs, frame;
     sound = soundClass.new;
     sound.openRead(soundfile);
     
     if(File.exists(treefile)) { (treefile + "exists").throw };
     
-    polyphony = sound.numChannels;
+    numChannels = sound.numChannels;
+    
+    if (numChannels % polyphony != 0) {
+      "Sound file channels must be a multiple of polyphony".throw;
+    };
+
+    frame = numChannels / polyphony;
+
+    cs = chunksize - (chunksize % numChannels);
     
     tree = SpaceTree.new(treefile);
-    
-    samples = FloatArray.newClear(polyphony);
-    
+
+    samples = FloatArray.newClear(cs);
+
     while ({
       sound.readData(samples);
       samples.size > 0;
     }, {
-      line = this.format(samples);
-      tree.write(line, [3,lengths.at(naming)]);
+      var i, j, size;
+      i=0;
+      j=0;
+      size = samples.size;
+      while ( { i < size }, {
+        j = i + frame - 1;
+        line = samples.copyRange(i.asInteger, j.asInteger);
+        line = this.format(line);
+        tree.write(line, [3,lengths.at(naming)]);
+        i = j+1;
+      });
     });
 
     sound.close;
@@ -216,7 +233,7 @@ SpaceTracker {
 
   toSoundFile {
     arg soundfile;
-    var space, sound, tmp, chunk, counter;
+    var space, sound, tmp, chunk, counter, numChannels, frame, cs;
 
     if (soundfile.isNil) {
       soundfile = this.tmpFileName;
@@ -224,24 +241,39 @@ SpaceTracker {
 
     space = treeClass.new(treefile);
 
+    space.parse({
+      arg line;
+      frame = line.size;
+      \break;
+    });
+
+    numChannels = polyphony * frame;
+
     sound = soundClass.new
       .headerFormat_(headerFormat)
       .sampleFormat_(sampleFormat)
-      .numChannels_(polyphony);
+      .numChannels_(numChannels);
     sound.openWrite(soundfile);
     
-    chunk = FloatArray.new(chunksize - (chunksize % polyphony));
-    
-    counter = 0;
+    cs = chunksize - (chunksize % numChannels);
+    chunk = FloatArray.new(cs);
 
     space.parse({
       arg line, indent, lastindent;
       if (line.notNil) {
         line = this.unformat(line);
-        sound.writeData(line)
+        for (0, frame-1, {
+          arg i;
+          chunk.add(line[i]);
+        });
+      };
+      if (chunk.size == cs) {
+        sound.writeData(chunk);
+        chunk = FloatArray.new(cs);
       };
     });
-  
+    sound.writeData(chunk);
+
     sound.close;
     ^soundfile;
   }

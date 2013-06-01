@@ -103,7 +103,7 @@ SpaceTree {
       while ({ (line=file.getLine).notNil }) {
         indent = this.getIndent(line);
         line = this.formatLine(line);
-        if (true==callback.value(line, indent, lastindent)) {
+        if (\break==callback.value(line, indent, lastindent)) {
           break.value;
         };
         lastindent = indent;
