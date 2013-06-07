@@ -16,7 +16,6 @@ only be good for the artistic quality of music written with it.
 SpaceTracker {
 
   classvar
-    <>mappers,
     <>naming,
     <>lengths,
     <>treeClass,
@@ -30,7 +29,11 @@ SpaceTracker {
     <>headerFormat="AIFF",
     <>sampleFormat="float",
     <>polyphony = 4,
-    <>maxnote = 7 // 7th power of 2 is 128, so shortest note specified by integer is 1/128th
+    <>maxnote = 7, // 7th power of 2 is 128, so shortest note specified by integer is 1/128th
+    <>namingClasses = IdentityDictionary[
+      \note -> NamingNote,
+      \drum -> NamingDrum
+    ];
   ;
 
   *new {
@@ -42,122 +45,8 @@ SpaceTracker {
 
     mappers = IdentityDictionary.new;
 
-    mappers[\drum] = TwoWayIdentityDictionary[
-      35 -> \kicker,
-      36 -> \kick,
-      37 -> \rim,
-      38 -> \snarer,
-      39 -> \clap,
-      40 -> \snare,
-      41 -> \floor,
-      42 -> \hat,
-      43 -> \ceil,
-      44 -> \pedal,
-      45 -> \tom,
-      46 -> \hatt,
-      47 -> \tomm,
-      48 -> \tommy,
-      49 -> \crash,
-      50 -> \tommyer,
-      51 -> \ride,
-      52 -> \china,
-      53 -> \bell,
-      54 -> \tam,
-      55 -> \splash,
-      56 -> \cow,
-      57 -> \crash,
-      58 -> \vibe,
-      59 -> \rider,
-      60 -> \bongo,
-      61 -> \bongoo,
-      62 -> \congga,
-      63 -> \conga,
-      64 -> \cong,
-      65 -> \timbb,
-      66 -> \timb,
-      67 -> \aggo,
-      68 -> \ago,
-      69 -> \cab,
-      70 -> \mar,
-      71 -> \whis,
-      72 -> \whiss,
-      73 -> \guiro,
-      74 -> \guiiro,
-      75 -> \clav,
-      76 -> \wood,
-      77 -> \wod,
-      78 -> \cuicc,
-      79 -> \cuic,
-      80 -> \tri,
-      81 -> \trii
-    ];
-
-    mappers[\note] = {
-      arg note, reverse;
-      var mods,tones,octaves;
-      mods = TwoWayIdentityDictionary[
-        $b -> -1,
-        $x ->  1,
-        $c -> -2,
-        $y ->  2,
-      ];
-
-      tones = TwoWayIdentityDictionary[
-        $c -> 0,
-        $d -> 1,
-        $e -> 2,
-        $f -> 3,
-        $g -> 4,
-        $a -> 5,
-        $b -> 6
-      ];
-  
-      octaves = TwoWayIdentityDictionary[
-        $0 -> 2,
-        $1 -> 3,
-        $2 -> 4,
-        $3 -> 5,
-        $4 -> 6,
-        $5 -> 7,
-        $6 -> 8,
-        $7 -> 9,
-        $8 -> 10,
-        $9 -> 11
-      ];
-    
-
-      if(reverse,{
-        var string;
-        string = note.asString.toLower;
-        if ("^[a-g][0-9]?[bxcy]?$".matchRegexp(string), {
-          var octave, tone, mod;
-          tone = tones.at(note[0]);
-          octave = octaves.at(note[1]);
-          mod = mods.at(note[2]) ? 0;
-          12 * octave + tone + mod;
-        },{
-          "Could not understand the notation for the note value".throw;
-        });
-      },{
-        var octave, tone, mod, semi;
-        semi = Scale.major.semitones;
-        tone = (note % 12).asFloat;
-        octave = ((note - tone)/12).asInteger;
-        mod = if(semi.indexOf(tone).isNil,1,0);
-        tone = (tone-mod).asFloat;
-        tone = semi.indexOf(tone);
-        tone= tones.getID(tone);
-        octave=octaves.getID(octave);
-        mod=mods.getID(mod)?"";
-        tone++octave++mod;
-      });
     };
   
-    lengths = IdentityDictionary.new;
-
-    lengths[\drum] = 11;
-    lengths[\note] = 3;
-
     treeClass = SpaceTree;
     soundClass = SoundFile;
   }
@@ -165,6 +54,7 @@ SpaceTracker {
   init {
     server=Server.default;
     naming = treefile.splitext[1].asSymbol;
+    namingMapper = namingClasses.at(naming).new;
   }
 
   *fromSoundFile {
@@ -206,7 +96,7 @@ SpaceTracker {
         j = i + frame - 1;
         line = samples.copyRange(i.asInteger, j.asInteger);
         line = this.format(line);
-        tree.write(line, [3,lengths.at(naming)]);
+        tree.write(line, [3,namingMapper.length]);
         i = j+1;
       });
     });
@@ -356,30 +246,12 @@ SpaceTracker {
 
   formatNote {
     arg note;
-    var mapper;
-    mapper = mappers[naming];
-    ^switch(mapper.class,
-    TwoWayIdentityDictionary, {
-      mapper.at(note.asInteger);
-    },
-    Function, {
-      mapper.value(note: note, reverse: false);
-    });
+    ^namingMapper.string(note);
   }
 
   unformatNote {
     arg note;
-    var mapper;
-
-    mapper = mappers[naming];
-
-    ^switch(mapper.class,
-    TwoWayIdentityDictionary, {
-      mapper.getID(note);
-    },
-    Function, {
-      mapper.value(note: note, reverse: true);
-    });
+    ^namingMapper.number(note);
   }
 
   tmpName {
