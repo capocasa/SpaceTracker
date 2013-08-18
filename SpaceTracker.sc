@@ -28,7 +28,7 @@ SpaceTracker {
     <>server,
     <>headerFormat="AIFF",
     <>sampleFormat="float",
-    <>polyphony = 4,
+    <>polyphony = 1,
     <>namingMapper,
     <>maxnote = 7 // 7th power of 2 is 128, so shortest note specified by integer is 1/128th
   ;
@@ -66,10 +66,11 @@ SpaceTracker {
   fromSoundFile {
     arg soundfile;
     var sound, tracker, tree, line, samples, numChannels, cs, frame;
-    sound = soundClass.new;
-    sound.openRead(soundfile);
     
     if(File.exists(treefile)) { (treefile + "exists").throw };
+    
+    sound = soundClass.new;
+    sound.openRead(soundfile);
     
     numChannels = sound.numChannels;
     
@@ -96,7 +97,6 @@ SpaceTracker {
       while ( { i < size }, {
         j = i + frame - 1;
         line = samples.copyRange(i.asInteger, j.asInteger);
-        line.postln;
         line = this.format(line);
         //tree.write(line, [1, 1,namingMapper.length]);
         tree.write(line);
@@ -154,7 +154,6 @@ SpaceTracker {
     };
     
     cs = chunksize - (chunksize % numChannels);
-    cs.postln;
     chunk = FloatArray.new(cs);
 
     space.parse({
@@ -171,7 +170,6 @@ SpaceTracker {
         chunk = FloatArray.new(cs);
       };
     });
-    chunk.postln;
 
     sound.writeData(chunk);
 
