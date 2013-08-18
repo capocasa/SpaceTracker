@@ -29,11 +29,11 @@ SpaceTracker {
     <>headerFormat="AIFF",
     <>sampleFormat="float",
     <>polyphony = 4,
-    <>maxnote = 7, // 7th power of 2 is 128, so shortest note specified by integer is 1/128th
-    <>namingClasses = IdentityDictionary[
-      \note -> NamingNote,
-      \drum -> NamingDrum
-    ];
+    <>namingMapper,
+    <>maxnote = 7 // 7th power of 2 is 128, so shortest note specified by integer is 1/128th
+  ;
+  classvar
+    <>namingClasses
   ;
 
   *new {
@@ -43,12 +43,13 @@ SpaceTracker {
 
   *initClass {
 
-    mappers = IdentityDictionary.new;
-
-    };
-  
     treeClass = SpaceTree;
     soundClass = SoundFile;
+    
+    namingClasses = IdentityDictionary[
+      \note -> NamingNote,
+      \drum -> NamingDrum
+    ];
   }
 
   init {
@@ -95,8 +96,10 @@ SpaceTracker {
       while ( { i < size }, {
         j = i + frame - 1;
         line = samples.copyRange(i.asInteger, j.asInteger);
+        line.postln;
         line = this.format(line);
-        tree.write(line, [3,namingMapper.length]);
+        //tree.write(line, [1, 1,namingMapper.length]);
+        tree.write(line);
         i = j+1;
       });
     });
@@ -129,23 +132,29 @@ SpaceTracker {
       soundfile = this.tmpFileName;
     };
 
+    if(File.exists(soundfile)) { (soundfile + "exists").throw };
+    
     space = treeClass.new(treefile);
 
     space.parse({
       arg line;
+      line = this.unformat(line);
       frame = line.size;
-      \break;
+      if (frame>1, \break, nil); // break only if not a pause
     });
-
+    
     numChannels = polyphony * frame;
-
+    
     sound = soundClass.new
       .headerFormat_(headerFormat)
       .sampleFormat_(sampleFormat)
       .numChannels_(numChannels);
-    sound.openWrite(soundfile);
+    if (false == sound.openWrite(soundfile)) {
+      ("Could not open"+soundfile+"for writing").throw;
+    };
     
     cs = chunksize - (chunksize % numChannels);
+    cs.postln;
     chunk = FloatArray.new(cs);
 
     space.parse({
@@ -162,6 +171,8 @@ SpaceTracker {
         chunk = FloatArray.new(cs);
       };
     });
+    chunk.postln;
+
     sound.writeData(chunk);
 
     sound.close;
@@ -179,18 +190,27 @@ SpaceTracker {
 
   format {
     arg samples;
-    var time, note, line;
+    var time, divisor, note, line;
   
     line = Array.newFrom(samples);
 
     time = line[0];
     note = line[1];
+    
+    note = this.formatNote(note);
+    line[1] = note;
 
     time = this.formatTime(time);
-    note = this.formatNote(note);
-  
+    
+    if (time.isArray) {
+      divisor = time[1];
+      time = time[0];
+      line[0] = 2 ** divisor;
+      line.addFirst(nil);
+    };
+
     line[0] = time;
-    line[1] = note;
+
     ^line;
   }
   
@@ -199,49 +219,56 @@ SpaceTracker {
 
     var
       time,
+      divisor,
       note
     ;
 
-    time = line[0];
-    time = this.unformatTime(time);
+    // Detect note format
 
-    note = line[1];
+    time = line[0];
+    divisor = line[1];
+    
+    if (time.asInteger == time && divisor.asInteger == divisor, {
+      // First two numbers are integers - assume "note" style line
+      // So calculate time float from first two numbers, and shorten
+      // the line
+      time = this.unformatTime(time, divisor);
+      note = line[2];
+
+      line.removeAt(0);
+    },{
+      time = time.asFloat;
+      note = line[1];
+    });
+    
     note = this.unformatNote(note);
 
     line[0] = time;
     line[1] = note;
-
+    
     ^FloatArray.newFrom(line);
   }
   
+  // If the time is a float that is a fraction of 2, transform
+  // to note format (two integers), otherwise return the fraction
   formatTime {
     arg time;
-    var attempt;
-    attempt = 1;
-    block {
-      arg break;
-      for (1, maxnote, {
-        attempt = attempt * 2;
-        time = time * 2;
-        if (time.asInteger==time) {
-          break.value;
-        };
-      });
+  
+    var divisor = 0;
+    while ( {time != time.asInteger }) {
+      time = time * 2;
+      divisor = divisor + 1;
+      if (divisor == maxnote) {
+        ^time;
+      };
     };
-    if (attempt > 1) {
-      // if time is a multiple of 2, interpret as note (4 = quarter note, etc)
-      time = attempt;
-    };
-    ^time;
+  
+    ^[time, divisor]
   }
-  
+
   unformatTime {
-    arg time;
-  
-  ^case
-      { time.class == Integer } { 1/time  }
-      { time }
-    ;
+    arg time, divisor;
+    ^time / divisor;
   }
 
   formatNote {

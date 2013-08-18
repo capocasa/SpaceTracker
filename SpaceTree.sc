@@ -138,7 +138,7 @@ SpaceTree {
     var file;
     lengths.do({
       arg length, i;
-      line[i] = line[i].asString.padRight(length);
+      line[i] = line[i].asString.padLeft(length);
     });
     line = line.join(" ");
     file = File.open(filename, "a");
