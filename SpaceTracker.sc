@@ -30,7 +30,7 @@ SpaceTracker {
     <>sampleFormat="float",
     <>polyphony = 1,
     <>namingMapper,
-    <>maxnote = 7 // 7th power of 2 is 128, so shortest note specified by integer is 1/128th
+    <>shortestnote = 128 // The shortest note to look for is a 128th note
   ;
   classvar
     <>namingClasses
@@ -251,17 +251,16 @@ SpaceTracker {
   // to note format (two integers), otherwise return the fraction
   formatTime {
     arg time;
-  
-    var divisor = 0;
-    while ( {time != time.asInteger }) {
-      time = time * 2;
-      divisor = divisor + 1;
-      if (divisor == maxnote) {
+    var t = time, d = 1;
+    while ( {t != t.asInteger }) {
+      d = d * 2;
+      if (d > shortestnote) {
         ^time;
       };
+      t = t * 2;
     };
   
-    ^[time, divisor]
+    ^[t, d]
   }
 
   unformatTime {
