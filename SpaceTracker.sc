@@ -27,7 +27,7 @@ SpaceTracker {
     <>server,
     <>headerFormat="AIFF",
     <>sampleFormat="float",
-    <>polyphony = 1,
+    <>polyphony = 8,
     <>namingMapper,
     <>shortestnote = 128 // The shortest note to look for is a 128th note
   ;
@@ -64,31 +64,25 @@ SpaceTracker {
 
   fromSoundFile {
     arg soundfile, force = false;
-    var sound, tracker, tree, line, unformatted_line, numChannels, frame;
+    var sound, tree, line, numChannels;
     
     if(File.exists(treefile) && (force == false)) { (treefile + "exists").throw };
     File.delete(treefile);
     
     sound = soundClass.new;
+    soundfile.postln;
     sound.openRead(soundfile);
     
     numChannels = sound.numChannels;
     
-    if (numChannels % polyphony != 0) {
-      "Sound file channels must be a multiple of polyphony".throw;
-    };
-
-    frame = numChannels / polyphony;
-
     tree = SpaceTree.new(treefile);
 
-    unformatted_line = FloatArray.newClear(numChannels);
-    
     while ({
-      sound.readData(unformatted_line);
-      unformatted_line.size > 0;
+      line = FloatArray.newClear(numChannels);
+      sound.readData(line);
+      line.size > 0;
     }, {
-      line = this.format(unformatted_line);
+      line = this.format(line);
       //tree.write(line, [1, 1,namingMapper.length]);
       tree.write(line);
     });
@@ -115,7 +109,7 @@ SpaceTracker {
 
   toSoundFile {
     arg soundfile, force = false;
-    var space, sound, tmp, chunk, counter, numChannels, frame;
+    var space, sound, numChannels;
 
     if (soundfile.isNil) {
       soundfile = this.tmpFileName;
@@ -129,11 +123,9 @@ SpaceTracker {
     space.parse({
       arg line;
       line = this.unformat(line);
-      frame = line.size;
-      if (frame>1, \break, nil); // break only if not a pause
+      numChannels = line.size;
+      if (numChannels >1, \break, nil); // break only if not a pause
     });
-    
-    numChannels = polyphony * frame;
     
     sound = soundClass.new
       .headerFormat_(headerFormat)
