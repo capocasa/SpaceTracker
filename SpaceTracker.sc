@@ -19,8 +19,7 @@ SpaceTracker {
     <>naming,
     <>lengths,
     <>treeClass,
-    <>soundClass,
-    chunksize = 1024
+    <>soundClass
   ;
 
   var
@@ -65,7 +64,7 @@ SpaceTracker {
 
   fromSoundFile {
     arg soundfile, force = false;
-    var sound, tracker, tree, line, samples, numChannels, cs, frame;
+    var sound, tracker, tree, line, numChannels, frame;
     
     if(File.exists(treefile) && (force == false)) { (treefile + "exists").throw };
     File.delete(treefile);
@@ -81,28 +80,17 @@ SpaceTracker {
 
     frame = numChannels / polyphony;
 
-    cs = chunksize - (chunksize % numChannels);
-    
     tree = SpaceTree.new(treefile);
 
-    samples = FloatArray.newClear(cs);
 
     while ({
-      sound.readData(samples);
-      samples.size > 0;
+      line = FloatArray.newClear(numChannels);
+      sound.readData(line);
+      line.size > 0;
     }, {
-      var i, j, size;
-      i=0;
-      j=0;
-      size = samples.size;
-      while ( { i < size }, {
-        j = i + frame - 1;
-        line = samples.copyRange(i.asInteger, j.asInteger);
-        line = this.format(line);
-        //tree.write(line, [1, 1,namingMapper.length]);
-        tree.write(line);
-        i = j+1;
-      });
+      line = this.format(line);
+      //tree.write(line, [1, 1,namingMapper.length]);
+      tree.write(line);
     });
 
     sound.close;
@@ -127,7 +115,7 @@ SpaceTracker {
 
   toSoundFile {
     arg soundfile, force = false;
-    var space, sound, tmp, chunk, counter, numChannels, frame, cs;
+    var space, sound, tmp, chunk, counter, numChannels, frame;
 
     if (soundfile.isNil) {
       soundfile = this.tmpFileName;
@@ -155,26 +143,13 @@ SpaceTracker {
       ("Could not open"+soundfile+"for writing").throw;
     };
     
-    cs = chunksize - (chunksize % numChannels);
-    chunk = FloatArray.new(cs);
-
     space.parse({
       arg line, indent, lastindent;
-      line.postln;
       if (line.notNil) {
         line = this.unformat(line);
-        for (0, frame-1, {
-          arg i;
-          chunk.add(line[i]);
-        });
-      };
-      if (chunk.size == cs) {
-        sound.writeData(chunk);
-        chunk = FloatArray.new(cs);
+        sound.writeData(line);
       };
     });
-
-    sound.writeData(chunk);
 
     sound.close;
     ^soundfile;
@@ -190,10 +165,10 @@ SpaceTracker {
   /* These are not part of the public interace and might change */
 
   format {
-    arg samples;
-    var time, divisor, note, line;
+    arg line;
+    var time, divisor, note;
   
-    line = Array.newFrom(samples);
+    line = Array.newFrom(line);
 
     time = line[0];
     note = line[1];
