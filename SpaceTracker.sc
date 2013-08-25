@@ -64,7 +64,7 @@ SpaceTracker {
 
   fromSoundFile {
     arg soundfile, force = false;
-    var sound, tracker, tree, line, numChannels, frame;
+    var sound, tracker, tree, line, unformatted_line, numChannels, frame;
     
     if(File.exists(treefile) && (force == false)) { (treefile + "exists").throw };
     File.delete(treefile);
@@ -82,13 +82,13 @@ SpaceTracker {
 
     tree = SpaceTree.new(treefile);
 
-
+    unformatted_line = FloatArray.newClear(numChannels);
+    
     while ({
-      line = FloatArray.newClear(numChannels);
-      sound.readData(line);
-      line.size > 0;
+      sound.readData(unformatted_line);
+      unformatted_line.size > 0;
     }, {
-      line = this.format(line);
+      line = this.format(unformatted_line);
       //tree.write(line, [1, 1,namingMapper.length]);
       tree.write(line);
     });
