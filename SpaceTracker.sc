@@ -59,15 +59,16 @@ SpaceTracker {
   }
 
   *fromSoundFile {
-    arg treefile, soundfile;
-    ^this.new(treefile).fromSoundFile(soundfile);
+    arg treefile, soundfile, force=false;
+    ^this.new(treefile).fromSoundFile(soundfile, force);
   }
 
   fromSoundFile {
-    arg soundfile;
+    arg soundfile, force = false;
     var sound, tracker, tree, line, samples, numChannels, cs, frame;
     
-    if(File.exists(treefile)) { (treefile + "exists").throw };
+    if(File.exists(treefile) && (force == false)) { (treefile + "exists").throw };
+    File.delete(treefile);
     
     sound = soundClass.new;
     sound.openRead(soundfile);
@@ -125,15 +126,16 @@ SpaceTracker {
   }
 
   toSoundFile {
-    arg soundfile;
+    arg soundfile, force = false;
     var space, sound, tmp, chunk, counter, numChannels, frame, cs;
 
     if (soundfile.isNil) {
       soundfile = this.tmpFileName;
     };
 
-    if(File.exists(soundfile)) { (soundfile + "exists").throw };
-    
+    if(File.exists(soundfile) && (force == false)) { (soundfile + "exists").throw };
+    File.delete(soundfile);
+
     space = treeClass.new(treefile);
 
     space.parse({
@@ -158,6 +160,7 @@ SpaceTracker {
 
     space.parse({
       arg line, indent, lastindent;
+      line.postln;
       if (line.notNil) {
         line = this.unformat(line);
         for (0, frame-1, {
