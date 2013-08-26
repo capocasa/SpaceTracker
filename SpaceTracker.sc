@@ -109,15 +109,12 @@ SpaceTracker {
 
   toSoundFile {
     arg soundfile, force = false;
-    var space, sound, numChannels;
+    var space, sounds, totaltimes, numChannels;
 
     if (soundfile.isNil) {
-      soundfile = this.tmpFileName;
+      soundfile = [this.tmpFileName];
     };
-
-    if(File.exists(soundfile) && (force == false)) { (soundfile + "exists").throw };
-    File.delete(soundfile);
-
+    
     space = treeClass.new(treefile);
 
     space.parse({
@@ -126,24 +123,92 @@ SpaceTracker {
       numChannels = line.size;
       if (numChannels >1, \break, nil); // break only if not a pause
     });
+
+    sounds = Array.new(polyphony);
+    polyphony.do({
+      arg i;
+      var sound, file;
+      sound = soundClass.new
+        .headerFormat_(headerFormat)
+        .sampleFormat_(sampleFormat)
+        .numChannels_(numChannels);
+      file = soundfile++$.++i;
+      if(File.exists(file) && (force == false)) { (file + "exists").throw };
+      File.delete(file);
+      if (false == sound.openWrite(file)) {
+        ("Could not open"+file+"for writing").throw;
+      };
+      sounds.add(sound);
+    });
+
+    {
+    var times, maxtime, index, current_parallel;
     
-    sound = soundClass.new
-      .headerFormat_(headerFormat)
-      .sampleFormat_(sampleFormat)
-      .numChannels_(numChannels);
-    if (false == sound.openWrite(soundfile)) {
-      ("Could not open"+soundfile+"for writing").throw;
-    };
+    times = Array.fill(polyphony, 0);
+    maxtime = 0;
     
     space.parse({
       arg line, indent, lastindent;
+
       if (line.notNil) {
+
+        // Pick a sound file to insert the note in
+        if (indent == 0) {
+          // Zero indents make it easy, just use the first
+          index = 0;
+        };
+        
+        if (indent == 1) {
+          
+          var i;
+          
+          // One indent is parallelization, so we figure out
+          // which one to use
+        
+          // fresh indent, note latest position
+          if (lastindent == 0 && indent == 1) {
+            maxtime = times.maxItem;
+          };
+          
+          i = times.minItem;
+          if (times[i] <= maxtime, {
+            current_parallel = index = i;
+          },{
+            (this.class + "dropped note" + line).postln;
+            ^nil;
+          });
+        };
+
+        if (indent == 2) {
+          // Two indents is piling on more notes linearly
+          // onto one parallized slot, so just use the
+          // last one
+          index = current_parallel;
+        };
+      
+        //// Good, got it figured out. Now insert.
+
+        // Insert pre-pause if necessary
+        if (index == 1) {
+          // Parallel, so relative to max time when parallel started
+          if (times[index] < maxtime) {
+            sounds[index].write(FloatArray.newFrom([maxtime-times[index]]));
+            times[index] = maxtime;
+          }
+        };
+
+        // Insert main line
         line = this.unformat(line);
-        sound.writeData(line);
+        sounds[index].writeData(line);
+        times[index] = times[index] + line[0];
       };
     });
+    }.value;
 
-    sound.close;
+    sounds.do({
+      arg sound;
+      sound.close;
+    });
     ^soundfile;
   }
 
