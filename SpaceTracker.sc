@@ -70,7 +70,6 @@ SpaceTracker {
     File.delete(treefile);
     
     sound = soundClass.new;
-    soundfile.postln;
     sound.openRead(soundfile);
     
     numChannels = sound.numChannels;
@@ -141,69 +140,77 @@ SpaceTracker {
       sounds.add(sound);
     });
 
-    {
-    var times, maxtime, index, current_parallel;
+    block {
+    arg break_outer;
+    var times, index, maxtime, maxtimes, in_use;
     
     times = Array.fill(polyphony, 0);
     maxtime = 0;
+    in_use = List.new.add(0);
+    maxtimes = List.new.add(0);
     
     space.parse({
       arg line, indent, lastindent;
 
       if (line.notNil) {
+      block {
+        arg break_inner;
 
-        // Pick a sound file to insert the note in
-        if (indent == 0) {
-          // Zero indents make it easy, just use the first
-          index = 0;
-        };
-        
-        if (indent == 1) {
-          
-          var i;
+        if (indent % 2 == 1, {
           
           // One indent is parallelization, so we figure out
           // which one to use
+          
+          var i;
         
           // fresh indent, note latest position
-          if (lastindent == 0 && indent == 1) {
-            maxtime = times.maxItem;
+          if (lastindent < indent) {
+            maxtimes.add(times.maxItem);
           };
           
-          i = times.minItem;
-          if (times[i] <= maxtime, {
-            current_parallel = index = i;
+          i = times.difference(in_use).minItem;
+          if (times[i] <= maxtimes.last, {
+            in_use.add(i);
           },{
-            (this.class + "dropped note" + line).postln;
-            ^nil;
+            (this.class.name + "dropped note" + line).postln;
+            break_inner.value;
           });
-        };
-
-        if (indent == 2) {
+        
+        
+        },{
           // Two indents is piling on more notes linearly
           // onto one parallized slot, so just use the
           // last one
-          index = current_parallel;
-        };
-      
+        
+        
+          // Handle de-indent
+          if (indent < lastindent) {
+            maxtimes.pop;
+            in_use.pop;
+          };
+        
+        });
+        
         //// Good, got it figured out. Now insert.
 
-        // Insert pre-pause if necessary
-        if (index == 1) {
-          // Parallel, so relative to max time when parallel started
-          if (times[index] < maxtime) {
-            sounds[index].write(FloatArray.newFrom([maxtime-times[index]]));
-            times[index] = maxtime;
-          }
-        };
+        index = in_use.last;
+        maxtime = maxtimes.last;
 
+        // Insert pre-pause if necessary
+        // Parallel, so relative to max time when parallel started
+        // Fill up with pause
+        if (times[index] < maxtimes.last) {
+          sounds[index].write(FloatArray.newFrom([maxtime-times[index]]));
+          times[index] = maxtime;
+        };
         // Insert main line
         line = this.unformat(line);
         sounds[index].writeData(line);
         times[index] = times[index] + line[0];
       };
+      };
     });
-    }.value;
+    };
 
     sounds.do({
       arg sound;
