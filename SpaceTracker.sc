@@ -151,14 +151,14 @@ SpaceTracker {
     
     space.parse({
       arg line, indent, lastindent;
-
+        
       if (line.notNil) {
       block {
         arg break_inner;
-
+        
         if (indent % 2 == 1, {
           
-          // One indent is parallelization, so we figure out
+          // Odd indent does parallelization, so we figure out
           // which one to use
           
           var i;
@@ -178,10 +178,8 @@ SpaceTracker {
         
         
         },{
-          // Two indents is piling on more notes linearly
-          // onto one parallized slot, so just use the
-          // last one
-        
+          // Even indent is piling on more notes linearly
+          // onto one parallization, so continue with the current indent
         
           // Handle de-indent
           if (indent < lastindent) {
@@ -191,7 +189,8 @@ SpaceTracker {
         
         });
         
-        //// Good, got it figured out. Now insert.
+        //// Good, we figured out which channel to use from
+        //// indentation. Now insert the note.
 
         index = in_use.last;
         maxtime = maxtimes.last;
