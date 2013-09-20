@@ -96,7 +96,10 @@ SpaceTree {
   parse {
     arg callback;
     var file,line,indent,lastindent,change;
-    lastindent = 0;
+    if (File.exists(filename) == false) {
+			(filename + "does not exist").throw;
+		};
+		lastindent = 0;
     file=File.open(filename, "r");
     block {
       arg break;
