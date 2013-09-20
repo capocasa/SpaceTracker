@@ -111,18 +111,18 @@ SpaceTracker {
     var space, sounds, totaltimes, numChannels;
 
     if (soundfile.isNil) {
-      soundfile = [this.tmpFileName];
+      soundfile = this.tmpFileName;
     };
     
     space = treeClass.new(treefile);
-
+    
     space.parse({
       arg line;
       line = this.unformat(line);
       numChannels = line.size;
       if (numChannels >1, \break, nil); // break only if not a pause
     });
-
+    
     sounds = Array.new(polyphony);
     polyphony.do({
       arg i;
@@ -141,74 +141,73 @@ SpaceTracker {
     });
 
     block {
-    arg break_outer;
-    var times, index, maxtime, maxtimes, in_use;
-    
-    times = Array.fill(polyphony, 0);
-    maxtime = 0;
-    in_use = List.new.add(0);
-    maxtimes = List.new.add(0);
-    
-    space.parse({
-      arg line, indent, lastindent;
-        
-      if (line.notNil) {
-      block {
-        arg break_inner;
-        
-        if (indent % 2 == 1, {
+      arg break_outer;
+      var times, index, maxtime, maxtimes, in_use;
+      
+      times = Array.fill(polyphony, 0);
+      maxtime = 0;
+      in_use = List.new.add(0);
+      maxtimes = List.new.add(0);
+      
+      space.parse({
+        arg line, indent, lastindent;
+        if (line.notNil) {
+        block {
+          arg break_inner;
           
-          // Odd indent does parallelization, so we figure out
-          // which one to use
+          if (indent % 2 == 1, {
+            
+            // Odd indent does parallelization, so we figure out
+            // which one to use
+            
+            var i;
           
-          var i;
-        
-          // fresh indent, note latest position
-          if (lastindent < indent) {
-            maxtimes.add(times.maxItem);
-          };
+            // fresh indent, note latest position
+            if (lastindent < indent) {
+              maxtimes.add(times.maxItem);
+            };
+            
+            i = times.difference(in_use).minItem;
+            if (times[i] <= maxtimes.last, {
+              in_use.add(i);
+            },{
+              (this.class.name + "dropped note" + line).postln;
+              break_inner.value;
+            });
           
-          i = times.difference(in_use).minItem;
-          if (times[i] <= maxtimes.last, {
-            in_use.add(i);
+          
           },{
-            (this.class.name + "dropped note" + line).postln;
-            break_inner.value;
+            // Even indent is piling on more notes linearly
+            // onto one parallization, so continue with the current indent
+          
+            // Handle de-indent
+            if (indent < lastindent) {
+              maxtimes.pop;
+              in_use.pop;
+            };
+          
           });
-        
-        
-        },{
-          // Even indent is piling on more notes linearly
-          // onto one parallization, so continue with the current indent
-        
-          // Handle de-indent
-          if (indent < lastindent) {
-            maxtimes.pop;
-            in_use.pop;
+          
+          //// Good, we figured out which channel to use from
+          //// indentation. Now insert the note.
+
+          index = in_use.last;
+          maxtime = maxtimes.last;
+
+          // Insert pre-pause if necessary
+          // Parallel, so relative to max time when parallel started
+          // Fill up with pause
+          if (times[index] < maxtimes.last) {
+            sounds[index].write(FloatArray.newFrom([maxtime-times[index]]));
+            times[index] = maxtime;
           };
-        
-        });
-        
-        //// Good, we figured out which channel to use from
-        //// indentation. Now insert the note.
-
-        index = in_use.last;
-        maxtime = maxtimes.last;
-
-        // Insert pre-pause if necessary
-        // Parallel, so relative to max time when parallel started
-        // Fill up with pause
-        if (times[index] < maxtimes.last) {
-          sounds[index].write(FloatArray.newFrom([maxtime-times[index]]));
-          times[index] = maxtime;
+          // Insert main line
+          line = this.unformat(line);
+          sounds[index].writeData(line);
+          times[index] = times[index] + line[0];
         };
-        // Insert main line
-        line = this.unformat(line);
-        sounds[index].writeData(line);
-        times[index] = times[index] + line[0];
-      };
-      };
-    });
+        };
+      });
     };
 
     sounds.do({
@@ -255,15 +254,12 @@ SpaceTracker {
   
   unformat {
     arg line;
-
     var
       time,
       divisor,
       note
     ;
-
     // Detect note format
-
     time = line[0];
     divisor = line[1];
     
@@ -284,7 +280,12 @@ SpaceTracker {
 
     line[0] = time;
     line[1] = note;
-    
+
+    for(2, line.size-1, {
+      arg i;
+      line[i] = line[i].asFloat;
+    });
+
     ^FloatArray.newFrom(line);
   }
   
