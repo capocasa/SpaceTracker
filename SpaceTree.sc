@@ -97,8 +97,8 @@ SpaceTree {
     arg callback;
     var file,line,indent,lastindent,change;
     if (File.exists(filename) == false) {
-			(filename + "does not exist").throw;
-		};
+      (filename + "does not exist").throw;
+    };
 		lastindent = 0;
     file=File.open(filename, "r");
     block {
