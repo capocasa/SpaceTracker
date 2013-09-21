@@ -29,7 +29,8 @@ SpaceTracker {
     <>sampleFormat="float",
     <>polyphony = 8,
     <>namingMapper,
-    <>shortestnote = 128 // The shortest note to look for is a 128th note
+    <>defaultDivisor = 4,
+    <>zeroNote = 0 // avoid magic number
   ;
   classvar
     <>namingClasses
@@ -52,6 +53,12 @@ SpaceTracker {
   }
 
   init {
+    if (treefile.isNil) {
+      ("treefile is required").throw;
+    };
+    if (false == File.exists(treefile)) {
+      (treefile + "does not exist").throw;
+    };
     server=Server.default;
     naming = treefile.splitext[1].asSymbol;
     namingMapper = namingClasses.at(naming).new;
@@ -231,23 +238,14 @@ SpaceTracker {
     var time, divisor, note;
   
     line = Array.newFrom(line);
-
-    time = line[0];
-    note = line[1];
     
+    // For note length, just make everything specified
+    // in quarter notes. This could be made more powerful later.
+    line = line.insert(1, defaultDivisor);
+
+    note = line[2];
     note = this.formatNote(note);
-    line[1] = note;
-
-    time = this.formatTime(time);
-    
-    if (time.isArray) {
-      divisor = time[1];
-      time = time[0];
-      line[0] = 2 ** divisor;
-      line.addFirst(nil);
-    };
-
-    line[0] = time;
+    line[2] = note;
 
     ^line;
   }
@@ -259,52 +257,44 @@ SpaceTracker {
       divisor,
       note
     ;
+    
+    if (false == line.isArray) {
+      line = [line];
+    };
+
+    if (line.size < 2) {
+      line=line.add(defaultDivisor);
+    };
+    
+    if (line.size < 3) {
+      line=line.add(zeroNote);
+    };
+
     // Detect note format
     time = line[0];
     divisor = line[1];
     
-    if (time.asInteger == time && divisor.asInteger == divisor, {
-      // First two numbers are integers - assume "note" style line
-      // So calculate time float from first two numbers, and shorten
-      // the line
-      time = this.unformatTime(time, divisor);
-      note = line[2];
+    // First two numbers are integers - assume "note" style line
+    // So calculate time float from first two numbers, and shorten
+    // the line
+    time = this.unformatTime(time, divisor);
+    note = line[2];
 
-      line.removeAt(0);
-    },{
-      time = time.asFloat;
-      note = line[1];
-    });
+    line.removeAt(1);
     
     note = this.unformatNote(note);
 
     line[0] = time;
     line[1] = note;
 
-    for(2, line.size-1, {
+    for(0, line.size-1, {
       arg i;
-      line[i] = line[i].asFloat;
+      line[i] = (line[i] ? 0) .asFloat;
     });
 
     ^FloatArray.newFrom(line);
   }
   
-  // If the time is a float that is a fraction of 2, transform
-  // to note format (two integers), otherwise return the fraction
-  formatTime {
-    arg time;
-    var t = time, d = 1;
-    while ( {t != t.asInteger }) {
-      d = d * 2;
-      if (d > shortestnote) {
-        ^time;
-      };
-      t = t * 2;
-    };
-  
-    ^[t, d]
-  }
-
   unformatTime {
     arg time, divisor;
     ^time / divisor;
