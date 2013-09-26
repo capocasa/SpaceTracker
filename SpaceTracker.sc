@@ -148,75 +148,68 @@ SpaceTracker {
     });
 
     block {
-      arg break_outer;
-      var times, index, maxtime, maxtimes, in_use;
+      arg break;
+      var index, time, times, indentTime, indentTimes;
       
+      index = 0;
+      time = 0;
+      indentTime = 0;
       times = Array.fill(polyphony, 0);
-      in_use = List.new.add(0);
-      maxtimes = List.new.add(0);
+      indentTimes = List.new.add(0);
       
       space.parse({
-        arg line, indent, lastindent;
-        if (line.notNil) {
+        arg line, indent, lastIndent;
         block {
-          arg break_inner;
-          
+          arg continue;
+          if (line.isNil) {
+            continue.value;
+          };
+
           if (indent % 2 == 1, {
             
             // Odd indent does parallelization, so we figure out
-            // which one to use
+            // which channel to use
             
-            var i;
-            
-            // fresh indent, note latest position
-            
-            // NOTE: this block is fishy, especially the difference thing below
-            // mixing indices and values
-            
-            if (indent > lastindent) {
-              maxtimes.add(times.maxItem);
+            // Keep track of indentTime by indent level
+            // No note of a higher indent can come sooner than this
+            if (indent > lastIndent) {
+              var num;
+              indentTime = times.maxItem;
+              ((indent - lastIndent) * 0.5).round.asInteger.do({
+                indentTimes.add(indentTime);
+              });
             };
             
-            i = times.difference(in_use).minItem;
-            if (times[i] <= maxtimes.last, {
-              in_use.add(i);
-            },{
+            if (indent < lastIndent) {
+              ((lastIndent - indent) * 0.5).round.asInteger.do({
+                indentTimes.pop;
+              });
+              indentTime = indentTimes.last;
+            };
+            
+            index = times.minIndex;
+            time = times[index];
+            if (time > indentTime, {
               (this.class.name + "dropped note" + line).postln;
-              break_inner.value;
+              continue.value;
             });
-          
-          
-          },{
-            // Even indent is piling on more notes linearly
-            // onto one parallization, so continue with the current indent
-          
-            // Handle de-indent
-            if (indent < lastindent) {
-              maxtimes.pop;
-              in_use.pop;
-            };
-          
           });
           
-          //// Good, we figured out which channel to use from
+          //// Good, we figured out which channel we can use from
           //// indentation. Now insert the note.
 
-          index = in_use.last;
-          maxtime = maxtimes.last;
-[in_use,maxtimes].postln;
           // Insert pre-pause if necessary
-          // Parallel, so relative to max time when parallel started
+          // Parallel, so relative to indentTime when parallel started
           // Fill up with pause
-          if (times[index] < maxtime) {
-            sounds[index].write(FloatArray.newFrom([maxtime-times[index]]));
-            times[index] = maxtime;
+          if (times[index] < indentTime) {
+            sounds[index].write(FloatArray.newFrom([indentTime-times[index]]));
+            times[index] = indentTime;
           };
           // Insert main line
           line = this.unformat(line);
           sounds[index].writeData(line);
           times[index] = times[index] + line[0];
-        };
-        };
+        }; 
       });
     };
 
