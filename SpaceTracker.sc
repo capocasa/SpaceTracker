@@ -152,7 +152,6 @@ SpaceTracker {
       var times, index, maxtime, maxtimes, in_use;
       
       times = Array.fill(polyphony, 0);
-      maxtime = 0;
       in_use = List.new.add(0);
       maxtimes = List.new.add(0);
       
@@ -168,9 +167,13 @@ SpaceTracker {
             // which one to use
             
             var i;
-          
+            
             // fresh indent, note latest position
-            if (lastindent < indent) {
+            
+            // NOTE: this block is fishy, especially the difference thing below
+            // mixing indices and values
+            
+            if (indent > lastindent) {
               maxtimes.add(times.maxItem);
             };
             
@@ -200,11 +203,11 @@ SpaceTracker {
 
           index = in_use.last;
           maxtime = maxtimes.last;
-
+[in_use,maxtimes].postln;
           // Insert pre-pause if necessary
           // Parallel, so relative to max time when parallel started
           // Fill up with pause
-          if (times[index] < maxtimes.last) {
+          if (times[index] < maxtime) {
             sounds[index].write(FloatArray.newFrom([maxtime-times[index]]));
             times[index] = maxtime;
           };
