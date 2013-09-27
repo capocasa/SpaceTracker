@@ -162,7 +162,7 @@ SpaceTracker {
         block {
           arg continue;
           if (line.isNil) {
-            continue.value;
+            continue.();
           };
 
           if (indent % 2 == 1, {
@@ -186,12 +186,11 @@ SpaceTracker {
               });
               indentTime = indentTimes.last;
             };
-            
             index = times.minIndex;
             time = times[index];
             if (time > indentTime, {
               (this.class.name + "dropped note" + line).postln;
-              continue.value;
+              continue.();
             });
           });
           
@@ -202,13 +201,15 @@ SpaceTracker {
           // Parallel, so relative to indentTime when parallel started
           // Fill up with pause
           if (times[index] < indentTime) {
-            sounds[index].write(FloatArray.newFrom([indentTime-times[index]]));
+            sounds[index].writeData(FloatArray.newFrom([indentTime-times[index]]));
             times[index] = indentTime;
           };
           // Insert main line
           line = this.unformat(line);
           sounds[index].writeData(line);
           times[index] = times[index] + line[0];
+          
+          [index,line,times].postln;
         }; 
       });
     };
