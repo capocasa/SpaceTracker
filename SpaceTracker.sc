@@ -115,7 +115,7 @@ SpaceTracker {
 
   toSoundFile {
     arg soundfile, force = false;
-    var space, sounds, totaltimes, numChannels;
+    var space, sounds, totaltimes, numChannels, soundfiles;
 
     if (soundfile.isNil) {
       soundfile = this.tmpFileName;
@@ -131,6 +131,7 @@ SpaceTracker {
     });
     
     sounds = Array.new(polyphony);
+    soundfiles = Array.new(polyphony);
     polyphony.do({
       arg i;
       var sound, file;
@@ -138,13 +139,14 @@ SpaceTracker {
         .headerFormat_(headerFormat)
         .sampleFormat_(sampleFormat)
         .numChannels_(numChannels);
-      file = soundfile++$.++i;
+      file = soundfile++if(i > 0, $.++i, "");
       if(File.exists(file) && (force == false)) { (file + "exists").throw };
       File.delete(file);
       if (false == sound.openWrite(file)) {
         ("Could not open"+file+"for writing").throw;
       };
       sounds.add(sound);
+      soundfiles.add(file);
     });
 
     block {
@@ -209,6 +211,7 @@ SpaceTracker {
           sounds[index].writeData(line);
           times[index] = times[index] + line[0];
           
+          // Must keep this debug line!
           [index,line,times].postln;
         }; 
       });
@@ -218,14 +221,21 @@ SpaceTracker {
       arg sound;
       sound.close;
     });
-    ^soundfile;
+    ^if(polyphony==1, soundfile, soundfiles);
   }
 
   toBuffer {
-    arg action;
+    arg action, force = false;
     var soundfile;
-    soundfile = this.toSoundFile;
-    ^Buffer.read(server, soundfile, 0, -1, action);
+    soundfile = this.toSoundFile(nil, true);
+    if (Array == soundfile.class, {  
+      ^soundfile.collect({
+        arg file;
+        ^Buffer.read(server, file, 0, -1, action);
+      });
+    }, {
+      ^Buffer.read(server, soundfile, 0, -1, action);
+    });
   }
 
   /* These are not part of the public interace and might change */
