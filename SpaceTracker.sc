@@ -56,9 +56,6 @@ SpaceTracker {
     if (treefile.isNil) {
       ("treefile is required").throw;
     };
-    if (false == File.exists(treefile)) {
-      (treefile + "does not exist").throw;
-    };
     server=Server.default;
     naming = treefile.splitext[1].asSymbol;
     namingMapper = namingClasses.at(naming).new;
@@ -71,16 +68,35 @@ SpaceTracker {
 
   fromSoundFile {
     arg soundfile, force = false;
-    var sound, tree, line, numChannels;
+    var sounds, tree, line;
     
     if(File.exists(treefile) && (force == false)) { (treefile + "exists").throw };
     File.delete(treefile);
+
+    if (false == File.exists(soundfile)) {
+      (treefile + "does not exist").throw;
+    };
     
-    sound = soundClass.new;
-    sound.openRead(soundfile);
+    sounds = List.new;
+
+    block {
+      var i, sound, file;
+      i = 1;
+      file = soundfile;
+      while ({
+        File.exists(file);
+      }, {
+        sound = soundClass.openRead(file);
+        sounds.add(sound);
+        i = i + 1;
+        file = soundfile ++ $. ++ i;
+      });
+    };
+
+    sounds.postln;
+    ^nil;
     
-    numChannels = sound.numChannels;
-    
+    /*
     tree = SpaceTree.new(treefile);
 
     while ({
@@ -94,6 +110,7 @@ SpaceTracker {
     });
 
     sound.close;
+    */
   }
 
   *fromBuffer {
@@ -119,6 +136,10 @@ SpaceTracker {
 
     if (soundfile.isNil) {
       soundfile = this.tmpFileName;
+    };
+    
+    if (false == File.exists(treefile)) {
+      (treefile + "does not exist").throw;
     };
     
     space = treeClass.new(treefile);
