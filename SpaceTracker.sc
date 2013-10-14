@@ -131,21 +131,6 @@ SpaceTracker {
       });
     };
 
-    /*
-    tree = SpaceTree.new(treefile);
-
-    while ({
-      line = FloatArray.newClear(numChannels);
-      sound.readData(line);
-      line.size > 0;
-    }, {
-      line = this.format(line);
-      //tree.write(line, [1, 1,namingMapper.length]);
-      tree.write(line);
-    });
-
-    sound.close;
-    */
   }
 
   *fromBuffer {
