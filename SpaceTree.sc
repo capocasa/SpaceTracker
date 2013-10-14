@@ -137,13 +137,9 @@ SpaceTree {
   }
 
   write {
-    arg line, lengths = nil;
+    arg line, indent;
     var file;
-    lengths.do({
-      arg length, i;
-      line[i] = line[i].asString.padLeft(length);
-    });
-    line = line.join(" ");
+    line = String.fill(indent, $ ) ++ line.join(" ");
     file = File.open(filename, "a");
     file.write(line++"\n");
     file.close;

@@ -68,16 +68,18 @@ SpaceTracker {
 
   fromSoundFile {
     arg soundfile, force = false;
-    var sounds, tree, line;
+    var sounds, tree, line, numChannels;
     
     if(File.exists(treefile) && (force == false)) { (treefile + "exists").throw };
     File.delete(treefile);
 
     if (false == File.exists(soundfile)) {
-      (treefile + "does not exist").throw;
+      (soundfile + "does not exist").throw;
     };
     
     sounds = List.new;
+
+    tree = SpaceTree.new(treefile);
 
     block {
       var i, sound, file;
@@ -88,14 +90,47 @@ SpaceTracker {
       }, {
         sound = soundClass.openRead(file);
         sounds.add(sound);
-        i = i + 1;
         file = soundfile ++ $. ++ i;
+        i = i + 1;
       });
     };
 
-    sounds.postln;
-    ^nil;
+    polyphony = sounds.size;
     
+    numChannels = sounds[0].numChannels;
+
+    block {
+      var index, times, lines;
+
+      index = 0;
+      times = Array.fill(polyphony, 0);
+
+      while ({sounds.size > 0}, {
+        var sound, time, line;
+
+        index = times.minIndex;
+        sound = sounds[index];
+
+        line = FloatArray.newClear(numChannels);
+        sound.readData(line);
+        //[index,sound.path,line].postln;
+      
+        if (line.size > 0, {
+          time = line[0];
+        
+          times[index] = times[index] + time;
+          
+          line = this.format(line);
+          tree.write(line);
+        },{
+          sound.close();
+          sounds.removeAt(index);
+          times.removeAt(index);
+        });
+        
+      });
+    };
+
     /*
     tree = SpaceTree.new(treefile);
 
@@ -233,8 +268,8 @@ SpaceTracker {
           times[index] = times[index] + line[0];
           
           // Must keep this debug line!
-          [index,line,times].postln;
-        }; 
+          // [index,line,times].postln;
+        };
       });
     };
 
@@ -266,14 +301,25 @@ SpaceTracker {
     var time, divisor, note;
   
     line = Array.newFrom(line);
+   
+    time = line[0];
+    note = line[1];
     
     // For note length, just make everything specified
     // in quarter notes. This could be made more powerful later.
-    line = line.insert(1, defaultDivisor);
-
-    note = line[2];
+    divisor = if(time == 0, 0, defaultDivisor);
+    
     note = this.formatNote(note);
-    line[2] = note;
+    time = time * divisor;
+
+    line[0] = time;
+    line[1] = note;
+    
+    line = line.insert(1, divisor);
+
+    if (line.occurrencesOf(0) == line.size) {
+      line = [0]; // Syntactic sugar: null line is a single zero
+    };
 
     ^line;
   }
@@ -330,6 +376,7 @@ SpaceTracker {
 
   formatNote {
     arg note;
+    note.postln;
     ^namingMapper.string(note);
   }
 
