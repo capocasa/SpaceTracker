@@ -376,7 +376,6 @@ SpaceTracker {
 
   formatNote {
     arg note;
-    note.postln;
     ^namingMapper.string(note);
   }
 
