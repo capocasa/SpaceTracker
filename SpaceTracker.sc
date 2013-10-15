@@ -109,6 +109,8 @@ SpaceTracker {
         var sound, time, line;
 
         index = times.minIndex;
+        
+        
         sound = sounds[index];
 
         line = FloatArray.newClear(numChannels);
@@ -244,7 +246,7 @@ SpaceTracker {
           // Parallel, so relative to indentTime when parallel started
           // Fill up with pause
           if (times[index] < indentTime) {
-            sounds[index].writeData(FloatArray.newFrom([indentTime-times[index]]));
+            sounds[index].writeData(FloatArray.fill(numChannels, 0).put(0, indentTime-times[index]));
             times[index] = indentTime;
           };
           // Insert main line
