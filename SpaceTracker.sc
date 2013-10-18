@@ -104,19 +104,16 @@ SpaceTracker {
 
       index = 0;
       times = Array.fill(polyphony, 0);
+      lines = Array.fill(polyphony, []);
 
       while ({sounds.size > 0}, {
-        var sound, time, line;
-
+        var time, line;
+          
         index = times.minIndex;
         
-        
-        sound = sounds[index];
-
         line = FloatArray.newClear(numChannels);
-        sound.readData(line);
-        //[index,sound.path,line].postln;
-      
+        sounds[index].readData(line);
+    
         if (line.size > 0, {
           time = line[0];
         
@@ -124,12 +121,12 @@ SpaceTracker {
           
           line = this.format(line);
           tree.write(line);
-        },{
-          sound.close();
-          sounds.removeAt(index);
-          times.removeAt(index);
-        });
         
+        },{
+          times.removeAt(index);
+          sounds[index].close();
+          sounds.removeAt(index);
+        });
       });
     };
 
