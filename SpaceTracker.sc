@@ -119,14 +119,13 @@ SpaceTracker {
       // Loop until all lines from all sound files have been consumed
       while ({sounds.size > 0}, {
         block {
-          arg skip;
           var line;
           
           // Fill up a buffer of one line per polyphonic channel
           // (used to locate note ends and null notes)
           lines.do({
-            arg line, i
-            while (line.isNil) {
+            arg line, i;
+            while ({line.isNil},{
               line = FloatArray.newClear(numChannels);
               sounds[i].readData(line);
               lines[i] = line;
@@ -136,23 +135,11 @@ SpaceTracker {
                 times[i] = times[i] + line[0];
                 line = nil;
               };
-            };
+            });
           });
-
-          if (line.size > 0, {
-
-            time = line[0];
-
-            times[index] = indextime;
-            
-            if (line[1] == 0) {
-              nullnote = true;
-            };
-          };
-        }
-      
-      // Remove null notes
-      };
+        };
+      });
+    }
 
 
 
