@@ -66,9 +66,19 @@ SpaceTracker {
     ^this.new(treefile).fromSoundFile(soundfile, force);
   }
 
+  // Null note condition.
+  // Right now, this is a note with a note value of 0.
+  // It could be encoded differently if this collides
+  // with something important.
+  // My guess is it will work fine.
+  isNullNote {
+    arg line;
+    ^ line[1] == 0;
+  }
+
   fromSoundFile {
     arg soundfile, force = false;
-    var sounds, tree, line, numChannels;
+    var sounds, tree, numChannels;
     
     if(File.exists(treefile) && (force == false)) { (treefile + "exists").throw };
     File.delete(treefile);
@@ -81,6 +91,7 @@ SpaceTracker {
 
     tree = SpaceTree.new(treefile);
 
+    // Create soundfile objects from data files
     block {
       var i, sound, file;
       i = 1;
@@ -94,11 +105,58 @@ SpaceTracker {
         i = i + 1;
       });
     };
-
     polyphony = sounds.size;
-    
     numChannels = sounds[0].numChannels;
 
+    // Let's get started!
+    block {
+      var lines,times;
+
+      // Initialize
+      lines = Array.newClear(polyphony);
+      times = Array.fill(polyphony, 0);
+
+      // Loop until all lines from all sound files have been consumed
+      while ({sounds.size > 0}, {
+        block {
+          arg skip;
+          var line;
+          
+          // Fill up a buffer of one line per polyphonic channel
+          // (used to locate note ends and null notes)
+          lines.do({
+            arg line, i
+            while (line.isNil) {
+              line = FloatArray.newClear(numChannels);
+              sounds[i].readData(line);
+              lines[i] = line;
+              
+              // "Consume" null notes immediately, add their time and drop them
+              if (this.isNullNote(line)) {
+                times[i] = times[i] + line[0];
+                line = nil;
+              };
+            };
+          });
+
+          if (line.size > 0, {
+
+            time = line[0];
+
+            times[index] = indextime;
+            
+            if (line[1] == 0) {
+              nullnote = true;
+            };
+          };
+        }
+      
+      // Remove null notes
+      };
+
+
+
+    /*
     block {
       var index, times, lines, indent, mintime, lastmintime;
 
@@ -109,33 +167,6 @@ SpaceTracker {
       times = Array.fill(polyphony, 0);
       lines = List.new; 
 
-      while ({sounds.size > 0}, {
-        var time, line, nullnote;
-
-        nullnote = false;
-          
-        index = times.minIndex;
-
-        odd = 1 == index % 2;
-        
-        mintime = times.minItem;
-
-
-
-
-
-        line = FloatArray.newClear(numChannels);
-        sounds[index].readData(line);
-
-        if (line.size > 0, {
-
-          time = line[0];
-
-          times[index] = indextime;
-          
-          if (line[1] == 0) {
-            nullnote = true;
-          };
 
 
           if (false == nullnote) {
@@ -151,7 +182,10 @@ SpaceTracker {
         });
       });
     };
-
+    
+    */
+    
+  
   }
 
   *fromBuffer {
