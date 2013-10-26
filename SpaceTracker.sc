@@ -100,30 +100,52 @@ SpaceTracker {
     numChannels = sounds[0].numChannels;
 
     block {
-      var index, times, lines;
+      var index, times, lines, indent, mintime, lastmintime;
 
       index = 0;
+      indent = 0;
+      mintime = 0;
+      lastmintime = 0;
       times = Array.fill(polyphony, 0);
-      lines = Array.fill(polyphony, []);
+      lines = List.new; 
 
       while ({sounds.size > 0}, {
-        var time, line;
+        var time, line, nullnote;
+
+        nullnote = false;
           
         index = times.minIndex;
+
+        odd = 1 == index % 2;
         
+        mintime = times.minItem;
+
+
+
+
+
         line = FloatArray.newClear(numChannels);
         sounds[index].readData(line);
-    
+
         if (line.size > 0, {
+
           time = line[0];
-        
-          times[index] = times[index] + time;
+
+          times[index] = indextime;
           
-          line = this.format(line);
-          tree.write(line);
-        
+          if (line[1] == 0) {
+            nullnote = true;
+          };
+
+
+          if (false == nullnote) {
+            line = this.format(line);
+            tree.write(line, indent);
+            lines[index] = nil;
+          };
         },{
           times.removeAt(index);
+          lines.removeAt(index);
           sounds[index].close();
           sounds.removeAt(index);
         });

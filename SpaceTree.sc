@@ -137,7 +137,7 @@ SpaceTree {
   }
 
   write {
-    arg line, indent;
+    arg line, indent = 0;
     var file;
     line = String.fill(indent, $ ) ++ line.join(" ");
     file = File.open(filename, "a");
