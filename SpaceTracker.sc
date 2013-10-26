@@ -66,16 +66,6 @@ SpaceTracker {
     ^this.new(treefile).fromSoundFile(soundfile, force);
   }
 
-  // Null note condition.
-  // Right now, this is a note with a note value of 0.
-  // It could be encoded differently if this collides
-  // with something important.
-  // My guess is it will work fine.
-  isNullNote {
-    arg line;
-    ^ line[1] == 0;
-  }
-
   fromSoundFile {
     arg soundfile, force = false;
     var sounds, tree, numChannels;
@@ -117,28 +107,59 @@ SpaceTracker {
       times = Array.fill(polyphony, 0);
 
       // Loop until all lines from all sound files have been consumed
-      while ({sounds.size > 0}, {
-        block {
-          var line;
+      block {
+        arg break;
+        while (true, {
           
           // Fill up a buffer of one line per polyphonic channel
           // (used to locate note ends and null notes)
-          lines.do({
-            arg line, i;
+
+          // as opposed to lines.size.do or lines.reverseDo, this
+          // allows removeAt with correct indices
+          lines.size.reverseDo({
+            arg i;
+            var line;
+            1.postln;
+            line = lines[i];
+
+            // Make sure this element of the lines buffer is full, not nil
+            // decrease buffer size if sound has exhausted
+
+            // Line can be nil, when:
+            // - just initialized
+            // - explicitly set on null note
+            // - consumed and written to tree file
             while ({line.isNil},{
               line = FloatArray.newClear(numChannels);
               sounds[i].readData(line);
-              lines[i] = line;
               
-              // "Consume" null notes immediately, add their time and drop them
-              if (this.isNullNote(line)) {
-                times[i] = times[i] + line[0];
-                line = nil;
-              };
+              if (line.size > 1, {
+                if (line[1] == 0, {
+                  // Null note: Consume immediately
+                  times.atInc(i, line.at(0));
+                  line = nil;
+                },{
+                  // Write to buffer
+                  lines.put(i, line);
+                });
+              },{
+                // Purge depleted
+                sounds.removeAt(i);
+                lines.removeAt(i);
+              });
             });
+          
           });
-        };
-      });
+          
+          if (lines.size == 0) {
+            break.();
+          };
+
+          // consume
+          lines.postln;
+          lines[0] = nil;
+        });
+      };
     }
 
 
