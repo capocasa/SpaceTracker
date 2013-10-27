@@ -326,12 +326,14 @@ SpaceTracker {
       
       space.parse({
         arg line, indent, lastIndent;
+
+        // [indent, lastIndent,((lastIndent - indent).abs * 0.5).round,indentTimes].postln;
+        
         block {
           arg continue;
           if (line.isNil) {
             continue.();
           };
-
           if (indent % 2 == 1, {
             
             // Odd indent does parallelization, so we figure out
@@ -347,18 +349,21 @@ SpaceTracker {
               });
             };
             
-            if (indent < lastIndent) {
-              ((lastIndent - indent) * 0.5).round.asInteger.do({
-                indentTimes.pop;
-              });
-              indentTime = indentTimes.last;
-            };
             index = times.minIndex;
             time = times[index];
             if (time > indentTime, {
               (this.class.name + "dropped note" + line).postln;
               continue.();
             });
+          });
+
+          if (indent % 2 == 0, {
+            if (indent < lastIndent) {
+              ((lastIndent - indent) * 0.5).round.asInteger.do({
+                indentTimes.pop;
+              });
+              indentTime = indentTimes.last;
+            };
           });
           
           //// Good, we figured out which channel we can use from
