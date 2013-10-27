@@ -81,7 +81,7 @@ SpaceTracker {
 
     tree = SpaceTree.new(treefile);
 
-    // Create soundfile objects from data files
+    // Create soundfile objects from sound files
     block {
       var i, sound, file;
       i = 1;
@@ -115,6 +115,8 @@ SpaceTracker {
         while ({true}, {
           var line;
          
+          pauses.do({arg p; p.clear; });
+
           // Fill up a buffer of one line per polyphonic channel
           // (used to locate note ends and null notes)
 
@@ -133,7 +135,6 @@ SpaceTracker {
             // - consumed and made note of pause
             // - consumed and written to tree file
             while ({ line.isNil }) {
-
               line = FloatArray.newClear(numChannels);
               sounds[i].readData(line);
               
