@@ -100,17 +100,21 @@ SpaceTracker {
 
     // Let's get started!
     block {
-      var lines,times;
+      var lines,begins,ends,pauses,overlap,index;
 
       // Initialize
       lines = Array.newClear(polyphony);
-      times = Array.fill(polyphony, 0);
+      begins = Array.fill(polyphony, 0);
+      ends = Array.fill(polyphony, 0);
+      pauses = Array.fill(polyphony, { List[] });
+      overlap = nil;
 
       // Loop until all lines from all sound files have been consumed
       block {
         arg break;
-        while (true, {
-          
+        while ({true}, {
+          var line;
+         
           // Fill up a buffer of one line per polyphonic channel
           // (used to locate note ends and null notes)
 
@@ -119,7 +123,6 @@ SpaceTracker {
           lines.size.reverseDo({
             arg i;
             var line;
-            1.postln;
             line = lines[i];
 
             // Make sure this element of the lines buffer is full, not nil
@@ -127,37 +130,72 @@ SpaceTracker {
 
             // Line can be nil, when:
             // - just initialized
-            // - explicitly set on null note
+            // - consumed and made note of pause
             // - consumed and written to tree file
-            while ({line.isNil},{
+            while ({ line.isNil }) {
+
               line = FloatArray.newClear(numChannels);
               sounds[i].readData(line);
               
-              if (line.size > 1, {
+              if (line.size == numChannels, { 
+                // If it's a pause, consume it, but save for possible later writing
+                // This should be the only part with unpredictable memory, but rare/little data
                 if (line[1] == 0, {
-                  // Null note: Consume immediately
-                  times.atInc(i, line.at(0));
+                  var pause;
+                  pause = line[0];
+                  pauses[i].add(pause);
+                  ends.atInc(i, pause);
+                  [\pauseAdd, i, line[0]].postln;
                   line = nil;
                 },{
-                  // Write to buffer
                   lines.put(i, line);
+                  ends.atInc(i, line[0]);
                 });
               },{
                 // Purge depleted
                 sounds.removeAt(i);
                 lines.removeAt(i);
+                pauses.removeAt(i);
+                begins.removeAt(i);
+                ends.removeAt(i);
               });
-            });
+            };
           
           });
           
+          // Termination when all soundfiles depleted and purged
           if (lines.size == 0) {
             break.();
           };
+          [\begins, begins, \ends, ends].postln;
+          index = begins.minIndex;
+          line = lines[index];
+
+          // if () overlap =
+
+          if (overlap.isNil, {
+            
+            // Write pauses
+            pauses.do({
+              arg pauses, i;
+              pauses.do({
+                arg pause;
+                if (i == index) {
+                  var line;
+                  line = FloatArray[pause, 0];
+                  [\pauseConsume, index, line].postln;
+                };
+                begins.atInc(index, pause);
+              });
+            });
+          },{
+
+          });
 
           // consume
-          lines.postln;
-          lines[0] = nil;
+          [\lineConsume, index, line].postln;
+          begins.atInc(index, line[0]);
+          lines[index] = nil; 
         });
       };
     }
@@ -165,6 +203,29 @@ SpaceTracker {
 
 
     /*
+    // First pass: Make a note how many channels are in use when
+    block {
+      var line, ends, index, marks;
+
+      ends = Array.fill(0, polyphony);
+      index = 0;
+      marks = List[0];
+      
+      while (sounds.size > 0,
+        line = FloatArray.newClear(polyphony);
+        
+        sounds[index].readData(line);
+        if (line.size > 0, {
+          ends.incAt(index, line[0]);
+        
+          begins.incAt(index, line[0]);
+
+        },{
+          sounds.removeAt(index);
+        });
+      });
+    
+    };
     block {
       var index, times, lines, indent, mintime, lastmintime;
 
