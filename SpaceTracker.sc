@@ -145,6 +145,7 @@ SpaceTracker {
                   var pause;
                   pause = line[0];
                   pauses[i].add(pause);
+                  begins.atInc(i, pause);
                   ends.atInc(i, pause);
                   [\pauseAdd, i, line[0]].postln;
                   line = nil;
@@ -186,7 +187,6 @@ SpaceTracker {
                   line = FloatArray[pause, 0];
                   [\pauseConsume, index, line].postln;
                 };
-                begins.atInc(index, pause);
               });
             });
           },{
