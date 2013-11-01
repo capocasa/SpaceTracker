@@ -173,7 +173,23 @@ SpaceTracker {
           index = begins.minIndex;
           line = lines[index];
 
-          // if () overlap =
+          // detect overlap
+          if (overlap.isNil) {
+            if (ends.size > 1) {
+              if (begins.maxItem.postln > ends.copy.sort[1].postln) {
+                // overlap detected. Lookahead to see how long it lasts.
+                "overlap detected".postln; 
+
+                sounds.do({
+                  arg i;
+                  var l, line;
+                  l = 0;
+                  line = FloatArray.new(numChannels);
+                });
+              };
+            };
+          };
+
 
           if (overlap.isNil, {
             
