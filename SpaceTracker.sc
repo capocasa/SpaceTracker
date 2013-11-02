@@ -225,61 +225,6 @@ SpaceTracker {
         });
       };
     }
-
-
-
-    /*
-    // First pass: Make a note how many channels are in use when
-    block {
-      var line, ends, index, marks;
-
-      ends = Array.fill(0, polyphony);
-      index = 0;
-      marks = List[0];
-      
-      while (sounds.size > 0,
-        line = FloatArray.newClear(polyphony);
-        
-        sounds[index].readData(line);
-        if (line.size > 0, {
-          ends.incAt(index, line[0]);
-        
-          begins.incAt(index, line[0]);
-
-        },{
-          sounds.removeAt(index);
-        });
-      });
-    
-    };
-    block {
-      var index, times, lines, indent, mintime, lastmintime;
-
-      index = 0;
-      indent = 0;
-      mintime = 0;
-      lastmintime = 0;
-      times = Array.fill(polyphony, 0);
-      lines = List.new; 
-
-
-
-          if (false == nullnote) {
-            line = this.format(line);
-            tree.write(line, indent);
-            lines[index] = nil;
-          };
-        },{
-          times.removeAt(index);
-          lines.removeAt(index);
-          sounds[index].close();
-          sounds.removeAt(index);
-        });
-      });
-    };
-    
-    */
-    
   
   }
 
