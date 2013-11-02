@@ -100,14 +100,38 @@ SpaceTracker {
 
     // Let's get started!
     block {
-      var lines,begins,beginsOrder,ends,pauses,overlap,index,index2;
+      var
+        lines,
+        begins,
+        beginsOrder,
+        ends,
+        overlap,
+        previousOverlap,
+        index,
+        index2,
+        previousIndex,
+        note,
+        forceNote,
+        notes,
+        times,
+        counts,
+        isNote,
+        drop,
+        sections
+      ;
 
       // Initialize
       lines = Array.newClear(polyphony);
       begins = Array.fill(polyphony, 0);
       ends = Array.fill(polyphony, 0);
-      pauses = Array.fill(polyphony, { List[] });
-      overlap = nil;
+      overlap = false;
+      previousOverlap = false;
+      forceNote = Array.fill(polyphony, false);
+      counts = Array.fill(polyphony, 0);
+      index = 0;
+      previousIndex = 0;
+      sections = List.new;
+      isNote = Array.fill(polyphony, false);
 
       // Loop until all lines from all sound files have been consumed
       block {
@@ -115,8 +139,6 @@ SpaceTracker {
         while ({true}, {
           var line;
          
-          pauses.do({arg p; p.clear; });
-
           // Fill up a buffer of one line per polyphonic channel
           // (used to locate note ends and null notes)
 
@@ -133,6 +155,7 @@ SpaceTracker {
             // Line can be nil, when:
             // - just initialized
             // - consumed and made note of pause
+
             // - consumed and written to tree file
             while ({ line.isNil }) {
               line = FloatArray.newClear(numChannels);
@@ -145,9 +168,9 @@ SpaceTracker {
                 // Purge depleted
                 sounds.removeAt(i);
                 lines.removeAt(i);
-                pauses.removeAt(i);
                 begins.removeAt(i);
                 ends.removeAt(i);
+                counts.removeAt(i);
               });
             };
           
@@ -157,33 +180,48 @@ SpaceTracker {
           if (lines.size == 0) {
             break.();
           };
-          [\begins, begins, \ends, ends].postln;
-          beginsOrder = begins.order;
-          index = beginsOrder[0];
-          index2 = beginsOrder[1];
-          line = lines[index];
+          
+          notes = lines.collect({arg line; line[1]});
+          times = lines.collect({arg line; line[0]});
+          isNote = notes.collect({arg note, i; note != 0 || forceNote[i]});
+          
+          drop = isNote.indexOf(false);
+          if (drop.isNil, {
+            index = ends.minIndex;
+          },{
+            index = drop;
+          });
 
-          // detect overlap
-          if (overlap.isNil) {
-            if (begins.size > 1) {
-              if (ends[index].postln > begins[index2].postln) {
-                // overlap detected. Lookahead to see how long it lasts.
-                "overlap detected".postln; 
+          if (drop.isNil, {
+            // detect overlap
+            // Overlap if second earliest end is smaller than earliest begin
+            if (begins.size > 1, {
+              index2 = begins.order[1];
+              overlap = begins[index2] < ends[index];
+              [secondEarliestBegin: begins[index2], earliestEnd: ends[index]].postln;
+            },{
+              overlap = false;
+            });
+          });
 
-                sounds.do({
-                  arg i;
-                  var l, line;
-                  l = 0;
-                  line = FloatArray.new(numChannels);
-                });
-              };
-            };
-          };
 
-          // consume
-          [\lineConsume, index, line].postln;
-          begins.atInc(index, line[0]);
-          lines[index] = nil; 
+          [
+            begins: begins,
+            ends: ends,
+            notes: notes,
+            times: times,
+            overlap: overlap,
+            previousOverlap: previousOverlap,
+            index: index,
+            drop: drop
+          ].postln;
+          
+          begins.atInc(index, times[index]);
+          counts.atInc(index, 1);
+          lines[index] = nil;
+          
+          previousOverlap = overlap;
+          previousIndex = index;
         });
       };
     }
