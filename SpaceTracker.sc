@@ -198,7 +198,7 @@ SpaceTracker {
             if (begins.size > 1, {
               index2 = begins.order[1];
               overlap = begins[index2] < ends[index];
-              [secondEarliestBegin: begins[index2], earliestEnd: ends[index]].postln;
+              //[secondEarliestBegin: begins[index2], earliestEnd: ends[index]].postln;
             },{
               overlap = false;
             });
