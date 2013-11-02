@@ -108,7 +108,6 @@ SpaceTracker {
         overlap,
         previousOverlap,
         index,
-        index2,
         previousIndex,
         note,
         forceNote,
@@ -117,7 +116,8 @@ SpaceTracker {
         counts,
         isNote,
         drop,
-        sections
+        sections,
+        latestEnd
       ;
 
       // Initialize
@@ -132,6 +132,7 @@ SpaceTracker {
       previousIndex = 0;
       sections = List.new;
       isNote = Array.fill(polyphony, false);
+      latestEnd = 0;
 
       // Loop until all lines from all sound files have been consumed
       block {
@@ -187,18 +188,17 @@ SpaceTracker {
           
           drop = isNote.indexOf(false);
           if (drop.isNil, {
-            index = ends.minIndex;
+            index = begins.minIndex;
           },{
             index = drop;
           });
 
           if (drop.isNil, {
             // detect overlap
-            // Overlap if second earliest end is smaller than earliest begin
             if (begins.size > 1, {
-              index2 = begins.order[1];
-              overlap = begins[index2] < ends[index];
-              //[secondEarliestBegin: begins[index2], earliestEnd: ends[index]].postln;
+              var index2 = begins.order[1];
+              latestEnd = latestEnd max: ends[index];
+              overlap = latestEnd > begins[index2];
             },{
               overlap = false;
             });
