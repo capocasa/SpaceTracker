@@ -100,7 +100,7 @@ SpaceTracker {
 
     // Let's get started!
     block {
-      var lines,begins,ends,pauses,overlap,index;
+      var lines,begins,beginsOrder,ends,pauses,overlap,index,index2;
 
       // Initialize
       lines = Array.newClear(polyphony);
@@ -139,20 +139,8 @@ SpaceTracker {
               sounds[i].readData(line);
               
               if (line.size == numChannels, { 
-                // If it's a pause, consume it, but save for possible later writing
-                // This should be the only part with unpredictable memory, but rare/little data
-                if (line[1] == 0, {
-                  var pause;
-                  pause = line[0];
-                  pauses[i].add(pause);
-                  begins.atInc(i, pause);
-                  ends.atInc(i, pause);
-                  [\pauseAdd, i, line[0]].postln;
-                  line = nil;
-                },{
-                  lines.put(i, line);
-                  ends.atInc(i, line[0]);
-                });
+                lines.put(i, line);
+                ends.atInc(i, line[0]);
               },{
                 // Purge depleted
                 sounds.removeAt(i);
@@ -170,13 +158,15 @@ SpaceTracker {
             break.();
           };
           [\begins, begins, \ends, ends].postln;
-          index = begins.minIndex;
+          beginsOrder = begins.order;
+          index = beginsOrder[0];
+          index2 = beginsOrder[1];
           line = lines[index];
 
           // detect overlap
           if (overlap.isNil) {
-            if (ends.size > 1) {
-              if (begins.maxItem.postln > ends.copy.sort[1].postln) {
+            if (begins.size > 1) {
+              if (ends[index].postln > begins[index2].postln) {
                 // overlap detected. Lookahead to see how long it lasts.
                 "overlap detected".postln; 
 
@@ -189,25 +179,6 @@ SpaceTracker {
               };
             };
           };
-
-
-          if (overlap.isNil, {
-            
-            // Write pauses
-            pauses.do({
-              arg pauses, i;
-              pauses.do({
-                arg pause;
-                if (i == index) {
-                  var line;
-                  line = FloatArray[pause, 0];
-                  [\pauseConsume, index, line].postln;
-                };
-              });
-            });
-          },{
-
-          });
 
           // consume
           [\lineConsume, index, line].postln;
