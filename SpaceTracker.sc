@@ -103,21 +103,24 @@ SpaceTracker {
       var
         lines,
         begins,
-        beginsOrder,
         ends,
         overlap,
         previousOverlap,
         index,
         previousIndex,
         note,
-        forceNote,
         notes,
         times,
         counts,
         isNote,
         drop,
         sections,
-        latestEnd
+        latestEnd,
+        overlapBegin,
+        latestEndsBegin,
+        latestEndsCounts,
+        overlapIndices,
+        overlapCounts
       ;
 
       // Initialize
@@ -126,13 +129,14 @@ SpaceTracker {
       ends = Array.fill(polyphony, 0);
       overlap = false;
       previousOverlap = false;
-      forceNote = Array.fill(polyphony, false);
       counts = Array.fill(polyphony, 0);
       index = 0;
       previousIndex = 0;
       sections = List.new;
       isNote = Array.fill(polyphony, false);
       latestEnd = 0;
+      overlapBegin = 0;
+      overlapIndices = Bag.new(polyphony);
 
       // Loop until all lines from all sound files have been consumed
       block {
@@ -184,7 +188,7 @@ SpaceTracker {
           
           notes = lines.collect({arg line; line[1]});
           times = lines.collect({arg line; line[0]});
-          isNote = notes.collect({arg note, i; note != 0 || forceNote[i]});
+          isNote = notes.collect({arg note, i; note != 0 });
           
           drop = isNote.indexOf(false);
           if (drop.isNil, {
@@ -197,10 +201,45 @@ SpaceTracker {
             // detect overlap
             if (begins.size > 1, {
               var index2 = begins.order[1];
-              latestEnd = latestEnd max: ends[index];
+              if (ends[index] > latestEnd) {
+                latestEnd = ends[index];
+                latestEndsBegin = begins[index];
+                latestEndsCounts = counts;
+              };
               overlap = latestEnd > begins[index2];
             },{
               overlap = false;
+            });
+          
+            // detect section change
+
+            if (overlap, {
+              if (previousOverlap, {
+              },{
+                overlapBegin = latestEndsBegin;
+                overlapCounts = latestEndsCounts;
+              });
+
+              if (overlapIndices.includes(index) == false) {
+                overlapIndices.add(index);
+              };
+
+            },{
+              if (previousOverlap, {
+              },{
+              
+                if (index != previousIndex) {
+                };
+              
+              });
+            
+              if (previousOverlap || (index != previousIndex), {
+                [
+                  overlapBegin: overlapBegin
+                ].postln;
+              });
+            
+            
             });
           });
 
@@ -214,7 +253,7 @@ SpaceTracker {
             previousOverlap: previousOverlap,
             index: index,
             drop: drop
-          ].postln;
+          ];
           
           begins.atInc(index, times[index]);
           counts.atInc(index, 1);
