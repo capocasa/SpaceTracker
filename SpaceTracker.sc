@@ -111,16 +111,12 @@ SpaceTracker {
         note,
         notes,
         times,
-        counts,
         isNote,
         drop,
         sections,
         latestEnd,
         overlapBegin,
-        latestEndsBegin,
-        latestEndsCounts,
-        overlapIndices,
-        overlapCounts
+        latestEndsBegin
       ;
 
       // Initialize
@@ -129,14 +125,12 @@ SpaceTracker {
       ends = Array.fill(polyphony, 0);
       overlap = false;
       previousOverlap = false;
-      counts = Array.fill(polyphony, 0);
       index = 0;
       previousIndex = 0;
       sections = List.new;
       isNote = Array.fill(polyphony, false);
       latestEnd = 0;
       overlapBegin = 0;
-      overlapIndices = Bag.new(polyphony);
 
       // Loop until all lines from all sound files have been consumed
       block {
@@ -175,7 +169,6 @@ SpaceTracker {
                 lines.removeAt(i);
                 begins.removeAt(i);
                 ends.removeAt(i);
-                counts.removeAt(i);
               });
             };
           
@@ -204,7 +197,6 @@ SpaceTracker {
               if (ends[index] > latestEnd) {
                 latestEnd = ends[index];
                 latestEndsBegin = begins[index];
-                latestEndsCounts = counts;
               };
               overlap = latestEnd > begins[index2];
             },{
@@ -217,12 +209,7 @@ SpaceTracker {
               if (previousOverlap, {
               },{
                 overlapBegin = latestEndsBegin;
-                overlapCounts = latestEndsCounts;
               });
-
-              if (overlapIndices.includes(index) == false) {
-                overlapIndices.add(index);
-              };
 
             },{
               if (previousOverlap, {
@@ -256,7 +243,6 @@ SpaceTracker {
           ];
           
           begins.atInc(index, times[index]);
-          counts.atInc(index, 1);
           lines[index] = nil;
           
           previousOverlap = overlap;
