@@ -68,7 +68,7 @@ SpaceTracker {
 
   fromSoundFile {
     arg soundfile, force = false;
-    var sounds, tree, numChannels;
+    var sounds, tree, numChannels,sources;
     
     if(File.exists(treefile) && (force == false)) { (treefile + "exists").throw };
     File.delete(treefile);
@@ -78,21 +78,23 @@ SpaceTracker {
     };
     
     sounds = List.new;
+    sources = List.new;
 
     tree = SpaceTree.new(treefile);
 
     // Create soundfile objects from sound files
     block {
       var i, sound, file;
-      i = 1;
+      i = 0;
       file = soundfile;
       while ({
         File.exists(file);
       }, {
         sound = soundClass.openRead(file);
         sounds.add(sound);
-        file = soundfile ++ $. ++ i;
+        sources.add(i);
         i = i + 1;
+        file = soundfile ++ $. ++ i;
       });
     };
     polyphony = sounds.size;
@@ -106,6 +108,7 @@ SpaceTracker {
         ends,
         overlap,
         previousOverlap,
+        previous2Overlap,
         index,
         previousIndex,
         note,
@@ -116,7 +119,11 @@ SpaceTracker {
         sections,
         latestEnd,
         overlapBegin,
-        latestEndsBegin
+        latestEndsBegin,
+        writes,
+        drops,
+        section,
+        sectionChange
       ;
 
       // Initialize
@@ -125,12 +132,16 @@ SpaceTracker {
       ends = Array.fill(polyphony, 0);
       overlap = false;
       previousOverlap = false;
+      previous2Overlap = false;
       index = 0;
       previousIndex = 0;
       sections = List.new;
       isNote = Array.fill(polyphony, false);
       latestEnd = 0;
       overlapBegin = 0;
+      writes = Array.fill(polyphony, 0);
+      drops = Array.fill(polyphony, 0);
+      sectionChange = false;
 
       // Loop until all lines from all sound files have been consumed
       block {
@@ -156,7 +167,7 @@ SpaceTracker {
             // - consumed and made note of pause
 
             // - consumed and written to tree file
-            while ({ line.isNil }) {
+            if ( line.isNil ) {
               line = FloatArray.newClear(numChannels);
               sounds[i].readData(line);
               
@@ -164,17 +175,16 @@ SpaceTracker {
                 lines.put(i, line);
                 ends.atInc(i, line[0]);
               },{
-                // Purge depleted
                 sounds.removeAt(i);
                 lines.removeAt(i);
                 begins.removeAt(i);
                 ends.removeAt(i);
+                sources.removeAt(i);
               });
             };
-          
           });
           
-          // Termination when all soundfiles depleted and purged
+          // Termination when all soundfiles depleted
           if (lines.size == 0) {
             break.();
           };
@@ -189,7 +199,7 @@ SpaceTracker {
           },{
             index = drop;
           });
-
+          
           if (drop.isNil, {
             // detect overlap
             if (begins.size > 1, {
@@ -203,50 +213,63 @@ SpaceTracker {
               overlap = false;
             });
           
+            if (overlap && (false == previousOverlap)) {
+              overlapBegin = latestEndsBegin;
+            };
+            
             // detect section change
-
-            if (overlap, {
-              if (previousOverlap, {
-              },{
-                overlapBegin = latestEndsBegin;
-              });
-
-            },{
-              if (previousOverlap, {
-              },{
-              
-                if (index != previousIndex) {
-                };
-              
-              });
+            if (overlap && (false == previousOverlap)) {
+              sectionChange = true;
+            };
+            if ((false == overlap) && (false == previousOverlap) && previous2Overlap) {
+              sectionChange = true;
+            };
             
-              if (previousOverlap || (index != previousIndex), {
-                [
-                  overlapBegin: overlapBegin
-                ].postln;
-              });
-            
-            
-            });
           });
-
-
+          
+          // Record action
+          if (drop.isNil,writes,drops).atInc(index);
+          
+          // Debug
           [
-            begins: begins,
-            ends: ends,
-            notes: notes,
-            times: times,
-            overlap: overlap,
-            previousOverlap: previousOverlap,
-            index: index,
-            drop: drop
-          ];
+            if(sectionChange, \sectionChange, \nosectionChange),
+            if(overlap, \overlap, \nooverlap),
+            if(previousOverlap, \previousOverlap, \nopreviousOverlap),
+            if(previous2Overlap, \previous2Overlap, \noprevious2Overlap),
+            note: notes[index]/12-2,
+            time: times[index]
+          ].postln;
+
+          // Add
+          if (sectionChange) {
+            section = List.new;
+            sounds.size.do({
+              arg i;
+              if ((writes[i] > 0) || (drops[i] > 0)) {
+                section.add([
+                  sources[i],
+                  drops[i],
+                  writes[i]
+                ]);
+              };
+            });
+            sections.add(section);
+
+            drops = Array.fill(sounds.size,0);
+            writes = Array.fill(sounds.size,0);
+            sectionChange = false;
+          };
           
+          // Record beginning of consumed note
           begins.atInc(index, times[index]);
+
+          // Reinit
           lines[index] = nil;
-          
+
+          previous2Overlap = previousOverlap;
           previousOverlap = overlap;
           previousIndex = index;
+        
         });
       };
     }
