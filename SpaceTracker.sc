@@ -152,7 +152,7 @@ SpaceTracker {
       overlapEnd = nil;
       writes = Array.fill(polyphony, 0);
       drops = Array.fill(polyphony, 0);
-      sectionChange = false;
+      sectionChange = 0;
       previousEnd = 0; 
 
       // Loop until all lines from all sound files have been consumed
@@ -230,17 +230,18 @@ SpaceTracker {
 
             overlap = overlapPrevious || overlapNext;
             
-            /*
+            
             // detect section change
+            sectionChange = 0;
             if (overlap && (false == previousOverlap)) {
-              sectionChange = true;
+              sectionChange = 1;
               overlapBegin = begins[index];
             };
+            
             if ((false == overlap) && previousOverlap) {
-              sectionChange = true;
+              sectionChange = -1;
               overlapEnd = ends[index];
             };
-            */
             
           });
           
@@ -249,11 +250,11 @@ SpaceTracker {
           
           // Debug
           [
-            //if(sectionChange, \sectionChange, \nosectionChange),
-            if(overlap, \overlap, \nooverlap),
-//            if(previousOverlap, \previousOverlap, \nopreviousOverlap),
-            if(overlapPrevious, \overlapPrevious, \nooverlapPrevious),
-            if(overlapNext, \overlapNext, \nooverlapNext),
+            switch(sectionChange, -1, "<", 0, "", 1, ">"),
+            if(overlap, "8", "o"),
+            //if(previousOverlap, \previousOverlap, \nopreviousOverlap),
+            //if(overlapPrevious, "<:", "<."),
+            //if(overlapNext, ">:", ">."),
             begin: begins[index],
             end: ends[index],
             note: this.formatNote(notes[index])
@@ -268,7 +269,7 @@ SpaceTracker {
           // don't just real down commands, use the section information
           // for the algorithm, then it works...
 
-          if (sectionChange) {
+          if (sectionChange != 0) {
             section = List.new;
             sounds.size.do({
               arg i;
