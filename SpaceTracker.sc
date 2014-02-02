@@ -66,23 +66,15 @@ SpaceTracker {
     ^this.new(treefile).fromSoundFile(soundfile, force);
   }
 
-  fromSoundFile {
-    arg soundfile, force = false;
-    var sounds, tree, numChannels,sources;
+  openSoundFiles {
+    arg soundfile;
+    var sounds,sources;
+    sounds = List.new;
+    sources = List.new;
     
-    if(File.exists(treefile) && (force == false)) { (treefile + "exists").throw };
-    File.delete(treefile);
-
     if (false == File.exists(soundfile)) {
       (soundfile + "does not exist").throw;
     };
-    
-    sounds = List.new;
-    sources = List.new;
-
-    tree = SpaceTree.new(treefile);
-
-    // Create soundfile objects from sound files
     block {
       var i, sound, file;
       i = 0;
@@ -97,6 +89,21 @@ SpaceTracker {
         file = soundfile ++ $. ++ i;
       });
     };
+    ^[sounds,sources];
+  }
+
+  fromSoundFile {
+    arg soundfile, force = false;
+    var sounds, tree, numChannels,sources;
+    
+    if(File.exists(treefile) && (force == false)) { (treefile + "exists").throw };
+    File.delete(treefile);
+    
+    #sounds, sources = this.openSoundFiles(soundfile);
+
+    tree = SpaceTree.new(treefile);
+
+    // Create soundfile objects from sound files
     polyphony = sounds.size;
     numChannels = sounds[0].numChannels;
 
@@ -108,7 +115,6 @@ SpaceTracker {
         ends,
         overlap,
         previousOverlap,
-        previous2Overlap,
         index,
         previousIndex,
         note,
@@ -120,11 +126,13 @@ SpaceTracker {
         latestEnd,
         overlapBegin,
         overlapEnd,
-        latestEndsBegin,
         writes,
         drops,
         section,
-        sectionChange
+        sectionChange,
+        previousEnd,
+        overlapPrevious,
+        overlapNext
       ;
 
       // Initialize
@@ -132,8 +140,9 @@ SpaceTracker {
       begins = Array.fill(polyphony, 0);
       ends = Array.fill(polyphony, 0);
       overlap = false;
+      overlapPrevious = false;
+      overlapNext = false;
       previousOverlap = false;
-      previous2Overlap = false;
       index = 0;
       previousIndex = 0;
       sections = List.new;
@@ -144,6 +153,7 @@ SpaceTracker {
       writes = Array.fill(polyphony, 0);
       drops = Array.fill(polyphony, 0);
       sectionChange = false;
+      previousEnd = 0; 
 
       // Loop until all lines from all sound files have been consumed
       block {
@@ -197,33 +207,34 @@ SpaceTracker {
           
           drop = isNote.indexOf(false);
           if (drop.isNil, {
-            if (false == overlap) {
+            //if (false == overlap) {
               index = begins.minIndex;
-            };
+            ////};
           },{
             index = drop;
           });
-          
+         // 
           if (drop.isNil, {
-
             // detect overlap
+            overlapPrevious = previousEnd > begins[index];
+            
             if (begins.size > 1, {
               var index2 = begins.order[1];
               if (ends[index] > latestEnd) {
                 latestEnd = ends[index];
-                latestEndsBegin = begins[index];
               };
-              overlap = latestEnd > begins[index2];
+              overlapNext = latestEnd > begins[index2];
             },{
-              overlap = false;
+              overlapNext = false;
             });
-         
+
+            overlap = overlapPrevious || overlapNext;
             // detect section change
             if (overlap && (false == previousOverlap)) {
               sectionChange = true;
               overlapBegin = begins[index];
             };
-            if ((false == overlap) && (false == previousOverlap) && previous2Overlap) {
+            if ((false == overlap) && previousOverlap) {
               sectionChange = true;
               overlapEnd = ends[index];
             };
@@ -237,8 +248,9 @@ SpaceTracker {
           [
             if(sectionChange, \sectionChange, \nosectionChange),
             if(overlap, \overlap, \nooverlap),
+            if(overlapPrevious, \overlapPrevious, \nooverlapPrevious),
+            if(overlapNext, \overlapNext, \nooverlapNext),
             if(previousOverlap, \previousOverlap, \nopreviousOverlap),
-            if(previous2Overlap, \previous2Overlap, \noprevious2Overlap),
             note: notes[index]/12-2,
             time: times[index]
           ].postln;
@@ -271,10 +283,12 @@ SpaceTracker {
           // Record beginning of consumed note
           begins.atInc(index, times[index]);
 
+          if (drop.isNil) {
+            previousEnd = ends[index];
+          };
           // Reinit
           lines[index] = nil;
 
-          previous2Overlap = previousOverlap;
           previousOverlap = overlap;
           previousIndex = index;
         
@@ -509,7 +523,7 @@ SpaceTracker {
 
     ^FloatArray.newFrom(line);
   }
-  
+
   unformatTime {
     arg time, divisor;
     ^time / divisor;
