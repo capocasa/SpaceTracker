@@ -241,6 +241,11 @@ SpaceTracker {
           ].postln;
 
           // Add
+
+          // NOTE:: Section detection works reliably! In the second pass,
+          // don't just real down commands, use the section information
+          // for the algorithm, then it works...
+
           if (sectionChange) {
             section = List.new;
             sounds.size.do({
