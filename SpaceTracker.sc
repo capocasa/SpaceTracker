@@ -119,6 +119,7 @@ SpaceTracker {
         sections,
         latestEnd,
         overlapBegin,
+        overlapEnd,
         latestEndsBegin,
         writes,
         drops,
@@ -138,7 +139,8 @@ SpaceTracker {
       sections = List.new;
       isNote = Array.fill(polyphony, false);
       latestEnd = 0;
-      overlapBegin = 0;
+      overlapBegin = nil;
+      overlapEnd = nil;
       writes = Array.fill(polyphony, 0);
       drops = Array.fill(polyphony, 0);
       sectionChange = false;
@@ -195,12 +197,15 @@ SpaceTracker {
           
           drop = isNote.indexOf(false);
           if (drop.isNil, {
-            index = begins.minIndex;
+            if (false == overlap) {
+              index = begins.minIndex;
+            };
           },{
             index = drop;
           });
           
           if (drop.isNil, {
+
             // detect overlap
             if (begins.size > 1, {
               var index2 = begins.order[1];
@@ -212,17 +217,15 @@ SpaceTracker {
             },{
               overlap = false;
             });
-          
-            if (overlap && (false == previousOverlap)) {
-              overlapBegin = latestEndsBegin;
-            };
-            
+         
             // detect section change
             if (overlap && (false == previousOverlap)) {
               sectionChange = true;
+              overlapBegin = begins[index];
             };
             if ((false == overlap) && (false == previousOverlap) && previous2Overlap) {
               sectionChange = true;
+              overlapEnd = ends[index];
             };
             
           });
