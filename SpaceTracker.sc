@@ -229,6 +229,8 @@ SpaceTracker {
             });
 
             overlap = overlapPrevious || overlapNext;
+            
+            /*
             // detect section change
             if (overlap && (false == previousOverlap)) {
               sectionChange = true;
@@ -238,6 +240,7 @@ SpaceTracker {
               sectionChange = true;
               overlapEnd = ends[index];
             };
+            */
             
           });
           
@@ -246,14 +249,18 @@ SpaceTracker {
           
           // Debug
           [
-            if(sectionChange, \sectionChange, \nosectionChange),
+            //if(sectionChange, \sectionChange, \nosectionChange),
             if(overlap, \overlap, \nooverlap),
+//            if(previousOverlap, \previousOverlap, \nopreviousOverlap),
             if(overlapPrevious, \overlapPrevious, \nooverlapPrevious),
             if(overlapNext, \overlapNext, \nooverlapNext),
-            if(previousOverlap, \previousOverlap, \nopreviousOverlap),
-            note: notes[index]/12-2,
-            time: times[index]
+            begin: begins[index],
+            end: ends[index],
+            note: this.formatNote(notes[index])
+            //time: times[index]
           ].postln;
+          
+          //[begins,ends].postln;
 
           // Add
 
