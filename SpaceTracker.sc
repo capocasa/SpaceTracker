@@ -137,12 +137,13 @@ SpaceTracker {
             line = FloatArray.newClear(numChannels);
             sounds[i].readData(line);
             
-            if (line.size == numChannels, { 
+            if (line.size == numChannels, {
               lines.put(i, line);
               
               delta.put(i, line.at(0));
               
               ends.atInc(i, delta.at(i));
+              
             },{
               sounds.removeAt(i);
               lines.removeAt(i);
@@ -159,17 +160,14 @@ SpaceTracker {
         };
 
         consumed = callback.(lines,begins,ends);
-          
+
         // Beginning and end of consumed note are not the same.
         // End of consumed note will increase again when received new
         // line from soundfile
-        delta.do({
-          arg d, i;
-          begins.atInc(i, d);
-          delta.put(i, 0);
-        });
+        begins.atInc(consumed, lines.at(consumed).at(0));
 
-        lines[consumed] = nil;
+        lines.put(consumed, nil);
+
       });
     }
   }
@@ -183,10 +181,8 @@ SpaceTracker {
     
     tree = SpaceTree.new(treefile);
 
-    this.soundFilesDo(soundfile, {
-      arg lines,begins,ends;
 
-      // Let's get started!
+    block {
       var
         overlap,
         previousOverlap,
@@ -209,7 +205,7 @@ SpaceTracker {
         overlapPrevious,
         overlapNext
       ;
-
+        
       // Initialize
       overlap = false;
       overlapPrevious = false;
@@ -226,106 +222,113 @@ SpaceTracker {
       drops = Array.fill(polyphony, 0);
       sectionChange = 0;
       previousEnd = 0; 
-
-      // Loop until all lines from all sound files have been consumed
-          
-      notes = lines.collect({arg line; line[1]});
-      times = lines.collect({arg line; line[0]});
-      isNote = notes.collect({arg note, i; note != 0 });
       
-      drop = isNote.indexOf(false);
-      if (drop.isNil, {
-        //if (false == overlap) {
-          index = begins.minIndex;
-        ////};
-      },{
-        index = drop;
-      });
-     // 
-      if (drop.isNil, {
-        // detect overlap
-        overlapPrevious = previousEnd > begins[index];
+      this.soundFilesDo(soundfile, {
+        arg lines,begins,ends;
+
+        // Let's get started!
+
+
+        // Loop until all lines from all sound files have been consumed
+            
+        notes = lines.collect({arg line; line[1]});
+        times = lines.collect({arg line; line[0]});
+        isNote = notes.collect({arg note, i; note != 0 });
         
-        if (begins.size > 1, {
-          var index2 = begins.order[1];
-          if (ends[index] > latestEnd) {
-            latestEnd = ends[index];
-          };
-          overlapNext = latestEnd > begins[index2];
+        drop = isNote.indexOf(false);
+        if (drop.isNil, {
+          //if (false == overlap) {
+            index = begins.minIndex;
+          ////};
         },{
-          overlapNext = false;
+          index = drop;
         });
+       // 
+        if (drop.isNil, {
+          // detect overlap
+          overlapPrevious = previousEnd > begins[index];
+          
+          if (begins.size > 1, {
+            var index2 = begins.order[1];
+            if (ends[index] > latestEnd) {
+              latestEnd = ends[index];
+            };
+            overlapNext = latestEnd > begins[index2];
+          },{
+            overlapNext = false;
+          });
 
-        overlap = overlapPrevious || overlapNext;
-        
-        
-        // detect section change
-        sectionChange = 0;
-        if (overlap && (false == previousOverlap)) {
-          sectionChange = 1;
-          overlapBegin = begins[index];
-        };
-        
-        if ((false == overlap) && previousOverlap) {
-          sectionChange = -1;
-          overlapEnd = ends[index];
-        };
-        
-        previousEnd = ends[index];
-      });
-      
-      // Record action
-      if (drop.isNil,writes,drops).atInc(index);
-      
-      // Debug
-      [
-        switch(sectionChange, -1, "<", 0, "", 1, ">"),
-        if(overlap, "8", "o"),
-        //if(previousOverlap, \previousOverlap, \nopreviousOverlap),
-        //if(overlapPrevious, "<:", "<."),
-        //if(overlapNext, ">:", ">."),
-        begin: begins[index],
-        end: ends[index],
-        note: this.formatNote(notes[index]),
-        index: index
-        //time: times[index]
-      ].postln;
-      
-      //[begins,ends].postln;
-
-      // Add
-
-      // NOTE:: Section detection works reliably! In the second pass,
-      // don't just real down commands, use the section information
-      // for the algorithm, then it works...
-
-      if (sectionChange != 0) {
-        /*
-        section = List.new;
-        sounds.size.do({
-          arg i;
-          if ((writes[i] > 0) || (drops[i] > 0)) {
-            section.add([
-              sources[i],
-              drops[i],
-              writes[i]
-            ]);
+          overlap = overlapPrevious || overlapNext;
+          
+          
+          // detect section change
+          sectionChange = 0;
+          if (overlap && (false == previousOverlap)) {
+            sectionChange = 1;
+            overlapBegin = begins[index];
           };
+          
+          if ((false == overlap) && previousOverlap) {
+            sectionChange = -1;
+            overlapEnd = ends[index];
+          };
+          
+          previousEnd = ends[index];
         });
-        sections.add(section);
+        
+        // Record action
+        if (drop.isNil,writes,drops).atInc(index);
+        
+        // Debug
+        [
+          switch(sectionChange, -1, "<", 0, "", 1, ">"),
+          if(overlap, "8", "o"),
+          //if(previousOverlap, \previousOverlap, \nopreviousOverlap),
+          if(overlapPrevious, ":", "."),
+          if(overlapNext, "=", "-"),
+          begin: begins[index],
+          end: ends[index],
+          note: this.formatNote(notes[index]),
+          index: index
+          //time: times[index]
+        ].postln;
+        
+        //[begins,ends].postln;
 
-        drops = Array.fill(sounds.size,0);
-        writes = Array.fill(sounds.size,0);
-        sectionChange = false;
-        */
-      };
-      
-      previousOverlap = overlap;
-      previousIndex = index;
-      
-      // Return value marks consumed
-      index;
-    });
+        // Add
+
+        // NOTE:: Section detection works reliably! In the second pass,
+        // don't just real down commands, use the section information
+        // for the algorithm, then it works...
+
+        if (sectionChange != 0) {
+          /*
+          section = List.new;
+          sounds.size.do({
+            arg i;
+            if ((writes[i] > 0) || (drops[i] > 0)) {
+              section.add([
+                sources[i],
+                drops[i],
+                writes[i]
+              ]);
+            };
+          });
+          sections.add(section);
+
+          drops = Array.fill(sounds.size,0);
+          writes = Array.fill(sounds.size,0);
+          sectionChange = false;
+          */
+        };
+        
+        previousOverlap = overlap;
+        previousIndex = index;
+        
+        // Return value marks consumed
+        index;
+      });
+    };
   
   }
 
