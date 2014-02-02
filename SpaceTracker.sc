@@ -281,7 +281,7 @@ SpaceTracker {
         
         // Debug
         [
-          switch(sectionChange, -1, "<", 0, "", 1, ">"),
+          switch(sectionChange, -1, "<", 0, " ", 1, ">"),
           if(overlap, "8", "o"),
           //if(previousOverlap, \previousOverlap, \nopreviousOverlap),
           if(overlapPrevious, ":", "."),
