@@ -161,6 +161,10 @@ SpaceTracker {
 
         consumed = callback.(lines,begins,ends);
 
+        if (consumed.isNil) {
+          "Please return the index to consume".throw;
+        };
+
         // Beginning and end of consumed note are not the same.
         // End of consumed note will increase again when received new
         // line from soundfile
