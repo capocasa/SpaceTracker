@@ -183,51 +183,39 @@ SpaceTracker {
 
 
     block {
+      // Variables that persist through each iteration
       var
-        overlap,
         previousOverlap,
-        index,
-        previousIndex,
-        note,
-        notes,
-        times,
-        isNote,
-        drop,
-        sections,
         latestEnd,
-        overlapBegin,
-        overlapEnd,
-        writes,
-        drops,
-        section,
-        sectionChange,
-        previousEnd,
-        overlapPrevious,
-        overlapNext
+        previousEnd
       ;
         
       // Initialize
-      overlap = false;
-      overlapPrevious = false;
-      overlapNext = false;
       previousOverlap = false;
-      index = 0;
-      previousIndex = 0;
-      sections = List.new;
-      isNote = Array.fill(polyphony, false);
       latestEnd = 0;
-      overlapBegin = nil;
-      overlapEnd = nil;
-      writes = Array.fill(polyphony, 0);
-      drops = Array.fill(polyphony, 0);
-      sectionChange = 0;
       previousEnd = 0; 
       
       this.soundFilesDo(soundfile, {
         arg lines,begins,ends;
+        // Variables that get re-assigned for every iteration
+        var
+          notes,
+          times,
+          drop,
+          isNote,
+          index,
+          overlapBackward,
+          overlapForward,
+          overlap,
+          sectionChange
+        ;
+
+        // Default values
+        overlap = false;
+        overlapBackward = false;
+        overlapForward = false;
 
         // Let's get started!
-
 
         // Loop until all lines from all sound files have been consumed
             
@@ -246,46 +234,41 @@ SpaceTracker {
        // 
         if (drop.isNil, {
           // detect overlap
-          overlapPrevious = previousEnd > begins[index];
+          overlapBackward = previousEnd > begins[index];
           
           if (begins.size > 1, {
             var index2 = begins.order[1];
             if (ends[index] > latestEnd) {
               latestEnd = ends[index];
             };
-            overlapNext = latestEnd > begins[index2];
+            overlapForward = latestEnd > begins[index2];
           },{
-            overlapNext = false;
+            overlapForward = false;
           });
 
-          overlap = overlapPrevious || overlapNext;
+          overlap = overlapBackward || overlapForward;
           
           
           // detect section change
           sectionChange = 0;
           if (overlap && (false == previousOverlap)) {
             sectionChange = 1;
-            overlapBegin = begins[index];
           };
           
           if ((false == overlap) && previousOverlap) {
             sectionChange = -1;
-            overlapEnd = ends[index];
           };
           
           previousEnd = ends[index];
         });
-        
-        // Record action
-        if (drop.isNil,writes,drops).atInc(index);
         
         // Debug
         [
           switch(sectionChange, -1, "<", 0, " ", 1, ">"),
           if(overlap, "8", "o"),
           //if(previousOverlap, \previousOverlap, \nopreviousOverlap),
-          if(overlapPrevious, ":", "."),
-          if(overlapNext, "=", "-"),
+          if(overlapBackward, ":", "."),
+          if(overlapForward, "=", "-"),
           begin: begins[index],
           end: ends[index],
           note: this.formatNote(notes[index]),
@@ -293,37 +276,7 @@ SpaceTracker {
           //time: times[index]
         ].postln;
         
-        //[begins,ends].postln;
-
-        // Add
-
-        // NOTE:: Section detection works reliably! In the second pass,
-        // don't just real down commands, use the section information
-        // for the algorithm, then it works...
-
-        if (sectionChange != 0) {
-          /*
-          section = List.new;
-          sounds.size.do({
-            arg i;
-            if ((writes[i] > 0) || (drops[i] > 0)) {
-              section.add([
-                sources[i],
-                drops[i],
-                writes[i]
-              ]);
-            };
-          });
-          sections.add(section);
-
-          drops = Array.fill(sounds.size,0);
-          writes = Array.fill(sounds.size,0);
-          sectionChange = false;
-          */
-        };
-        
         previousOverlap = overlap;
-        previousIndex = index;
         
         // Return value marks consumed
         index;
