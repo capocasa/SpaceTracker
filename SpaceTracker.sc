@@ -291,8 +291,7 @@ SpaceTracker {
         ].postln;
         */
        
-        // Save
-
+        // Save guidance to inform the second pass
         type = if(drop.isNil, if(overlap, \parallel, \sequential), \drop);
         if (previousType != type) {
           types=types.add(type);
@@ -300,6 +299,8 @@ SpaceTracker {
         };
         types.atInc(types.size-1);
         
+
+        // Lookbehind
         previousOverlap = overlap;
         previousType = type;
 
@@ -308,29 +309,61 @@ SpaceTracker {
       });
     };
 
-    // Second pass: Write to tree using overlap information from first pass
+    // Second pass: Write to tree using information collected in first pass
   
-    types.postln;
-
-    this.soundFilesDo(soundfile, {
-      arg lines,begins,ends;
-    
+    block {
+      // Variables that persist through each iteration
       var
         index,
-        line,
-        indent
+        typeIndex,
+        type,
+        count,
+        previousType
       ;
-      
-      index = begins.minIndex;
 
-      line = lines[index];
-      line = this.convertToSymbolic(line);
-      indent = 0;
+      // Initialization
+      // index = 0;
+      count = 0;
+      typeIndex = -2;
 
-      tree.write(line, indent);
+      this.soundFilesDo(soundfile, {
+        arg lines,begins,ends;
       
-      index;
-    });
+        // Variables that get re-assigned for every iteration
+        var
+          line,
+          indent
+        ;
+        
+        if (count == 0) {
+          typeIndex = typeIndex + 2;
+          type = types.at(typeIndex);
+          count = types.at(typeIndex + 1);
+        };
+        
+        [typeIndex,type,count].postln;
+          
+        //if (type != \parallel) {
+          index = begins.minIndex;
+        //};
+
+        if (type != \drop) {
+
+          line = lines[index];
+          line = this.convertToSymbolic(line);
+          
+          indent = if(type == \parallel, if(previousType == \parallel,2,1), 0);
+          
+          tree.write(line, indent);
+        };
+
+        count = count - 1;
+        
+        previousType = type;
+
+        index;
+      });
+    }
   }
 
   *fromBuffer {
