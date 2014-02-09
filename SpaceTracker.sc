@@ -278,10 +278,11 @@ SpaceTracker {
           if(overlapForward, "=", "-"),
           begin: begins[index],
           end: ends[index],
-          note: this.formatNote(notes[index]),
+          note: this.convertToSymbolicNote(notes[index]),
           index: index
           //time: times[index]
         ].postln;
+        */
         
         previousOverlap = overlap;
         
@@ -325,7 +326,7 @@ SpaceTracker {
     
     space.parse({
       arg line;
-      line = this.unformat(line);
+      line = this.convertToNumeric(line);
       numChannels = line.size;
       if (numChannels >1, \break, nil); // break only if not a pause
     });
@@ -412,7 +413,7 @@ SpaceTracker {
             times[index] = indentTime;
           };
           // Insert main line
-          line = this.unformat(line);
+          line = this.convertToNumeric(line);
           sounds[index].writeData(line);
           times[index] = times[index] + line[0];
           
@@ -445,7 +446,7 @@ SpaceTracker {
 
   /* These are not part of the public interace and might change */
 
-  format {
+  convertToSymbolic {
     arg line;
     var time, divisor, note;
   
@@ -458,7 +459,7 @@ SpaceTracker {
     // in quarter notes. This could be made more powerful later.
     divisor = if(time == 0, 0, defaultDivisor);
     
-    note = this.formatNote(note);
+    note = this.convertToSymbolicNote(note);
     time = time * divisor;
 
     line[0] = time;
@@ -473,7 +474,7 @@ SpaceTracker {
     ^line;
   }
   
-  unformat {
+  convertToNumeric {
     arg line;
     var
       time,
@@ -493,19 +494,19 @@ SpaceTracker {
       line=line.add(zeroNote);
     };
 
-    // Detect note format
+    // Detect note convertToSymbolic
     time = line[0];
     divisor = line[1];
     
     // First two numbers are integers - assume "note" style line
     // So calculate time float from first two numbers, and shorten
     // the line
-    time = this.unformatTime(time, divisor);
+    time = this.convertToNumericTime(time, divisor);
     note = line[2];
 
     line.removeAt(1);
     
-    note = this.unformatNote(note);
+    note = this.convertToNumericNote(note);
 
     line[0] = time;
     line[1] = note;
@@ -518,17 +519,17 @@ SpaceTracker {
     ^FloatArray.newFrom(line);
   }
 
-  unformatTime {
+  convertToNumericTime {
     arg time, divisor;
     ^time / divisor;
   }
 
-  formatNote {
+  convertToSymbolicNote {
     arg note;
     ^namingMapper.string(note);
   }
 
-  unformatNote {
+  convertToNumericNote {
     arg note;
     ^namingMapper.number(note);
   }
