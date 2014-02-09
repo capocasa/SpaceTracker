@@ -290,7 +290,28 @@ SpaceTracker {
         index;
       });
     };
+
+    // Second pass: Write to tree using overlap information from first pass
   
+    this.soundFilesDo(soundfile, {
+      arg lines,begins,ends;
+    
+      var
+        index,
+        line,
+        indent
+      ;
+      
+      index = 0;
+
+      line = lines[index];
+      line = this.convertToSymbolic(line);
+      indent = 0;
+
+      tree.write(line, indent);
+      
+      index;
+    });
   }
 
   *fromBuffer {
