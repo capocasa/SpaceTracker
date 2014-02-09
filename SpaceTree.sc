@@ -105,7 +105,7 @@ SpaceTree {
       arg break;
       while ({ (line=file.getLine).notNil }) {
         indent = this.getIndent(line);
-        line = this.formatLine(line);
+        line = this.parseLine(line);
         if (\break==callback.value(line, indent, lastindent)) {
           break.value;
         };
@@ -125,7 +125,7 @@ SpaceTree {
     ^indent;
   }
 
-  formatLine {
+  parseLine {
     arg line;
     line=line.findRegexp("[^ \t\r\n]+").collect({|r|r[1]}).collect({|token|
       case
