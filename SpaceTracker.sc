@@ -185,6 +185,7 @@ SpaceTracker {
     
     tree = SpaceTree.new(treefile);
 
+    // First pass: Discover overlaps in sound files
 
     block {
       // Variables that persist through each iteration
@@ -229,13 +230,11 @@ SpaceTracker {
         
         drop = isNote.indexOf(false);
         if (drop.isNil, {
-          //if (false == overlap) {
-            index = begins.minIndex;
-          ////};
+          index = begins.minIndex;
         },{
           index = drop;
         });
-       // 
+        
         if (drop.isNil, {
           // detect overlap
           overlapBackward = previousEnd > begins[index];
@@ -267,6 +266,10 @@ SpaceTracker {
         });
         
         // Debug
+        
+        // Keep this debug output around, it's the bread
+        // and butter of developing this algorithm more easily
+        /*
         [
           switch(sectionChange, -1, "<", 0, " ", 1, ">"),
           if(overlap, "8", "o"),
