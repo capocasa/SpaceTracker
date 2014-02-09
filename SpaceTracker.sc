@@ -178,12 +178,16 @@ SpaceTracker {
 
   fromSoundFile {
     arg soundfile, force = false;
-    var tree, numChannels;
+    var tree, numChannels, types;
     
     if(File.exists(treefile) && (force == false)) { (treefile + "exists").throw };
     File.delete(treefile);
     
     tree = SpaceTree.new(treefile);
+    
+    // The first pass will fill this with instructions
+    // for the second pass
+    types = Array.new;
 
     // First pass: Discover overlaps in sound files
 
@@ -192,13 +196,15 @@ SpaceTracker {
       var
         previousOverlap,
         latestEnd,
-        previousEnd
+        previousEnd,
+        previousType
       ;
         
       // Initialize
       previousOverlap = false;
       latestEnd = 0;
-      previousEnd = 0; 
+      previousEnd = 0;
+      previousType = nil;
       
       this.soundFilesDo(soundfile, {
         arg lines,begins,ends;
@@ -212,7 +218,8 @@ SpaceTracker {
           overlapBackward,
           overlapForward,
           overlap,
-          sectionChange
+          sectionChange,
+          type
         ;
 
         // Default values
@@ -283,9 +290,19 @@ SpaceTracker {
           //time: times[index]
         ].postln;
         */
+       
+        // Save
+
+        type = if(drop.isNil, if(overlap, \parallel, \sequential), \drop);
+        if (previousType != type) {
+          types=types.add(type);
+          types=types.add(0);
+        };
+        types.atInc(types.size-1);
         
         previousOverlap = overlap;
-        
+        previousType = type;
+
         // Return value marks consumed
         index;
       });
@@ -293,6 +310,8 @@ SpaceTracker {
 
     // Second pass: Write to tree using overlap information from first pass
   
+    types.postln;
+
     this.soundFilesDo(soundfile, {
       arg lines,begins,ends;
     
@@ -302,7 +321,7 @@ SpaceTracker {
         indent
       ;
       
-      index = 0;
+      index = begins.minIndex;
 
       line = lines[index];
       line = this.convertToSymbolic(line);
