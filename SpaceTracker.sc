@@ -101,7 +101,11 @@ SpaceTracker {
       delta,
       polyphony,
       numChannels,
-      consumed
+      consumed,
+      notes,
+      times,
+      isNote,
+      drop
     ;
     
     sounds = this.openSoundFiles(soundfile);
@@ -158,8 +162,14 @@ SpaceTracker {
         if (lines.size == 0) {
           break.();
         };
+        
+        notes = lines.collect({arg line; line[1]});
+        times = lines.collect({arg line; line[0]});
+        isNote = notes.collect({arg note, i; note != 0 });
+        
+        drop = isNote.indexOf(false);
 
-        consumed = callback.(lines,begins,ends);
+        consumed = callback.(lines,begins,ends,notes,times,drop);
 
         if (consumed.isNil) {
           "Please return the index to consume".throw;
@@ -207,12 +217,9 @@ SpaceTracker {
       previousType = nil;
       
       this.soundFilesDo(soundfile, {
-        arg lines,begins,ends;
+        arg lines,begins,ends,notes,times,drop;
         // Variables that get re-assigned for every iteration
         var
-          notes,
-          times,
-          drop,
           isNote,
           index,
           overlapBackward,
@@ -229,13 +236,7 @@ SpaceTracker {
 
         // Let's get started!
 
-        // Loop until all lines from all sound files have been consumed
-            
-        notes = lines.collect({arg line; line[1]});
-        times = lines.collect({arg line; line[0]});
-        isNote = notes.collect({arg note, i; note != 0 });
-        
-        drop = isNote.indexOf(false);
+        // Loop until all lines from all sound files have been consumed   
         if (drop.isNil, {
           index = begins.minIndex;
         },{
@@ -276,7 +277,7 @@ SpaceTracker {
         
         // Keep this debug output around, it's the bread
         // and butter of developing this algorithm more easily
-        /*
+        
         [
           switch(sectionChange, -1, "<", 0, " ", 1, ">"),
           if(overlap, "8", "o"),
@@ -289,7 +290,6 @@ SpaceTracker {
           index: index
           //time: times[index]
         ].postln;
-        */
        
         // Save guidance to inform the second pass
         type = if(drop.isNil, if(overlap, \parallel, \sequential), \drop);
@@ -298,7 +298,6 @@ SpaceTracker {
           types=types.add(0);
         };
         types.atInc(types.size-1);
-        
 
         // Lookbehind
         previousOverlap = overlap;
@@ -322,12 +321,12 @@ SpaceTracker {
       ;
 
       // Initialization
-      // index = 0;
+      index = 0;
       count = 0;
       typeIndex = -2;
 
       this.soundFilesDo(soundfile, {
-        arg lines,begins,ends;
+        arg lines,begins,ends,notes,times,drop;
       
         // Variables that get re-assigned for every iteration
         var
@@ -343,10 +342,16 @@ SpaceTracker {
         
         [typeIndex,type,count].postln;
           
-        //if (type != \parallel) {
-          index = begins.minIndex;
-        //};
-
+        switch(type,
+          \drop, {
+            index = drop;
+          },
+          \parallel, {
+          },
+          \sequential, {
+            index = begins.minIndex;
+          }
+        );
         if (type != \drop) {
 
           line = lines[index];
