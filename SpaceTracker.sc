@@ -188,7 +188,7 @@ SpaceTracker {
 
   fromSoundFile {
     arg soundfile, force = false;
-    var tree, numChannels, types;
+    var tree, numChannels, changes;
     
     if(File.exists(treefile) && (force == false)) { (treefile + "exists").throw };
     File.delete(treefile);
@@ -197,7 +197,7 @@ SpaceTracker {
     
     // The first pass will fill this with instructions
     // for the second pass
-    types = Array.new;
+    changes = Array.new;
 
     // First pass: Discover overlaps in sound files
 
@@ -225,7 +225,7 @@ SpaceTracker {
           overlapBackward,
           overlapForward,
           overlap,
-          sectionChange,
+          parallel,
           type
         ;
 
@@ -259,15 +259,14 @@ SpaceTracker {
 
           overlap = overlapBackward || overlapForward;
           
-          
           // detect section change
-          sectionChange = 0;
+          parallel = nil;
           if (overlap && (false == previousOverlap)) {
-            sectionChange = 1;
+            parallel = true;
           };
           
           if ((false == overlap) && previousOverlap) {
-            sectionChange = -1;
+            parallel = false;
           };
           
           previousEnd = ends[index];
@@ -279,7 +278,7 @@ SpaceTracker {
         // and butter of developing this algorithm more easily
         
         [
-          switch(sectionChange, -1, "<", 0, " ", 1, ">"),
+          switch(parallel, false, "<", nil, " ", true, ">"),
           if(overlap, "8", "o"),
           //if(previousOverlap, \previousOverlap, \nopreviousOverlap),
           if(overlapBackward, ":", "."),
@@ -292,16 +291,16 @@ SpaceTracker {
         ].postln;
        
         // Save guidance to inform the second pass
-        type = if(drop.isNil, if(overlap, \parallel, \sequential), \drop);
-        if (previousType != type) {
-          types=types.add(type);
-          types=types.add(0);
-        };
-        types.atInc(types.size-1);
+        //changes=changes.add(type);
+        //changes=changes.add(0);
+        //changes.atInc(changes.size-1);
+        if (parallel.notNil, {
+          changes.add(parallel);
+          changes.add(begins[index]);
+        });
 
         // Lookbehind
         previousOverlap = overlap;
-        previousType = type;
 
         // Return value marks consumed
         index;
@@ -314,16 +313,20 @@ SpaceTracker {
       // Variables that persist through each iteration
       var
         index,
-        typeIndex,
-        type,
-        count,
-        previousType
+        parallel,
+        paralleled,
+        changed,
+        begin
       ;
 
       // Initialization
       index = 0;
-      count = 0;
-      typeIndex = -2;
+      parallel = false;
+      begin = 0;
+      changed = 0;
+      parallel = false;
+      paralleled = 0;
+
 
       this.soundFilesDo(soundfile, {
         arg lines,begins,ends,notes,times,drop;
@@ -331,40 +334,45 @@ SpaceTracker {
         // Variables that get re-assigned for every iteration
         var
           line,
-          indent
+          indent,
+          parallel
         ;
         
-        if (count == 0) {
-          typeIndex = typeIndex + 2;
-          type = types.at(typeIndex);
-          count = types.at(typeIndex + 1);
-        };
-        
-        [typeIndex,type,count].postln;
+        if (drop.notNil, {
+          index = drop;
+          indent = 0;
+        },{
           
-        switch(type,
-          \drop, {
-            index = drop;
-          },
-          \parallel, {
-          },
-          \sequential, {
-            index = begins.minIndex;
-          }
-        );
-        if (type != \drop) {
+          if (ends.at(index) >= changed, {
+            if (parallel, {
+              index = begins.minIndex;
+              if (paralleled == lines.size, {
+                #parallel, changed = changes.removeAt(0);
+                paralleled = 0;
+              }, {
+                paralleled = paralleled + 1;
+              });
+              indent = 1;
+            },{
+              #parallel, changed = changes.removeAt(0);
+            });
+          },{
+            if (parallel, {
+              indent = 2;
+            });
+          });
 
+          if (false == parallel, {
+            index = begins.minIndex;
+            indent = 0;
+          });
+          
           line = lines[index];
           line = this.convertToSymbolic(line);
           
-          indent = if(type == \parallel, if(previousType == \parallel,2,1), 0);
-          
           tree.write(line, indent);
-        };
-
-        count = count - 1;
-        
-        previousType = type;
+          
+        });
 
         index;
       });
@@ -522,7 +530,7 @@ SpaceTracker {
     });
   }
 
-  /* These are not part of the public interace and might change */
+  /* These are not part of the public interace and might parallel */
 
   convertToSymbolic {
     arg line;
