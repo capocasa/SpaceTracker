@@ -31,6 +31,7 @@ SpaceLine {
         + this.namings.collect({|n|n.asCompileString}).join(",")
       ).throw;
     };
+    namingMapper = namingClass.new;
   }
 
   namingClasses {
