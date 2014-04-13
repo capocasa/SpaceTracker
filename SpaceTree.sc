@@ -56,13 +56,11 @@ SpaceTree {
   ;
 
   *new {
-    arg arg_filename;
-    ^super.new.init(arg_filename);
+    arg filename;
+    ^super.newCopyArgs(filename).init;
   }
 
   init {
-    arg arg_filename;
-    filename = arg_filename;
   }
 
   asArray {
