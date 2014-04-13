@@ -4,7 +4,7 @@
 // into numeric representation that can be saved
 // in a standard sound file or pumped down a Bus
 
-SpaceLine {
+SpaceLinemap {
 
   var
     naming,
