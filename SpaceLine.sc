@@ -1,4 +1,9 @@
 
+// A class for converting single "lines" of data
+// from their symbolic representation ("1 4 c2")
+// into numeric representation that can be saved
+// in a standard sound file or pumped down a Bus
+
 SpaceLine {
 
   var
