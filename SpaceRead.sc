@@ -3,33 +3,19 @@ SpaceRead {
   var
     tree,
     sounds,
-    liner,
-    totaltimes,
-    numChannels,
+    linemap,
+    totaltimes
   ;
 
-  initClass {
-    treeClass = SpaceTree;
-    linerClass = SpaceLiner;
-    tmpClass = SpaceTmp;
-  }
-
   *new {
-    arg tree, sounds, liner;
-    
-    ^super.newCopyArgs(tree, sounds, liner).init;
+    arg tree, sounds, linemap;
+    ^super.newCopyArgs(tree, sounds, linemap).init;
   }
 
   init {
-    tree.parse({
-      arg line;
-      line = liner.convertToNumeric(line);
-      numChannels = line.size;
-      if (numChannels >1, \break, nil); // break only if not a pause
-    });
   }
 
-  read {
+  toSounds {
     var index, time, times, indentTime, indentTimes;
     
     index = 0;
@@ -87,11 +73,11 @@ SpaceRead {
         // Parallel, so relative to indentTime when parallel started
         // Fill up with pause
         if (times[index] < indentTime) {
-          sounds[index].writeData(FloatArray.fill(numChannels, 0).put(0, indentTime-times[index]));
+          sounds[index].writeData(FloatArray.fill(sounds[index].numChannels, 0).put(0, indentTime-times[index]));
           times[index] = indentTime;
         };
         // Insert main line
-        line = this.convertToNumeric(line);
+        line = linemap.convertToNumeric(line);
         sounds[index].writeData(line);
         times[index] = times[index] + line[0];
         
@@ -104,6 +90,8 @@ SpaceRead {
       arg sound;
       sound.close;
     });
+  
+    ^sounds;
   }
 }
 
