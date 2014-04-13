@@ -21,7 +21,7 @@ SpaceRead {
     index = 0;
     time = 0;
     indentTime = 0;
-    times = Array.fill(polyphony, 0);
+    times = Array.fill(sounds.size, 0);
     indentTimes = List.new.add(0);
     
     tree.parse({
