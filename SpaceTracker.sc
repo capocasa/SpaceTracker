@@ -19,7 +19,9 @@ SpaceTracker {
     readClass,
     writeClass,
     linemapClass,
-    soundClass
+    tmpClass,
+    soundfileClass,
+    defaultServer
   ;
 
   var
@@ -29,13 +31,17 @@ SpaceTracker {
     <>server,
     <>headerFormat="AIFF",
     <>sampleFormat="float",
-    <>sounds
+    <>soundExtension="aif",
+    <>sounds,
+    <>tmp
   ;
 
   *initClass {
     readClass = SpaceRead;
     linemapClass = SpaceLinemap;
-    soundClass = SoundFile;
+    tmpClass = SpaceTmp;
+    soundfileClass = SoundFile;
+    defaultServer = Server.default;
   }
 
   *new {
@@ -44,42 +50,24 @@ SpaceTracker {
   }
 
   init {
-    | treefile |
+    arg treefile;
+    var ext, tmp;
+    
     if (treefile.isNil) {
       ("treefile is required").throw;
     };
+
+    if (treefile.class == Symbol) {
+      treefile = tmp.file(treefile);
+    }
 
     tree = SpaceTree.new(treefile);
 
     linemap = linemapClass.new(treefile.splitext[1].asSymbol);
 
-    server=Server.default;
-  }
+    tmp = tmpClass.new(16);
 
-  *fromSoundFile {
-    arg treefile, soundfile, force=false;
-    ^this.new(treefile).fromSoundFile(soundfile, force);
-  }
-
-  fromSoundFile {
-    arg soundfile, force = false;
-  }
-
-  *fromBuffer {
-    arg treefile, buffer, action, naming;
-    ^this.class.new(treefile).naming_(naming).fromBuffer;
-  }
-
-  fromBuffer {
-    arg treefile, buffer, action;
-    var soundfile, tracker;
-    soundfile = this.tmpFileName;
-    tracker = this.class.new(treefile);
-    buffer.write(soundfile, headerFormat, sampleFormat, -1, 0, false, {
-      tracker.fromSoundFile(soundfile);
-      action.value(tracker);
-    });
-    ^tracker;
+    server=defaultServer;
   }
 
   *toSoundFile {
@@ -87,21 +75,22 @@ SpaceTracker {
     ^this.new(treefile).toSoundFile(soundfile, force);
   }
   
-  toBuffer {
-    arg action, force = false;
-    var soundfile;
-    soundfile = this.toSoundFile(nil, true);
-    if (Array == soundfile.class, {  
-      ^soundfile.collect({
-        arg file;
-        Buffer.read(server, file, 0, -1, action);
-      });
-    }, {
-      ^Buffer.read(server, soundfile, 0, -1, action);
-    });
+  *toBuffer {
+    arg treefile, action = false;
+    ^this.new(treefile).toBuffer(treefile,action);
   }
 
-  read {
+  *fromSoundFile {
+    arg treefile, soundfile, force=false;
+    ^this.new(treefile).fromSoundFile(soundfile, force);
+  }
+  
+  *fromBuffer {
+    arg treefile, buffer, naming, action;
+    ^this.new(treefile).fromBuffer(naming);
+  }
+
+  toSoundFile {
     arg soundfile, force = false;
    
     var numChannels;
@@ -122,7 +111,7 @@ SpaceTracker {
     polyphony.do({
       arg i;
       var sound, file;
-      sound = soundClass.new
+      sound = soundfileClass.new
         .headerFormat_(headerFormat)
         .sampleFormat_(sampleFormat)
         .numChannels_(numChannels);
@@ -137,13 +126,37 @@ SpaceTracker {
 
     readClass.new(tree, sounds, linemap);
 
-    ^readClass.toSounds;
+    ^readClass.toSoundFile;
+  }  
+
+  toBuffer {
+    arg action = false;
+    var soundfile;
+    soundfile = this.toSoundFile(nil, true);
+    if (Array == soundfile.class, {  
+      ^soundfile.collect({
+        arg file;
+        Buffer.read(server, file, 0, -1, action);
+      });
+    }, {
+      ^Buffer.read(server, soundfile, 0, -1, action);
+    });
   }
 
-  write {
-  
-  
+  fromSoundFile {
+    arg treefile, soundfile, force = false;
+    ^this.class.new(treefile).fromSoundFile(soundfile, force);
   }
 
+  fromBuffer {
+    arg buffer, action, naming=false;
+    var soundfile, tracker;
+    soundfile = tmp.file(soundExtension);
+    buffer.write(soundfile, headerFormat, sampleFormat, -1, 0, false, {
+      this.fromSoundFile(soundfile);
+      action.value(this);
+    });
+    ^tracker;
+  }
 }
 

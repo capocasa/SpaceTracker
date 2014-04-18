@@ -1,13 +1,10 @@
 
 SpaceTmp {
   var
-    extension,
-    length
+    <>length
   ;
-
   *new {
-    arg extension="wav", length = 12;
-    ^super.newCopyArgs(extension, length);
+    ^super.new(length);
   }
 
   rnd {
@@ -18,6 +15,7 @@ SpaceTmp {
   }
  
   file {
+    arg extension;
     ^Platform.defaultTempDir +/+ this.class.name.asString.toLower ++ this.rnd ++ $. ++ extension;
   }
   
