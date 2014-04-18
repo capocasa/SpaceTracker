@@ -26,14 +26,17 @@ SpaceTracker {
 
   var
     <>tree,
-    <>linemap,
     <>polyphony,
-    <>server,
+    <>linemap,
+    <>numChannels,
     <>headerFormat="AIFF",
     <>sampleFormat="float",
     <>soundExtension="aif",
+    <>server,
     <>sounds,
-    <>tmp
+    <>tmp,
+    <>read,
+    <>soundfile
   ;
 
   *initClass {
@@ -86,22 +89,21 @@ SpaceTracker {
     ^this.new(treefile).fromBuffer();
   }
 
-  toSoundFile {
-    arg soundfile, force = false;
-   
-    var numChannels;
-
-    if (false == File.exists(tree.filename)) {
-      (tree.filename + "does not exist").throw;
-    };
-
+  initChannels {
     tree.parse({
       arg line;
       line = linemap.convertToNumeric(line);
       numChannels = line.size;
       if (numChannels >1, \break, nil); // break only if not a pause
     });
+  }
 
+  soundFileName {
+    arg channel;
+    ^soundfile++if(channel > 0, $.++channel, "");
+  }
+
+  initSounds {
     sounds = Array.new(polyphony);
     
     polyphony.do({
@@ -111,19 +113,46 @@ SpaceTracker {
         .headerFormat_(headerFormat)
         .sampleFormat_(sampleFormat)
         .numChannels_(numChannels);
-      file = soundfile++if(i > 0, $.++i, "");
-      if(File.exists(file) && (force == false)) { (file + "exists").throw };
+      file = this.soundFileName(i);
       File.delete(file);
       if (false == sound.openWrite(file)) {
         ("Could not open"+file+"for writing").throw;
       };
       sounds.add(sound);
     });
+  
+  }
 
-    readClass.new(tree, sounds, linemap);
+  validateTreeRead {
+    if (false == File.exists(tree.filename)) {
+      (tree.filename + "does not exist").throw;
+    };
+  }
 
-    ^readClass.toSoundFile;
-  }  
+  validateSoundWrite {
+    polyphony.do({
+      arg i;
+      var file;
+      file = this.soundFileName(i);
+      if (File.exists(file)) {
+        (file + "exists, use 'force' to overwrite").throw
+      };
+    });
+  }
+
+  toSoundFile {
+    arg arg_soundfile, force = false;
+   
+    soundfile = arg_soundfile;
+
+    this.validateTreeRead;
+    if (false == force) {
+      this.validateSoundWrite;
+    };
+
+    read = readClass.new(tree, sounds, linemap);
+    read.toSounds;
+  }
 
   toBuffer {
     arg action = false;
