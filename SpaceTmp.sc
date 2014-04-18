@@ -4,7 +4,8 @@ SpaceTmp {
     <>length
   ;
   *new {
-    ^super.new(length);
+    arg length;
+    ^super.newCopyArgs(length);
   }
 
   rnd {

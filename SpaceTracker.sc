@@ -57,10 +57,6 @@ SpaceTracker {
       ("treefile is required").throw;
     };
 
-    if (treefile.class == Symbol) {
-      treefile = tmp.file(treefile);
-    }
-
     tree = SpaceTree.new(treefile);
 
     linemap = linemapClass.new(treefile.splitext[1].asSymbol);
@@ -86,8 +82,8 @@ SpaceTracker {
   }
   
   *fromBuffer {
-    arg treefile, buffer, naming, action;
-    ^this.new(treefile).fromBuffer(naming);
+    arg treefile, buffer, action;
+    ^this.new(treefile).fromBuffer();
   }
 
   toSoundFile {
@@ -149,7 +145,7 @@ SpaceTracker {
   }
 
   fromBuffer {
-    arg buffer, action, naming=false;
+    arg buffer, action;
     var soundfile, tracker;
     soundfile = tmp.file(soundExtension);
     buffer.write(soundfile, headerFormat, sampleFormat, -1, 0, false, {
