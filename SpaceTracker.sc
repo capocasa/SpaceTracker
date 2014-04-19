@@ -26,9 +26,9 @@ SpaceTracker {
   ;
 
   var
-    <>polyphony,
     <>tree,
     <>linemap,
+    <>polyphony = 8,
     <>numChannels,
     <>headerFormat="AIFF",
     <>sampleFormat="float",
@@ -37,6 +37,7 @@ SpaceTracker {
     <>sounds,
     <>tmp,
     <>read,
+    <>write,
     <>soundfile
   ;
 
@@ -50,8 +51,8 @@ SpaceTracker {
   }
 
   *new {
-    arg treefile, polyphony = 8;
-    ^super.newCopyArgs(polyphony).init(treefile);
+    arg treefile;
+    ^super.new.init(treefile);
   }
 
   init {
@@ -174,8 +175,9 @@ SpaceTracker {
   }
 
   fromSoundFile {
-    arg treefile, soundfile, force = false;
-    ^this.class.new(treefile).fromSoundFile(soundfile, force);
+    arg soundfile, force = false;
+  
+    write = writeClass.new
   }
 
   fromBuffer {
