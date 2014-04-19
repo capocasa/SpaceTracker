@@ -16,6 +16,7 @@ only be good for the artistic quality of music written with it.
 SpaceTracker {
 
   classvar
+    treeClass,
     readClass,
     writeClass,
     linemapClass,
@@ -25,8 +26,8 @@ SpaceTracker {
   ;
 
   var
-    <>tree,
     <>polyphony,
+    <>tree,
     <>linemap,
     <>numChannels,
     <>headerFormat="AIFF",
@@ -40,6 +41,7 @@ SpaceTracker {
   ;
 
   *initClass {
+    treeClass = SpaceTree;
     readClass = SpaceRead;
     linemapClass = SpaceLinemap;
     tmpClass = SpaceTmp;
@@ -49,7 +51,7 @@ SpaceTracker {
 
   *new {
     arg treefile, polyphony = 8;
-    ^super.newCopyArgs.init(treefile, polyphony);
+    ^super.newCopyArgs(polyphony).init(treefile);
   }
 
   init {
@@ -60,7 +62,7 @@ SpaceTracker {
       ("treefile is required").throw;
     };
 
-    tree = SpaceTree.new(treefile);
+    tree = treeClass.new(treefile);
 
     linemap = linemapClass.new(treefile.splitext[1].asSymbol);
 
@@ -149,6 +151,9 @@ SpaceTracker {
     if (false == force) {
       this.validateSoundWrite;
     };
+
+    this.initChannels;
+    this.initSounds;
 
     read = readClass.new(tree, sounds, linemap);
     read.toSounds;
