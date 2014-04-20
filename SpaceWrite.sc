@@ -4,9 +4,10 @@
 SpaceWrite {
   
   var
-    sounds,
+    soundsInit,
     tree,
     linemap,
+    sounds,
     
     // First pass state
     previousOverlap=false,
@@ -23,11 +24,10 @@ SpaceWrite {
   
     // Shared state
     changes
-    
   ;
 
   init {
-    changes = Array.new;
+    changes = List.new;
   }
 
   *new {
@@ -35,7 +35,7 @@ SpaceWrite {
     ^super.newCopyArgs(sounds,tree,linemap).init;
   }
 
-    soundsDo {
+  soundsDo {
     arg callback;
     var
       lines,
@@ -58,75 +58,73 @@ SpaceWrite {
     ends = Array.fill(polyphony, 0);
     delta = Array.fill(polyphony, 0);
       
-    block {
-      arg break;
-      while ({true}, {
-        // Fill up a buffer of one line per polyphonic channel
-        // (used to locate note ends and null notes)
+    while ({true}, {
+      // Fill up a buffer of one line per polyphonic channel
+      // (used to locate note ends and null notes)
 
-        // as opposed to lines.size.do or lines.reverseDo, this
-        // allows removeAt with correct indices
-        lines.size.reverseDo({
-          arg i;
-          var line;
-          line = lines[i];
+      // as opposed to lines.size.do or lines.reverseDo, this
+      // allows removeAt with correct indices
+      lines.size.reverseDo({
+        arg i;
+        var line;
+        line = lines[i];
 
-          // Make sure this element of the lines buffer is full, not nil
-          // decrease buffer size if sound has exhausted
+        // Make sure this element of the lines buffer is full, not nil
+        // decrease buffer size if sound has exhausted
 
-          // Line can be nil, when:
-          // - just initialized
-          // - consumed and made note of pause
+        // Line can be nil, when:
+        // - just initialized
+        // - consumed and made note of pause
 
-          // - consumed and written to tree file
-          if ( line.isNil ) {
-            line = FloatArray.newClear(numChannels);
-            sounds[i].readData(line);
+        // - consumed and written to tree file
+        if ( line.isNil ) {
+          line = FloatArray.newClear(numChannels);
+          sounds[i].readData(line);
+          
+          if (line.size == numChannels, {
+            lines.put(i, line);
             
-            if (line.size == numChannels, {
-              lines.put(i, line);
-              
-              delta.put(i, line.at(0));
-              
-              ends.atInc(i, delta.at(i));
-              
-            },{
-              sounds.removeAt(i);
-              lines.removeAt(i);
-              begins.removeAt(i);
-              ends.removeAt(i);
-              delta.removeAt(i);
-            });
-          };
-        });
-        
-        // Termination when all soundfiles depleted
-        if (lines.size == 0) {
-          ^this;
+            delta.put(i, line.at(0));
+            
+            ends.atInc(i, delta.at(i));
+            
+          },{
+            sounds.removeAt(i);
+            lines.removeAt(i);
+            begins.removeAt(i);
+            ends.removeAt(i);
+            delta.removeAt(i);
+          });
         };
-        
-        notes = lines.collect({arg line; line[1]});
-        times = lines.collect({arg line; line[0]});
-        isNote = notes.collect({arg note, i; note != 0 });
-        
-        drop = isNote.indexOf(false);
-
-        consumed = callback.(lines,begins,ends,notes,times,drop);
-
-        if (consumed.isNil) {
-          "Please return the index to consume".throw;
-        };
-
-        // Beginning and end of consumed note are not the same.
-        // End of consumed note will increase again when received new
-        // line from soundfile
-        begins.atInc(consumed, lines.at(consumed).at(0));
-
-        lines.put(consumed, nil);
-
       });
-    }
+    
+      // Termination when all soundfiles depleted
+      if (lines.size == 0) {
+        ^this;
+      };
+      
+      notes = lines.collect({arg line; line[1]});
+      times = lines.collect({arg line; line[0]});
+      isNote = notes.collect({arg note, i; note != 0 });
+      
+      drop = isNote.indexOf(false);
+
+      consumed = callback.(lines,begins,ends,notes,times,drop);
+
+      if (consumed.isNil) {
+        "Please return the index to consume".throw;
+      };
+
+      // Beginning and end of consumed note are not the same.
+      // End of consumed note will increase again when received new
+      // line from soundfile
+      begins.atInc(consumed, lines.at(consumed).at(0));
+
+      lines.put(consumed, nil);
+
+    });
   }
+  
   firstPass {
     // Initialize
     
@@ -142,7 +140,6 @@ SpaceWrite {
         parallel,
         type
       ;
-
       // Default values
       overlap = false;
       overlapBackward = false;
@@ -222,23 +219,23 @@ SpaceWrite {
   }
 
   secondPass {
+
     this.soundsDo({
       arg lines,begins,ends,notes,times,drop;
-    
+ 
       // Variables that get re-assigned for every iteration
       var
         line,
         indent,
         parallel
       ;
-
+      
       parallel = false;
       
       if (drop.notNil, {
         index = drop;
         indent = 0;
       },{
-        
         if (ends.at(index) >= changed, {
           if (parallel, {
             index = begins.minIndex;
@@ -274,19 +271,30 @@ SpaceWrite {
     });
   }
 
+  reset {
+    sounds = soundsInit.copy;
+    sounds.do({
+      arg sound;
+      sound.seek(0);
+    });
+  }
+
   fromSoundFile {
     
+    var s;
+
     // The first pass will fill this with instructions
     // for the second pass
 
     // First pass: Discover overlaps in sound files
+    this.reset;
     this.firstPass;
 
     changes.postln;
 
     // Second pass: Write to tree using information collected in first pass
+    this.reset;
     this.secondPass;
   }
-
 }
 
