@@ -51,13 +51,13 @@ SpaceTree {
   ;
 
   var
-    <>filename,
+    <>path,
     levels
   ;
 
   *new {
-    arg filename;
-    ^super.newCopyArgs(filename).init;
+    arg path;
+    ^super.newCopyArgs(path).init;
   }
 
   init {
@@ -94,11 +94,11 @@ SpaceTree {
   parse {
     arg callback;
     var file,line,indent,lastindent,change;
-    if (File.exists(filename) == false) {
-      (filename + "does not exist").throw;
+    if (File.exists(path) == false) {
+      (path + "does not exist").throw;
     };
 		lastindent = 0;
-    file=File.open(filename, "r");
+    file=File.open(path, "r");
     block {
       arg break;
       while ({ (line=file.getLine).notNil }) {
@@ -138,7 +138,7 @@ SpaceTree {
     arg line, indent = 0;
     var file;
     line = String.fill(indent, $ ) ++ line.join(" ");
-    file = File.open(filename, "a");
+    file = File.open(path, "a");
     file.write(line++"\n");
     file.close;
   }

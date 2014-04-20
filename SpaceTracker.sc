@@ -128,8 +128,8 @@ SpaceTracker {
   }
 
   validateTreeRead {
-    if (false == File.exists(tree.filename)) {
-      (tree.filename + "does not exist").throw;
+    if (false == File.exists(tree.path)) {
+      (tree.path + "does not exist").throw;
     };
   }
 
