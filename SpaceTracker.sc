@@ -26,6 +26,8 @@ SpaceTracker {
   ;
 
   var
+    <>treefile,
+    <>soundfile,
     <>tree,
     <>linemap,
     <>polyphony = 8,
@@ -37,8 +39,7 @@ SpaceTracker {
     <>sounds,
     <>tmp,
     <>read,
-    <>write,
-    <>soundfile
+    <>write
   ;
 
   *initClass {
@@ -52,14 +53,31 @@ SpaceTracker {
   }
 
   *new {
-    arg treefile;
-    ^super.new.init(treefile);
+    arg treefile, soundfile;
+    ^super.newCopyArgs(treefile, soundfile).init;
+  }
+
+  *toSoundFile {
+    arg treefile, soundfile, force=false;
+    ^this.newCopyArgs(treefile,soundfile).init.toSoundFile(force);
+  }
+  
+  *toBuffer {
+    arg treefile, action = false;
+    ^this.newCopyArgs(treefile).init.toBuffer(treefile,action);
+  }
+
+  *fromSoundFile {
+    arg treefile, soundfile, force=false;
+    ^this.newCopyArgs(treefile, soundfile).init.fromSoundFile(force);
+  }
+  
+  *fromBuffer {
+    arg treefile, buffer, action;
+    ^this.newCopyArgs(treefile).init.fromBuffer(buffer);
   }
 
   init {
-    arg treefile;
-    var ext, tmp;
-    
     if (treefile.isNil) {
       ("treefile is required").throw;
     };
@@ -71,26 +89,6 @@ SpaceTracker {
     tmp = tmpClass.new(16);
 
     server=defaultServer;
-  }
-
-  *toSoundFile {
-    arg treefile, soundfile, force=false;
-    ^this.new(treefile).toSoundFile(soundfile, force);
-  }
-  
-  *toBuffer {
-    arg treefile, action = false;
-    ^this.new(treefile).toBuffer(treefile,action);
-  }
-
-  *fromSoundFile {
-    arg treefile, soundfile, force=false;
-    ^this.new(treefile).fromSoundFile(soundfile, force);
-  }
-  
-  *fromBuffer {
-    arg treefile, buffer, action;
-    ^this.new(treefile).fromBuffer();
   }
 
   initChannels {
@@ -108,23 +106,44 @@ SpaceTracker {
   }
 
   initSounds {
-    sounds = Array.new(polyphony);
-    
-    polyphony.do({
-      arg i;
-      var sound, file;
+    sounds = this.soundFilesCollect({
+      arg file;
+      var sound;
       sound = soundfileClass.new
         .headerFormat_(headerFormat)
         .sampleFormat_(sampleFormat)
         .numChannels_(numChannels);
-      file = this.soundFileName(i);
       File.delete(file);
       if (false == sound.openWrite(file)) {
         ("Could not open"+file+"for writing").throw;
       };
-      sounds.add(sound);
+      sound
     });
+  }
+
+  soundFilesDo {
+    arg action;
+    polyphony.do({
+      arg i;
+      action.value(this.soundFileName(i));
+    });
+  }
   
+  soundFilesCollect {
+    arg action;
+    var returns = Array.fill(polyphony);
+    polyphony.do({
+      arg i;
+      returns.put(i, action.value(this.soundFileName(i)));
+    });
+    ^returns;
+  }
+
+  toCSV {
+    this.soundFilesDo({
+      arg file;
+      SoundFile.new(file).toCSV(file++".csv");
+    });
   }
 
   validateTreeRead {
@@ -145,7 +164,6 @@ SpaceTracker {
   }
   
   openSounds {
-    arg soundfile;
     sounds = List.new;
     
     if (false == File.exists(soundfile)) {
@@ -167,11 +185,9 @@ SpaceTracker {
     };
   }
 
-  toSoundFile {
-    arg arg_soundfile, force = false;
+  writeSounds {
+    arg force = false;
    
-    soundfile = arg_soundfile;
-
     this.validateTreeRead;
     if (false == force) {
       this.validateSoundWrite;
@@ -181,13 +197,12 @@ SpaceTracker {
     this.initSounds;
 
     read = readClass.new(tree, sounds, linemap);
-    read.toSounds;
+    read.toNumeric;
   }
 
   toBuffer {
     arg action = false;
-    var soundfile;
-    soundfile = this.toSoundFile(nil, true);
+    this.toSoundFile(true);
     if (Array == soundfile.class, {  
       ^soundfile.collect({
         arg file;
@@ -198,24 +213,22 @@ SpaceTracker {
     });
   }
 
-  fromSoundFile {
-    arg soundfile, force = false;
+  writeTree {
+    arg force = false;
  
     this.openSounds(soundfile);
 
     write = writeClass.new(sounds, tree, linemap);
-    write.fromSoundFile;
+    write.fromNumeric;
   }
 
   fromBuffer {
     arg buffer, action;
-    var soundfile, tracker;
     soundfile = tmp.file(soundExtension);
     buffer.write(soundfile, headerFormat, sampleFormat, -1, 0, false, {
-      this.fromSoundFile(soundfile);
+      this.writeSounds(soundfile);
       action.value(this);
     });
-    ^tracker;
   }
 }
 
