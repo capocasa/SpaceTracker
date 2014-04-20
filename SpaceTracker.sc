@@ -26,7 +26,7 @@ SpaceTracker {
   ;
 
   var
-    <>treefile,
+    >treefile,
     <>soundfile,
     <>tree,
     <>linemap,
@@ -78,17 +78,31 @@ SpaceTracker {
   }
 
   init {
-    if (treefile.isNil) {
-      ("treefile is required").throw;
-    };
 
     tree = treeClass.new(treefile);
 
-    linemap = linemapClass.new(treefile.splitext[1].asSymbol);
+    this.treefile(treefile);
+
 
     tmp = tmpClass.new(16);
 
     server=defaultServer;
+  }
+
+  treefile {
+    arg arg_treefile;
+    treefile = arg_treefile;
+    if (treefile.isNil) {
+      ("treefile is required").throw;
+    };
+    tree.path = treefile;
+    
+    linemap = linemapClass.new(this.namingFromExtension(treefile));
+  }
+
+  namingFromExtension {
+    arg filename;
+    ^filename.splitext[1].asSymbol
   }
 
   initChannels {
@@ -200,7 +214,25 @@ SpaceTracker {
     read.toNumeric;
   }
 
-  toBuffer {
+  writeTree {
+    arg force = false;
+ 
+    this.openSounds(soundfile);
+
+    write = writeClass.new(sounds, tree, linemap);
+    write.fromNumeric;
+  }
+
+  loadBuffer {
+    arg buffer, action;
+    soundfile = tmp.file(soundExtension);
+    buffer.write(soundfile, headerFormat, sampleFormat, -1, 0, false, {
+      this.writeSounds(soundfile);
+      action.value(this);
+    });
+  }
+  
+  saveBuffer {
     arg action = false;
     this.toSoundFile(true);
     if (Array == soundfile.class, {  
@@ -213,22 +245,5 @@ SpaceTracker {
     });
   }
 
-  writeTree {
-    arg force = false;
- 
-    this.openSounds(soundfile);
-
-    write = writeClass.new(sounds, tree, linemap);
-    write.fromNumeric;
-  }
-
-  fromBuffer {
-    arg buffer, action;
-    soundfile = tmp.file(soundExtension);
-    buffer.write(soundfile, headerFormat, sampleFormat, -1, 0, false, {
-      this.writeSounds(soundfile);
-      action.value(this);
-    });
-  }
 }
 
