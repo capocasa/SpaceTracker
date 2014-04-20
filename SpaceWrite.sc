@@ -9,24 +9,35 @@ SpaceWrite {
     linemap,
     sounds,
     
-    // First pass state
+    // First pass state (changes with iteration)
     previousOverlap,
     latestEnd,
     previousEnd,
     previousType,
     
-    // Second pass state
+    // First pass reassign (gets reassigned after each iteration)
+    isNote,
     index,
+    overlapBackward,
+    overlapForward,
+    overlap,
     parallel,
+    type,
+    
+    // Second pass state (re-used commented out)
+    // index,
+    // parallel,
     begin,
     changed,
     paralleled,
+    
+    // Second pass reassign
+    line,
+    indent,
+    parallel,
   
     // Shared state
-
-    // The first pass will fill this with instructions
-    // for the second pass
-    changes
+    changes            // This contains the information the first pass gleans for the second
   ;
 
   init {
@@ -144,20 +155,9 @@ SpaceWrite {
   }
 
   firstPass {
-    // Initialize
     
     this.soundsDo({
       arg lines,begins,ends,notes,times,drop;
-      // Variables that get re-assigned for every iteration
-      var
-        isNote,
-        index,
-        overlapBackward,
-        overlapForward,
-        overlap,
-        parallel,
-        type
-      ;
       // Default values
       overlap = false;
       overlapBackward = false;
@@ -249,13 +249,6 @@ SpaceWrite {
     this.soundsDo({
       arg lines,begins,ends,notes,times,drop;
  
-      // Variables that get re-assigned for every iteration
-      var
-        line,
-        indent,
-        parallel
-      ;
-      
       parallel = false;
       
       if (drop.notNil, {
