@@ -240,14 +240,16 @@ SpaceWrite {
           if (parallel, {
             index = begins.minIndex;
             if (paralleled == lines.size, {
-              #parallel, changed = changes.removeAt(0);
+              parallel = changes.removeAt(0);
+              changed =  changes.removeAt(0);
               paralleled = 0;
             }, {
               paralleled = paralleled + 1;
             });
             indent = 1;
           },{
-            #parallel, changed = changes.removeAt(0);
+            parallel = changes.removeAt(0);
+            changed =  changes.removeAt(0);
           });
         },{
           if (parallel, {

@@ -15,7 +15,7 @@ SpaceRead {
   init {
   }
 
-  toSounds {
+  toNumeric {
     var index, time, times, indentTime, indentTimes;
     
     index = 0;
