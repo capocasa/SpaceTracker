@@ -4,7 +4,7 @@ SpaceTmp {
     <>length
   ;
   *new {
-    arg length;
+    arg length = 16;
     ^super.newCopyArgs(length);
   }
 
@@ -16,8 +16,8 @@ SpaceTmp {
   }
  
   file {
-    arg extension;
-    ^Platform.defaultTempDir +/+ this.class.name.asString.toLower ++ this.rnd ++ $. ++ extension;
+    arg extension = "";
+    ^Platform.defaultTempDir +/+ this.class.name.asString.toLower ++ this.rnd ++ if(extension == "", "", $. ++ extension);
   }
   
 }
