@@ -10,24 +10,27 @@ SpaceWrite {
     sounds,
     
     // First pass state
-    previousOverlap=false,
-    latestEnd=0,
-    previousEnd=0,
-    previousType=nil,
+    previousOverlap,
+    latestEnd,
+    previousEnd,
+    previousType,
     
     // Second pass state
-    index = 0,
-    parallel = false,
-    begin = 0,
-    changed = 0,
-    paralleled = 0,
+    index,
+    parallel,
+    begin,
+    changed,
+    paralleled,
   
     // Shared state
+
+    // The first pass will fill this with instructions
+    // for the second pass
     changes
   ;
 
   init {
-    changes = List.new;
+    changes = List.new; 
   }
 
   *new {
@@ -125,6 +128,21 @@ SpaceWrite {
     });
   }
   
+  resetSounds {
+    sounds = soundsInit.copy;
+    sounds.do({
+      arg sound;
+      sound.seek(0);
+    });
+  }
+
+  initFirstPass {
+    previousOverlap=false;
+    latestEnd=0;
+    previousEnd=0;
+    previousType=nil; 
+  }
+
   firstPass {
     // Initialize
     
@@ -218,6 +236,14 @@ SpaceWrite {
     });
   }
 
+  initSecondPass {
+    index = 0;
+    parallel = false;
+    begin = 0;
+    changed = 0;
+    paralleled = 0;
+  }
+
   secondPass {
 
     this.soundsDo({
@@ -273,29 +299,18 @@ SpaceWrite {
     });
   }
 
-  reset {
-    sounds = soundsInit.copy;
-    sounds.do({
-      arg sound;
-      sound.seek(0);
-    });
-  }
-
-  fromSoundFile {
+  fromNumeric {
     
-    var s;
-
-    // The first pass will fill this with instructions
-    // for the second pass
-
     // First pass: Discover overlaps in sound files
-    this.reset;
+    this.resetSounds;
+    this.initFirstPass;
     this.firstPass;
 
     changes.postln;
 
     // Second pass: Write to tree using information collected in first pass
-    this.reset;
+    this.resetSounds;
+    this.initSecondPass;
     this.secondPass;
   }
 }
