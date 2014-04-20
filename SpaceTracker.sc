@@ -44,6 +44,7 @@ SpaceTracker {
   *initClass {
     treeClass = SpaceTree;
     readClass = SpaceRead;
+    writeClass = SpaceWrite;
     linemapClass = SpaceLinemap;
     tmpClass = SpaceTmp;
     soundfileClass = SoundFile;
@@ -142,6 +143,29 @@ SpaceTracker {
       };
     });
   }
+  
+  openSounds {
+    arg soundfile;
+    sounds = List.new;
+    
+    if (false == File.exists(soundfile)) {
+      (soundfile + "does not exist").throw;
+    };
+    block {
+      var i, sound, file;
+      i = 0;
+      file = soundfile;
+      while ({
+        File.exists(file);
+      }, {
+        sound = soundfileClass.openRead(file);
+        sounds.add(sound);
+        //sources.add(i);
+        i = i + 1;
+        file = soundfile ++ $. ++ i;
+      });
+    };
+  }
 
   toSoundFile {
     arg arg_soundfile, force = false;
@@ -176,8 +200,11 @@ SpaceTracker {
 
   fromSoundFile {
     arg soundfile, force = false;
-  
-    write = writeClass.new
+ 
+    this.openSounds(soundfile);
+
+    write = writeClass.new(sounds, tree, linemap);
+    write.fromSoundFile;
   }
 
   fromBuffer {
