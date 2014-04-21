@@ -37,7 +37,15 @@ SpaceWrite {
     parallel,
   
     // Shared state
-    changes            // This contains the information the first pass gleans for the second
+    changes,            // This contains the information the first pass gleans for the second
+  
+    // Iteration state
+    lines,
+    begins,
+    ends,
+    notes,
+    times,
+    drop
   ;
 
   init {
@@ -50,19 +58,14 @@ SpaceWrite {
   }
 
   soundsDo {
-    arg callback;
+    arg action;
     var
-      lines,
-      begins,
-      ends,
       delta,
       polyphony,
       numChannels,
       consumed,
-      notes,
       times,
-      isNote,
-      drop
+      isNote
     ;
     
     polyphony = sounds.size;
@@ -123,7 +126,7 @@ SpaceWrite {
       
       drop = isNote.indexOf(false);
 
-      consumed = callback.(lines,begins,ends,notes,times,drop);
+      consumed = action.value;
 
       if (consumed.isNil) {
         "Please return the index to consume".throw;
@@ -157,7 +160,6 @@ SpaceWrite {
   firstPass {
     
     this.soundsDo({
-      arg lines,begins,ends,notes,times,drop;
       // Default values
       overlap = false;
       overlapBackward = false;
@@ -303,7 +305,6 @@ SpaceWrite {
   secondPass {
 
     this.soundsDo({
-      arg lines,begins,ends,notes,times,drop;
  
       parallel = false;
       
@@ -321,7 +322,7 @@ SpaceWrite {
             this.notChangedParallel;
           },{
             this.notChangedNotParallel;
-          }
+          });
         });
 
         this.prepareLine;
