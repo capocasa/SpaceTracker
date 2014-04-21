@@ -244,6 +244,62 @@ SpaceWrite {
     paralleled = 0;
   }
 
+  // Second pass submethods
+
+  drop {
+    index = drop;
+    indent = 0;
+  }
+
+  isChanged {
+    ^ends.at(index) >= changed;
+  }
+
+  getChanges {
+    parallel = changes.removeAt(0);
+    changed =  changes.removeAt(0);
+  }
+
+  changedParallel {
+    index = begins.minIndex;
+    if (paralleled == lines.size, {
+      this.getChanges;
+      paralleled = 0;
+    }, {
+      paralleled = paralleled + 1;
+    });
+    indent = 1;
+  }
+
+  changedNotParallel {
+    this.getChanges;
+    this.resetIndent;
+  }
+
+  notChangedParallel {
+    if (parallel, {
+      indent = 2;
+    });
+  }
+
+  notChangedNotParallel {
+    this.resetIndent;
+  }
+
+  resetIndent {
+    index = begins.minIndex;
+    indent = 0;
+  }
+
+  prepareLine {
+    line = lines[index];
+    line = linemap.convertToSymbolic(line);
+  }
+
+  writeLine {
+    tree.write(line, indent);
+  }
+
   secondPass {
 
     this.soundsDo({
@@ -252,40 +308,24 @@ SpaceWrite {
       parallel = false;
       
       if (drop.notNil, {
-        index = drop;
-        indent = 0;
+        this.drop;
       },{
-        if (ends.at(index) >= changed, {
+        if (this.isChanged, {
           if (parallel, {
-            index = begins.minIndex;
-            if (paralleled == lines.size, {
-              parallel = changes.removeAt(0);
-              changed =  changes.removeAt(0);
-              paralleled = 0;
-            }, {
-              paralleled = paralleled + 1;
-            });
-            indent = 1;
+            this.changedParallel;
           },{
-            parallel = changes.removeAt(0);
-            changed =  changes.removeAt(0);
+            this.changedNotParallel;
           });
         },{
-          if (parallel, {
-            indent = 2;
-          });
+          if(parallel, {
+            this.notChangedParallel;
+          },{
+            this.notChangedNotParallel;
+          }
         });
 
-        if (false == parallel, {
-          index = begins.minIndex;
-          indent = 0;
-        });
-        
-        line = lines[index];
-        line = linemap.convertToSymbolic(line);
-        
-        tree.write(line, indent);
-        
+        this.prepareLine;
+        this.writeLine;
       });
 
       index;
