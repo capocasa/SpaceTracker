@@ -9,7 +9,7 @@ SpaceWrite {
     linemap,
     sounds,
     
-    // First pass state (changes with iteration)
+    // First pass state (sections with iteration)
     previousOverlap,
     latestEnd,
     previousEnd,
@@ -21,23 +21,23 @@ SpaceWrite {
     overlapBackward,
     overlapForward,
     overlap,
-    parallel,
+    sectionParallel,
     type,
     
     // Second pass state (re-used commented out)
     // index,
-    // parallel,
+    // sectionParallel,
     begin,
-    changed,
-    paralleled,
+    sectionBegin,
+    parallelCount,
     
     // Second pass reassign
     line,
     indent,
-    parallel,
+    sectionParallel,
   
     // Shared state
-    changes,            // This contains the information the first pass gleans for the second
+    sections,            // This contains the information the first pass gleans for the second
   
     // Iteration state
     lines,
@@ -49,7 +49,7 @@ SpaceWrite {
   ;
 
   init {
-    changes = List.new; 
+    sections = List.new; 
   }
 
   *new {
@@ -191,13 +191,13 @@ SpaceWrite {
         overlap = overlapBackward || overlapForward;
         
         // detect section change
-        parallel = nil;
+        sectionParallel = nil;
         if (overlap && (false == previousOverlap)) {
-          parallel = true;
+          sectionParallel = true;
         };
         
         if ((false == overlap) && previousOverlap) {
-          parallel = false;
+          sectionParallel = false;
         };
         
         previousEnd = ends[index];
@@ -207,9 +207,9 @@ SpaceWrite {
       
       // Keep this debug output around, it's the bread
       // and butter of developing this algorithm more easily
-      
+      /*
       [
-        switch(parallel, false, "<", nil, " ", true, ">"),
+        switch(sectionParallel, false, "<", nil, " ", true, ">"),
         if(overlap, "8", "o"),
         //if(previousOverlap, \previousOverlap, \nopreviousOverlap),
         if(overlapBackward, ":", "."),
@@ -220,14 +220,14 @@ SpaceWrite {
         index: index
         //time: times[index]
       ].postln;
-     
+      */
       // Save guidance to inform the second pass
-      //changes=changes.add(type);
-      //changes=changes.add(0);
-      //changes.atInc(changes.size-1);
-      if (parallel.notNil, {
-        changes.add(parallel);
-        changes.add(begins[index]);
+      //sections=sections.add(type);
+      //sections=sections.add(0);
+      //sections.atInc(sections.size-1);
+      if (sectionParallel.notNil, {
+        sections.add(sectionParallel);
+        sections.add(begins[index]);
       });
 
       // Lookbehind
@@ -240,10 +240,10 @@ SpaceWrite {
 
   initSecondPass {
     index = 0;
-    parallel = false;
+    sectionParallel = false;
     begin = 0;
-    changed = 0;
-    paralleled = 0;
+    sectionBegin = 0;
+    parallelCount = 0;
   }
 
   // Second pass submethods
@@ -254,41 +254,40 @@ SpaceWrite {
   }
 
   isChanged {
-    ^ends.at(index) >= changed;
+    ^ends.at(index) >= sectionBegin;
   }
 
-  getChanges {
-    parallel = changes.removeAt(0);
-    changed =  changes.removeAt(0);
+  consumeChanges {
+    sectionParallel = sections.removeAt(0);
+    sectionBegin =  sections.removeAt(0);
   }
 
   changedParallel {
     index = begins.minIndex;
-    if (paralleled == lines.size, {
-      this.getChanges;
-      paralleled = 0;
+    
+    // Go through all parallels of this section
+    if (parallelCount == lines.size, {
+      this.consumeChanges;
+      parallelCount = 0;
     }, {
-      paralleled = paralleled + 1;
+      parallelCount = parallelCount + 1;
     });
     indent = 1;
   }
 
   changedNotParallel {
-    this.getChanges;
-    this.resetIndent;
+    this.consumeChanges;
+    index = begins.minIndex;
+    indent = 0;
   }
 
   notChangedParallel {
-    if (parallel, {
+    if (indent != 2, {
       indent = 2;
     });
   }
 
   notChangedNotParallel {
-    this.resetIndent;
-  }
-
-  resetIndent {
     index = begins.minIndex;
     indent = 0;
   }
@@ -304,21 +303,31 @@ SpaceWrite {
 
   secondPass {
 
-    this.soundsDo({
- 
-      parallel = false;
-      
+    sections.postln;
+
+    this.soundsDo({ 
+
       if (drop.notNil, {
         this.drop;
       },{
+        
+        // Debug output, keep around
+        [
+          if(sectionParallel,\parallel, \sequential),
+          if(this.isChanged, \changed, \remained),
+          \sectionBegin, sectionBegin,
+          \indexEnd, ends.at(index)
+        ].postln;
+        
+        
         if (this.isChanged, {
-          if (parallel, {
+          if (sectionParallel, {
             this.changedParallel;
           },{
             this.changedNotParallel;
           });
         },{
-          if(parallel, {
+          if(sectionParallel, {
             this.notChangedParallel;
           },{
             this.notChangedNotParallel;
@@ -339,8 +348,6 @@ SpaceWrite {
     this.resetSounds;
     this.initFirstPass;
     this.firstPass;
-
-    changes.postln;
 
     // Second pass: Write to tree using information collected in first pass
     this.resetSounds;
