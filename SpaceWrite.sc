@@ -254,7 +254,7 @@ SpaceWrite {
   }
 
   isChanged {
-    ^ends.at(index) >= sectionBegin;
+    ^ends.at(index) >= sectionBegin && sections.size > 0;
   }
 
   consumeChanges {
