@@ -241,7 +241,6 @@ SpaceWrite {
   initSecondPass {
     index = 0;
     sectionParallel = false;
-    begin = 0;
     sectionBegin = 0;
     parallelCount = 0;
   }
@@ -316,9 +315,9 @@ SpaceWrite {
           if(sectionParallel,\parallel, \sequential),
           if(this.isChanged, \changed, \remained),
           \sectionBegin, sectionBegin,
-          \indexEnd, ends.at(index)
+          \indexEnd, ends.at(index),
+          \sections, sections
         ].postln;
-        
         
         if (this.isChanged, {
           if (sectionParallel, {
