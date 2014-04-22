@@ -165,7 +165,24 @@ SpaceTracker {
       (tree.path + "does not exist").throw;
     };
   }
+  
+  validateTreeWrite {
+    if (File.exists(tree.path)) {
+      (tree.path + "exists, use 'force' to overwrite").throw;
+    };
+  }
 
+  validateSoundRead {
+    polyphony.do({
+      arg i;
+      var file;
+      file = this.soundFileName(i);
+      if (false == File.exists(file)) {
+        (file + "does not exist").throw;
+      };
+    });
+  }
+  
   validateSoundWrite {
     polyphony.do({
       arg i;
@@ -176,7 +193,7 @@ SpaceTracker {
       };
     });
   }
-  
+
   openSounds {
     sounds = List.new;
     
@@ -216,7 +233,11 @@ SpaceTracker {
 
   writeTree {
     arg force = false;
- 
+
+    if (false == force) {
+      this.validateTreeWrite;
+    };
+    File.delete(treefile);
     this.openSounds(soundfile);
 
     write = writeClass.new(sounds, tree, linemap);
