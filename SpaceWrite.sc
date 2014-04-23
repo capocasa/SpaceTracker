@@ -29,13 +29,12 @@ SpaceWrite {
     // sectionParallel,
     begin,
     sectionBegin,
-    parallelCount,
+    nextBegin,
+    newSection,
     
     // Second pass reassign
     line,
     indent,
-    sectionParallel,
-  
     // Shared state
     sections,            // This contains the information the first pass gleans for the second
   
@@ -49,7 +48,6 @@ SpaceWrite {
   ;
 
   init {
-    sections = List.new; 
   }
 
   *new {
@@ -151,6 +149,7 @@ SpaceWrite {
   }
 
   initFirstPass {
+    sections = List[false, 0]; // TODO: Do not assume the file begins sequential
     previousOverlap=false;
     latestEnd=0;
     previousEnd=0;
@@ -239,10 +238,9 @@ SpaceWrite {
   }
 
   initSecondPass {
-    index = 0;
-    sectionParallel = false;
-    sectionBegin = 0;
-    parallelCount = 0;
+    sections.postln;
+    newSection = false;
+    this.startSection;
   }
 
   // Second pass submethods
@@ -252,41 +250,32 @@ SpaceWrite {
     indent = 0;
   }
 
-  isChanged {
-    ^ends.at(index) >= sectionBegin && sections.size > 0;
-  }
-
-  consumeChanges {
+  startSection {
     sectionParallel = sections.removeAt(0);
-    sectionBegin =  sections.removeAt(0);
+    sectionBegin = sections.removeAt(0);
+    nextBegin = sections.at(1) ?? 2147483647; // TODO: replace maxInt with song length
   }
 
-  changedParallel {
+  newParallel {
     index = begins.minIndex;
-    
-    // Go through all parallels of this section
-    if (parallelCount == lines.size, {
-      this.consumeChanges;
-      parallelCount = 0;
-    }, {
-      parallelCount = parallelCount + 1;
-    });
     indent = 1;
   }
 
-  changedNotParallel {
-    this.consumeChanges;
+  newSequential {
     index = begins.minIndex;
     indent = 0;
+    if (this.isNewSection) {
+      this.startSection;
+    };
   }
 
-  notChangedParallel {
+  sameParallel {
     if (indent != 2, {
       indent = 2;
     });
   }
 
-  notChangedNotParallel {
+  sameSequential {
     index = begins.minIndex;
     indent = 0;
   }
@@ -300,38 +289,48 @@ SpaceWrite {
     tree.write(line, indent);
   }
 
+  isNewSection {
+    ^ (ends.at(index) >= nextBegin);
+  }
+
+  renewSection {
+    newSection = this.isNewSection;
+  }
+
   secondPass {
 
-    sections.postln;
-
     this.soundsDo({ 
-
       if (drop.notNil, {
         this.drop;
       },{
         
         // Debug output, keep around
+
         [
-          if(sectionParallel,\parallel, \sequential),
-          if(this.isChanged, \changed, \remained),
-          \sectionBegin, sectionBegin,
-          \indexEnd, ends.at(index),
-          \sections, sections
+          String.fill(indent, $.),
+          if(sectionParallel,$=, $-),
+          if(newSection, $o, $.),
+          ends.at(index),
+          nextBegin,
+          //begins,
+          //ends,
         ].postln;
-        
-        if (this.isChanged, {
-          if (sectionParallel, {
-            this.changedParallel;
+     
+        if (sectionParallel, {
+          if (newSection, {
+            this.newParallel;
           },{
-            this.changedNotParallel;
+            this.sameParallel;
           });
         },{
-          if(sectionParallel, {
-            this.notChangedParallel;
+          if (newSection, {
+            this.newSequential;
           },{
-            this.notChangedNotParallel;
+            this.sameSequential;
           });
         });
+
+        this.renewSection;
 
         this.prepareLine;
         this.writeLine;
@@ -339,6 +338,8 @@ SpaceWrite {
 
       index;
     });
+  
+  
   }
 
   fromNumeric {
