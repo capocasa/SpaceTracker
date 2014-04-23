@@ -30,7 +30,7 @@ SpaceWrite {
     begin,
     sectionBegin,
     nextBegin,
-    newSection,
+    nextIsNewSection,
     
     // Second pass reassign
     line,
@@ -239,7 +239,8 @@ SpaceWrite {
 
   initSecondPass {
     sections.postln;
-    newSection = false;
+    nextIsNewSection;
+    index = 0;
     this.startSection;
   }
 
@@ -264,12 +265,10 @@ SpaceWrite {
   newSequential {
     index = begins.minIndex;
     indent = 0;
-    if (this.isNewSection) {
-      this.startSection;
-    };
   }
 
   sameParallel {
+    // keep index
     if (indent != 2, {
       indent = 2;
     });
@@ -289,12 +288,25 @@ SpaceWrite {
     tree.write(line, indent);
   }
 
-  isNewSection {
+  moreInPresentSection {
+    ^ (ends.minItem < nextBegin);
+  }
+
+  nextIsNewSection {
     ^ (ends.at(index) >= nextBegin);
   }
 
-  renewSection {
-    newSection = this.isNewSection;
+  determineSection {
+    if (this.nextIsNewSection) {
+      if (sectionParallel == false) {
+        this.startSection;
+      };
+      if (sectionParallel) {
+        if (false == this.moreInPresentSection) {
+          this.startSection;
+        };
+      };
+    };
   }
 
   secondPass {
@@ -303,43 +315,43 @@ SpaceWrite {
       if (drop.notNil, {
         this.drop;
       },{
-        
-        // Debug output, keep around
 
-        [
-          String.fill(indent, $.),
-          if(sectionParallel,$=, $-),
-          if(newSection, $o, $.),
-          ends.at(index),
-          nextBegin,
-          //begins,
-          //ends,
-        ].postln;
-     
+        // Process index & indent
         if (sectionParallel, {
-          if (newSection, {
+          if (this.nextIsNewSection, {
             this.newParallel;
           },{
             this.sameParallel;
           });
         },{
-          if (newSection, {
+          if (this.nextIsNewSection, {
             this.newSequential;
           },{
             this.sameSequential;
           });
         });
-
-        this.renewSection;
-
+        
+        // Write
         this.prepareLine;
         this.writeLine;
+        
+        // Determine next section
+        this.determineSection;
+
+        // Debug output, keep around
+        [
+          String.fill(indent, $.),
+          if(sectionParallel,$=, $-),
+          if(this.nextIsNewSection, $o, $.),
+          ends.at(index),
+          nextBegin,
+          //begins,
+          //ends,
+        ].postln;
       });
 
       index;
     });
-  
-  
   }
 
   fromNumeric {
