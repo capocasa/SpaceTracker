@@ -257,7 +257,7 @@ SpaceWrite {
 
   determineSection {
     // Uses index from previous iteration
-    if (index.isNil, {
+    if (nextBegin.isNil, {
       this.startSection;
     },{
       nextIsNewSection = this.nextIsNewSection;
@@ -309,12 +309,15 @@ SpaceWrite {
   }
 
   thisIsNewSection {
-    var return = (ends.at(index) >= sectionBegin);
+    var return;
+    return = (ends.at(index) >= sectionBegin);
     ^return;
   }
   
   nextIsNewSection {
-    var return = (ends.at(index) >= nextBegin);
+    var return;
+    [ends,nextBegin,index].postln;
+    return = (ends.at(index) >= nextBegin);
     ^return;
   }
 
@@ -322,20 +325,21 @@ SpaceWrite {
 
     this.soundsDo({ 
         
-      // Debug output, keep around
-      [
-        String.fill(indent, $.),
-        if(sectionParallel,$=, $-),
-        if(this.nextIsNewSection, $o, $.),
-        ends.at(index),
-        nextBegin,
-        //begins,
-        //ends,
-      ].postln;
       
       if (drop.notNil, {
         this.drop;
       },{
+      
+        // Debug output, keep around
+        [
+          $> ++ String.fill(indent, $.),
+          switch(sectionParallel,nil,$|, true, $=, false, $-),
+          //if(index.isNil, if(this.nextIsNewSection, $o, $.), $-),
+          //if(index.isNil, $-, ends.at(index)),
+          nextBegin,
+          //begins,
+          //ends,
+        ].postln;
         
         // Determine next section
         this.determineSection;
