@@ -31,7 +31,6 @@ SpaceWrite {
     sectionBegin,
     nextBegin,
     nextIsNewSection,
-    thisIsNewSection,
     
     // Second pass reassign
     line,
@@ -308,15 +307,8 @@ SpaceWrite {
     ^ (ends.minItem < nextBegin);
   }
 
-  thisIsNewSection {
-    var return;
-    return = (ends.at(index) >= sectionBegin);
-    ^return;
-  }
-  
   nextIsNewSection {
     var return;
-    [ends,nextBegin,index].postln;
     return = (ends.at(index) >= nextBegin);
     ^return;
   }
@@ -335,8 +327,8 @@ SpaceWrite {
           $> ++ String.fill(indent, $.),
           switch(sectionParallel,nil,$|, true, $=, false, $-),
           //if(index.isNil, if(this.nextIsNewSection, $o, $.), $-),
-          //if(index.isNil, $-, ends.at(index)),
-          nextBegin,
+          \currentEnd++$:++if(index.isNil, $-, ends.at(index)),
+          \nextBegin++$:++nextBegin,
           //begins,
           //ends,
         ].postln;
