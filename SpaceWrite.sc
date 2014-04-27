@@ -31,6 +31,7 @@ SpaceWrite {
     sectionBegin,
     nextBegin,
     nextIsNewSection,
+    thisIsNewSection,
     
     // Second pass reassign
     line,
@@ -238,10 +239,7 @@ SpaceWrite {
   }
 
   initSecondPass {
-    sections.postln;
-    nextIsNewSection;
-    index = 0;
-    this.startSection;
+    index = nil;
   }
 
   // Second pass submethods
@@ -257,26 +255,44 @@ SpaceWrite {
     nextBegin = sections.at(1) ?? 2147483647; // TODO: replace maxInt with song length
   }
 
-  newParallel {
-    index = begins.minIndex;
-    indent = 1;
-  }
-
-  newSequential {
-    index = begins.minIndex;
-    indent = 0;
-  }
-
-  sameParallel {
-    // keep index
-    if (indent != 2, {
-      indent = 2;
+  determineSection {
+    // Uses index from previous iteration
+    if (index.isNil, {
+      this.startSection;
+    },{
+      nextIsNewSection = this.nextIsNewSection;
+      if (nextIsNewSection) {
+        if (sectionParallel, {
+          if (false == this.moreInPresentSection) {
+            this.startSection;
+          };
+        },{
+          this.startSection;
+        });
+      };
     });
   }
 
-  sameSequential {
-    index = begins.minIndex;
-    indent = 0;
+  determineIndex {
+    if (sectionParallel, {
+      if (nextIsNewSection) {
+        index = begins.minIndex;
+      };
+    },{
+      index = begins.minIndex;
+    })
+  }
+
+  determineIndent {
+    if (sectionParallel, {
+      if (nextIsNewSection, {
+        indent = 1;
+      },{
+        indent = 2;
+      });
+    },{
+      indent = 0;
+    });
   }
 
   prepareLine {
@@ -292,62 +308,46 @@ SpaceWrite {
     ^ (ends.minItem < nextBegin);
   }
 
-  nextIsNewSection {
-    ^ (ends.at(index) >= nextBegin);
+  thisIsNewSection {
+    var return = (ends.at(index) >= sectionBegin);
+    ^return;
   }
-
-  determineSection {
-    if (this.nextIsNewSection) {
-      if (sectionParallel == false) {
-        this.startSection;
-      };
-      if (sectionParallel) {
-        if (false == this.moreInPresentSection) {
-          this.startSection;
-        };
-      };
-    };
+  
+  nextIsNewSection {
+    var return = (ends.at(index) >= nextBegin);
+    ^return;
   }
 
   secondPass {
 
     this.soundsDo({ 
+        
+      // Debug output, keep around
+      [
+        String.fill(indent, $.),
+        if(sectionParallel,$=, $-),
+        if(this.nextIsNewSection, $o, $.),
+        ends.at(index),
+        nextBegin,
+        //begins,
+        //ends,
+      ].postln;
+      
       if (drop.notNil, {
         this.drop;
       },{
+        
+        // Determine next section
+        this.determineSection;
 
         // Process index & indent
-        if (sectionParallel, {
-          if (this.nextIsNewSection, {
-            this.newParallel;
-          },{
-            this.sameParallel;
-          });
-        },{
-          if (this.nextIsNewSection, {
-            this.newSequential;
-          },{
-            this.sameSequential;
-          });
-        });
+        this.determineIndex;
+        this.determineIndent;
         
         // Write
         this.prepareLine;
         this.writeLine;
         
-        // Determine next section
-        this.determineSection;
-
-        // Debug output, keep around
-        [
-          String.fill(indent, $.),
-          if(sectionParallel,$=, $-),
-          if(this.nextIsNewSection, $o, $.),
-          ends.at(index),
-          nextBegin,
-          //begins,
-          //ends,
-        ].postln;
       });
 
       index;
