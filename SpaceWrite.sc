@@ -304,6 +304,7 @@ SpaceWrite {
   }
 
   moreInPresentSection {
+    ("     "+ends.minItem+nextBegin).postln;
     ^ (ends.minItem < nextBegin);
   }
 
@@ -321,17 +322,6 @@ SpaceWrite {
       if (drop.notNil, {
         this.drop;
       },{
-      
-        // Debug output, keep around
-        [
-          $> ++ String.fill(indent, $.),
-          switch(sectionParallel,nil,$|, true, $=, false, $-),
-          //if(index.isNil, if(this.nextIsNewSection, $o, $.), $-),
-          \currentEnd++$:++if(index.isNil, $-, ends.at(index)),
-          \nextBegin++$:++nextBegin,
-          //begins,
-          //ends,
-        ].postln;
         
         // Determine next section
         this.determineSection;
@@ -343,6 +333,18 @@ SpaceWrite {
         // Write
         this.prepareLine;
         this.writeLine;
+        
+        // Debug output, keep around
+        [
+          String.fill(indent, $ ),
+          line[2], $ ,
+          //if(index.isNil, if(this.nextIsNewSection, $o, $.), $-),
+          switch(sectionParallel,nil,$|, true, $=, false, $-), $ ,
+          \currentEnd++$:++if(index.isNil, $-, ends.at(index)), $ ,
+          \nextBegin++$:++nextBegin, $ ,
+          //begins,
+          //ends,
+        ].join.postln;
         
       });
 
