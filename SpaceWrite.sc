@@ -24,10 +24,11 @@ SpaceWrite {
     sectionParallel,
     type,
     
-    // Second pass state (re-used commented out)
-    // index,
-    // sectionParallel,
-    begin,
+    // Second pass state (commented out if re-used from first pass)
+      // index,
+      // sectionParallel,
+      // previousEnd,
+    currentEnd,
     sectionBegin,
     nextBegin,
     nextIsNewSection,
@@ -35,10 +36,11 @@ SpaceWrite {
     // Second pass reassign
     line,
     indent,
-    // Shared state
-    sections,            // This contains the information the first pass gleans for the second
+
+    // Transfer state (used to convey information from the first to the second pass)
+    sections,
   
-    // Iteration state
+    // Iteration state (used by soundsDo)
     lines,
     begins,
     ends,
@@ -213,7 +215,6 @@ SpaceWrite {
         //if(previousOverlap, \previousOverlap, \nopreviousOverlap),
         if(overlapBackward, ":", "."),
         if(overlapForward, "=", "-"),
-        begin: begins[index],
         end: ends[index],
         note: linemap.convertToSymbolicNote(notes[index]),
         index: index
@@ -238,8 +239,12 @@ SpaceWrite {
   }
 
   initSecondPass {
+    \sections.post;
+    sections.postln;
     this.startSection;
     nextIsNewSection = true;
+    currentEnd = nil;
+    previousEnd = nil;
   }
 
   // Second pass submethods
@@ -269,6 +274,8 @@ SpaceWrite {
   }
 
   determineIndex {
+    previousEnd = currentEnd;
+    currentEnd = ends.at(index);
     if (sectionParallel, {
       if (nextIsNewSection, {
         ("        "++\parallelSetIndex).postln;
@@ -283,7 +290,7 @@ SpaceWrite {
 
   determineIndent {
     if (sectionParallel, {
-      if (nextIsNewSection, {
+      if (previousEnd >= currentEnd, {
         indent = 1;
       },{
         indent = 2;
@@ -311,8 +318,8 @@ SpaceWrite {
 
   nextIsNewSection {
     var return;
-    return = (ends.at(index) >= nextBegin);
-    ("     "+ends.at(index)+nextBegin+if(return,\nextNew,\nextNotNew)).postln;
+    return = (currentEnd >= nextBegin);
+    ("     "+currentEnd+nextBegin+if(return,\nextNew,\nextNotNew)).postln;
     ^return;
   }
 
@@ -340,7 +347,8 @@ SpaceWrite {
           line[2], $ ,
           //if(index.isNil, if(this.nextIsNewSection, $o, $.), $-),
           switch(sectionParallel,nil,$|, true, $=, false, $-), $ ,
-          \currentEnd++$:++if(index.isNil, $-, ends.at(index)), $ ,
+          \previousEnd++$:++if(index.isNil, $-, previousEnd), $ ,
+          \currentEnd++$:++if(index.isNil, $-, currentEnd), $ ,
           \nextBegin++$:++nextBegin, $ ,
           //begins,
           //ends,
