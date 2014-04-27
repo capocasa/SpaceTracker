@@ -238,7 +238,8 @@ SpaceWrite {
   }
 
   initSecondPass {
-    index = nil;
+    this.startSection;
+    nextIsNewSection = true;
   }
 
   // Second pass submethods
@@ -255,28 +256,26 @@ SpaceWrite {
   }
 
   determineSection {
-    // Uses index from previous iteration
-    if (nextBegin.isNil, {
-      this.startSection;
-    },{
-      nextIsNewSection = this.nextIsNewSection;
-      if (nextIsNewSection) {
-        if (sectionParallel, {
-          if (false == this.moreInPresentSection) {
-            this.startSection;
-          };
-        },{
+    nextIsNewSection = this.nextIsNewSection;
+    if (nextIsNewSection) {
+      if (sectionParallel, {
+        if (false == this.moreInPresentSection) {
           this.startSection;
-        });
-      };
-    });
+        };
+      },{
+        this.startSection;
+      });
+    };
   }
 
   determineIndex {
     if (sectionParallel, {
-      if (nextIsNewSection) {
+      if (nextIsNewSection, {
+        ("        "++\parallelSetIndex).postln;
         index = begins.minIndex;
-      };
+      },{
+        ("        "++\parallelLeaveIndex).postln;
+      });
     },{
       index = begins.minIndex;
     })
@@ -304,35 +303,36 @@ SpaceWrite {
   }
 
   moreInPresentSection {
-    ("     "+ends.minItem+nextBegin).postln;
-    ^ (ends.minItem < nextBegin);
+    var return;
+    return = (ends.minItem < nextBegin);
+    ("     "+ends.minItem+nextBegin+if(return,\moreInPresent,\noMoreInPresent)).postln;
+    ^ return;
   }
 
   nextIsNewSection {
     var return;
     return = (ends.at(index) >= nextBegin);
+    ("     "+ends.at(index)+nextBegin+if(return,\nextNew,\nextNotNew)).postln;
     ^return;
   }
 
   secondPass {
 
     this.soundsDo({ 
-        
-      
+
       if (drop.notNil, {
         this.drop;
       },{
         
-        // Determine next section
-        this.determineSection;
-
-        // Process index & indent
         this.determineIndex;
+        
         this.determineIndent;
         
-        // Write
         this.prepareLine;
+        
         this.writeLine;
+        
+        this.determineSection;
         
         // Debug output, keep around
         [
