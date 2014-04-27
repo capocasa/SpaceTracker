@@ -274,8 +274,6 @@ SpaceWrite {
   }
 
   determineIndex {
-    previousEnd = currentEnd;
-    currentEnd = ends.at(index);
     if (sectionParallel, {
       if (nextIsNewSection, {
         ("        "++\parallelSetIndex).postln;
@@ -285,7 +283,9 @@ SpaceWrite {
       });
     },{
       index = begins.minIndex;
-    })
+    });
+    previousEnd = currentEnd;
+    currentEnd = ends.at(index);
   }
 
   determineIndent {
