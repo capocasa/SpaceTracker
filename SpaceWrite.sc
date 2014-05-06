@@ -238,26 +238,11 @@ SpaceWrite {
     });
   }
 
-  initSecondPass {
-    \sections.post;
-    sections.postln;
-    this.startSection;
-    nextIsNewSection = true;
-    currentEnd = nil;
-    previousEnd = nil;
-  }
-
   // Second pass submethods
 
   drop {
     index = drop;
     indent = 0;
-  }
-
-  startSection {
-    sectionParallel = sections.removeAt(0);
-    sectionBegin = sections.removeAt(0);
-    nextBegin = sections.at(1) ?? 2147483647; // TODO: replace maxInt with song length
   }
 
   determineSection {
@@ -290,7 +275,7 @@ SpaceWrite {
 
   determineIndent {
     if (sectionParallel, {
-      if (previousEnd >= currentEnd, {
+      if (nextIsNewSection || (previousEnd >= currentEnd), {
         indent = 1;
       },{
         indent = 2;
@@ -323,6 +308,21 @@ SpaceWrite {
     ^return;
   }
 
+  startSection {
+    sectionParallel = sections.removeAt(0);
+    sectionBegin = sections.removeAt(0);
+    nextBegin = sections.at(1) ?? 2147483647; // TODO: replace maxInt with song length
+  }
+
+  initSecondPass {
+    \sections.post;
+    sections.postln;
+    this.startSection;
+    nextIsNewSection = true;
+    currentEnd = nil;
+    previousEnd = nil;
+  }
+
   secondPass {
 
     this.soundsDo({ 
@@ -338,9 +338,7 @@ SpaceWrite {
         this.prepareLine;
         
         this.writeLine;
-        
-        this.determineSection;
-        
+                
         // Debug output, keep around
         [
           String.fill(indent, $ ),
@@ -353,6 +351,8 @@ SpaceWrite {
           //begins,
           //ends,
         ].join.postln;
+
+        this.determineSection;
         
       });
 
