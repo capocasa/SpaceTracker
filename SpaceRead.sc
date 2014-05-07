@@ -36,15 +36,18 @@ SpaceRead {
   }
 
   isIndentOdd {
-    ^indent % 2 == 1;
+    var isOdd = indent % 2 == 1;
+    ^isOdd;
   }
 
   hasIndentIncreased {
-    ^indent > lastIndent ;
+    var hasIncreased = indent > lastIndent ;
+    ^hasIncreased;
   }
 
   hasIndentDecreased {
-    ^ indent < lastIndent;
+    var hasDecreased = indent < lastIndent;
+    ^hasDecreased;
   }
 
   indentTimeIncrease {
@@ -68,11 +71,58 @@ SpaceRead {
   }
 
   isDrop {
-    ^time > indentTime;
+    var isDrop = time > indentTime;
+    ^isDrop;
   }
 
   isIndentEven {
-    ^ indent % 2 == 0;
+    var isEven = indent % 2 == 0;
+    ^isEven;
+  }
+
+  iterate {
+    //[indent, lastIndent,((lastIndent - indent).abs * 0.5).round,indentTimes].postln;
+3.postln; 
+    if (line.isNil) {
+      ^nil;
+    };
+    if (this.isIndentOdd, {
+1.postln; 
+      
+      // Odd indent does parallelization, so we figure out
+      // which channel to use
+      
+      // Keep track of indentTime by indent level
+      // No note of a higher indent can come sooner than this
+      if (this.hasIndentIncreased) {
+        this.indentTimeIncrease;
+      };
+      
+      this.track;
+
+      if (this.isDrop, {
+        (this.class.name + "dropped note" + line).postln;
+        ^nil;
+      });
+    });
+
+    if (this.isIndentEven, {
+2.postln; 
+      if (this.hasIndentDecreased) {
+        this.indentTimeDecrease;
+      };
+    });
+    
+    //// Good, we figured out which channel we can use from
+    //// indentation. Now insert the note.
+    
+    this.prePause;
+
+    this.write;
+
+    // Must keep this debug line!
+    [index,line,times].postln;
+  
   }
 
   toNumeric {
@@ -80,49 +130,11 @@ SpaceRead {
     this.initNumeric;
     
     tree.parse({
-
-      // [indent, lastIndent,((lastIndent - indent).abs * 0.5).round,indentTimes].postln;
-      
-      block {
-        arg continue;
-        if (line.isNil) {
-          continue.();
-        };
-        if (this.isIndentOdd, {
-          
-          // Odd indent does parallelization, so we figure out
-          // which channel to use
-          
-          // Keep track of indentTime by indent level
-          // No note of a higher indent can come sooner than this
-          if (this.hasIndentIncreased) {
-            this.indentTimeIncrease;
-          };
-          
-          this.track;
-
-          if (this.isDrop, {
-            (this.class.name + "dropped note" + line).postln;
-            continue.();
-          });
-        });
-
-        if (this.isIndentEven, {
-          if (this.hasIndentDecreased) {
-            this.indentTimeDecrease;
-          };
-        });
-        
-        //// Good, we figured out which channel we can use from
-        //// indentation. Now insert the note.
-        
-        this.prePause;
-    
-        this.write;
-
-        // Must keep this debug line!
-        // [index,line,times].postln;
-      };
+      arg arg_line, arg_indent, arg_lastIndent;
+      line = arg_line;
+      indent = arg_indent;
+      lastIndent = arg_lastIndent;
+      this.iterate;
     });
 
     this.close;
