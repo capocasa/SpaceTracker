@@ -4,7 +4,6 @@ SpaceRead {
     tree,
     sounds,
     linemap,
-    totaltimes,
   
     // algorithm state
     index,
@@ -65,7 +64,7 @@ SpaceRead {
     indentTime = indentTimes.last;
   }
 
-  track {
+  determineNextNote {
     index = times.minIndex;
     time = times[index];
   }
@@ -98,7 +97,7 @@ SpaceRead {
         this.indentTimeIncrease;
       };
       
-      this.track;
+      this.determineNextNote;
 
       if (this.isDrop, {
         (this.class.name + "dropped note" + line).postln;
@@ -121,7 +120,8 @@ SpaceRead {
     this.write;
 
     // Must keep this debug line!
-    [index,line,times].postln;
+    
+    //[index,line,times].postln;
   
   }
 
