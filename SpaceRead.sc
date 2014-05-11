@@ -64,7 +64,7 @@ SpaceRead {
     indentTime = indentTimes.last;
   }
 
-  determineNextNote {
+  determineNextIndex {
     index = times.minIndex;
     time = times[index];
   }
@@ -97,7 +97,7 @@ SpaceRead {
         this.indentTimeIncrease;
       };
       
-      this.determineNextNote;
+      this.determineNextIndex;
 
       if (this.isDrop, {
         (this.class.name + "dropped note" + line).postln;
@@ -156,7 +156,7 @@ SpaceRead {
     // Insert main line
     line = linemap.convertToNumeric(line);
     sounds[index].writeData(line);
-    times[index] = times[index] + line[0];
+    times.atInc(index, line[0]);
   }
 
   close {
