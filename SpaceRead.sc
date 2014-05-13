@@ -11,6 +11,8 @@ SpaceRead {
     times,
     indentTime,
     indentTimes,
+    lastIndentTime,
+    maxIndentTime,
   
     // algorithm by-iteration variables
     line,
@@ -50,7 +52,6 @@ SpaceRead {
   }
 
   indentTimeIncrease {
-    var num;
     indentTime = times.maxItem;
     ((indent - lastIndent) * 0.5).round.asInteger.do({
       indentTimes.add(indentTime);
@@ -81,12 +82,10 @@ SpaceRead {
 
   iterate {
     //[indent, lastIndent,((lastIndent - indent).abs * 0.5).round,indentTimes].postln;
-3.postln; 
     if (line.isNil) {
       ^nil;
     };
     if (this.isIndentOdd, {
-1.postln; 
       
       // Odd indent does parallelization, so we figure out
       // which channel to use
@@ -106,7 +105,6 @@ SpaceRead {
     });
 
     if (this.isIndentEven, {
-2.postln; 
       if (this.hasIndentDecreased) {
         this.indentTimeDecrease;
       };
@@ -115,7 +113,7 @@ SpaceRead {
     //// Good, we figured out which channel we can use from
     //// indentation. Now insert the note.
     
-    this.prePause;
+    //this.prePause;
 
     this.write;
 
