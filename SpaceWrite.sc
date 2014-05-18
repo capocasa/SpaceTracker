@@ -325,11 +325,19 @@ SpaceWrite {
     previousEnd = nil;
   }
 
+  isDrop {
+    var drop;
+
+    drop = pauseIndex.notNil;
+
+    ^ drop;
+  }
+
   secondPass {
 
     this.soundsDo({ 
 
-      if (pauseIndex.notNil, {
+      if (this.isDrop, {
         this.drop;
       },{
         
