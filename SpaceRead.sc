@@ -67,14 +67,6 @@ SpaceRead {
     indentTime = lastIndentTime;
   }
 
-  postPause {
-    var maxIndentTime = times.maxItem;
-    if (times[index] < times.maxItem) {
-      sounds[index].writeData(FloatArray.fill(sounds[index].numChannels, 0).put(0, maxIndentTime-times[index]));
-      times[index] = maxIndentTime;
-    }
-  }
-
   determineNextIndex {
     index = times.minIndex;
     time = times[index];
@@ -120,14 +112,13 @@ SpaceRead {
     if (this.isIndentEven, {
       if (this.hasIndentDecreased) {
         this.indentTimeDecrease;
-        this.postPause;
       };
     });
     
     //// Good, we figured out which channel we can use from
     //// indentation. Now insert the note.
     
-    //this.prePause;
+    this.prePause;
 
     this.write;
 
@@ -158,6 +149,7 @@ SpaceRead {
     // Insert pre-pause if necessary
     // Parallel, so relative to indentTime when parallel started
     // Fill up with pause
+    [\prepause, times[index], indentTime].postln;
     if (times[index] < indentTime) {
       sounds[index].writeData(FloatArray.fill(sounds[index].numChannels, 0).put(0, indentTime-times[index]));
       times[index] = indentTime;
