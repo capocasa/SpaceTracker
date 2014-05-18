@@ -46,7 +46,7 @@ SpaceWrite {
     ends,
     notes,
     times,
-    drop
+    pauseIndex 
   ;
 
   init {
@@ -124,7 +124,7 @@ SpaceWrite {
       times = lines.collect({arg line; line[0]});
       isNote = notes.collect({arg note, i; note != 0 });
       
-      drop = isNote.indexOf(false);
+      pauseIndex = isNote.indexOf(false);
 
       consumed = action.value;
 
@@ -169,13 +169,13 @@ SpaceWrite {
       // Let's get started!
 
       // Loop until all lines from all sound files have been consumed   
-      if (drop.isNil, {
+      if (pauseIndex.isNil, {
         index = begins.minIndex;
       },{
-        index = drop;
+        index = pauseIndex;
       });
       
-      if (drop.isNil, {
+      if (pauseIndex.isNil, {
         // detect overlap
         overlapBackward = previousEnd > begins[index];
         
@@ -243,7 +243,7 @@ SpaceWrite {
   // Second pass submethods
 
   drop {
-    index = drop;
+    index = pauseIndex;
     indent = 0;
   }
 
@@ -329,7 +329,7 @@ SpaceWrite {
 
     this.soundsDo({ 
 
-      if (drop.notNil, {
+      if (pauseIndex.notNil, {
         this.drop;
       },{
         
