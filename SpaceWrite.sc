@@ -190,7 +190,6 @@ SpaceWrite {
         });
 
         overlap = overlapBackward || overlapForward;
-        
         // detect section change
         sectionParallel = nil;
         if (overlap && (false == previousOverlap)) {
@@ -200,9 +199,14 @@ SpaceWrite {
         if ((false == overlap) && previousOverlap) {
           sectionParallel = false;
         };
-        
+ 
         previousEnd = ends[index];
+      
+        // Lookbehind
+        previousOverlap = overlap;
       });
+        
+      [\overlaps, linemap.convertToSymbolicNote(notes[index]), overlap, previousOverlap].postln;
       
       // Debug
       
@@ -230,8 +234,6 @@ SpaceWrite {
         sections.add(begins[index]);
       });
 
-      // Lookbehind
-      previousOverlap = overlap;
 
       // Return value marks consumed
       index;
@@ -366,6 +368,8 @@ SpaceWrite {
     this.resetSounds;
     this.initFirstPass;
     this.firstPass;
+
+    sections.postln;
 
     // Second pass: Write to tree using information collected in first pass
     this.resetSounds;
