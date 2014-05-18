@@ -10,9 +10,6 @@ SpaceRead {
     time,
     times,
     indentTime,
-    indentTimes,
-    lastIndentTime,
-    maxIndentTime,
   
     // algorithm by-iteration variables
     line,
@@ -32,9 +29,7 @@ SpaceRead {
     index = 0;
     time = 0;
     indentTime = 0;
-    maxIndentTime = 0;
     times = Array.fill(sounds.size, 0);
-    indentTimes = List.new.add(0);
   }
 
   isIndentOdd {
@@ -52,27 +47,13 @@ SpaceRead {
     ^hasDecreased;
   }
 
-  indentTimeIncrease {
+  setIndentTime {
     indentTime = times.maxItem;
-    lastIndentTime = 0;
-    ((indent - lastIndent) * 0.5).round.asInteger.do({
-      indentTimes.add(indentTime);
-    });
   }
 
-  indentTimeDecrease {
-    ((lastIndent - indent) * 0.5).round.asInteger.do({
-      indentTimes.pop;
-    });
-    indentTime = lastIndentTime;
-  }
-
-  determineNextIndex {
+  setIndex {
     index = times.minIndex;
     time = times[index];
-    if (time > maxIndentTime) {
-      maxIndentTime = time;
-    };
   }
 
   isDrop {
@@ -98,10 +79,10 @@ SpaceRead {
       // Keep track of indentTime by indent level
       // No note of a higher indent can come sooner than this
       if (this.hasIndentIncreased) {
-        this.indentTimeIncrease;
+        this.setIndentTime;
       };
       
-      this.determineNextIndex;
+      this.setIndex;
 
       if (this.isDrop, {
         (this.class.name + "dropped note" + line).postln;
@@ -111,7 +92,7 @@ SpaceRead {
 
     if (this.isIndentEven, {
       if (this.hasIndentDecreased) {
-        this.indentTimeDecrease;
+        this.setIndentTime;
       };
     });
     
@@ -149,8 +130,8 @@ SpaceRead {
     // Insert pre-pause if necessary
     // Parallel, so relative to indentTime when parallel started
     // Fill up with pause
-    [\prepause, times[index], indentTime].postln;
     if (times[index] < indentTime) {
+      [\prepause, times[index], indentTime].postln;
       sounds[index].writeData(FloatArray.fill(sounds[index].numChannels, 0).put(0, indentTime-times[index]));
       times[index] = indentTime;
     };
