@@ -32,6 +32,7 @@ SpaceRead {
     index = 0;
     time = 0;
     indentTime = 0;
+    maxIndentTime = 0;
     times = Array.fill(sounds.size, 0);
     indentTimes = List.new.add(0);
   }
@@ -53,6 +54,7 @@ SpaceRead {
 
   indentTimeIncrease {
     indentTime = times.maxItem;
+    lastIndentTime = 0;
     ((indent - lastIndent) * 0.5).round.asInteger.do({
       indentTimes.add(indentTime);
     });
@@ -62,12 +64,23 @@ SpaceRead {
     ((lastIndent - indent) * 0.5).round.asInteger.do({
       indentTimes.pop;
     });
-    indentTime = indentTimes.last;
+    indentTime = lastIndentTime;
+  }
+
+  postPause {
+    var maxIndentTime = times.maxItem;
+    if (times[index] < times.maxItem) {
+      sounds[index].writeData(FloatArray.fill(sounds[index].numChannels, 0).put(0, maxIndentTime-times[index]));
+      times[index] = maxIndentTime;
+    }
   }
 
   determineNextIndex {
     index = times.minIndex;
     time = times[index];
+    if (time > maxIndentTime) {
+      maxIndentTime = time;
+    };
   }
 
   isDrop {
@@ -107,6 +120,7 @@ SpaceRead {
     if (this.isIndentEven, {
       if (this.hasIndentDecreased) {
         this.indentTimeDecrease;
+        this.postPause;
       };
     });
     
@@ -119,7 +133,7 @@ SpaceRead {
 
     // Must keep this debug line!
     
-    //[index,line,times].postln;
+    [index,linemap.convertToSymbolic(line),times].postln;
   
   }
 
