@@ -32,6 +32,7 @@ SpaceWrite {
     sectionBegin,
     nextBegin,
     nextIsNewSection,
+    written,
     
     // Second pass reassign
     line,
@@ -46,7 +47,12 @@ SpaceWrite {
     ends,
     notes,
     times,
-    pauseIndex 
+    pauseIndex,
+    delta,
+    polyphony,
+    numChannels,
+    consumed,
+    isNote
   ;
 
   init {
@@ -59,14 +65,6 @@ SpaceWrite {
 
   soundsDo {
     arg action;
-    var
-      delta,
-      polyphony,
-      numChannels,
-      consumed,
-      times,
-      isNote
-    ;
     
     polyphony = sounds.size;
     numChannels = sounds[0].numChannels;
@@ -294,6 +292,7 @@ SpaceWrite {
 
   writeLine {
     tree.write(line, indent);
+    written.put(index, true);
   }
 
   moreInPresentSection {
@@ -314,11 +313,10 @@ SpaceWrite {
     sectionParallel = sections.removeAt(0);
     sectionBegin = sections.removeAt(0);
     nextBegin = sections.at(1) ?? 2147483647; // TODO: replace maxInt with song length
+    written = Array.fill(polyphony, false);
   }
 
   initSecondPass {
-    \sections.post;
-    sections.postln;
     this.startSection;
     nextIsNewSection = true;
     currentEnd = nil;
@@ -328,7 +326,7 @@ SpaceWrite {
   isDrop {
     var drop;
 
-    drop = pauseIndex.notNil;
+    drop = pauseIndex.notNil && (written.at(index) == false);
 
     ^ drop;
   }
