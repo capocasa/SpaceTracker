@@ -369,13 +369,22 @@ SpaceWrite {
   }
 
   fromNumeric {
-    
     // First pass: Discover overlaps in sound files
     this.resetSounds;
     this.initFirstPass;
     this.firstPass;
 
-    sections.postln;
+    block {
+      var debug = [\sections];
+      sections.pairsDo({
+        arg parallel, time;
+        debug=debug
+          .add(if(parallel, \parallel, \sequential))
+          .add(time)
+        ;
+      });
+      debug.postln;
+    };
 
     // Second pass: Write to tree using information collected in first pass
     this.resetSounds;
