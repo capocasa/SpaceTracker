@@ -255,10 +255,10 @@ SpaceWrite {
     if (nextIsNewSection) {
       if (sectionParallel, {
         if (false == this.moreInPresentSection) {
-          this.startSection;
+          this.initSection;
         };
       },{
-        this.startSection;
+        this.initSection;
       });
     };
   }
@@ -314,15 +314,15 @@ SpaceWrite {
     ^return;
   }
 
-  startSection {
+  initSection {
     sectionParallel = sections.removeAt(0);
     sectionBegin = sections.removeAt(0);
     nextBegin = sections.at(1) ?? 2147483647; // TODO: replace maxInt with song length
-    written = Array.fill(polyphony, false);
+    permitDrop = Array.fill(sounds.size, true);
   }
 
   initSecondPass {
-    this.startSection;
+    this.initSection;
     nextIsNewSection = true;
     currentEnd = nil;
     previousEnd = nil;
