@@ -344,6 +344,9 @@ SpaceWrite {
   }
 
   depletePermitDrop {
+    
+    // Pass specific state needs to be depleted in the pass rather than in soundsDo
+    
     depleted.do({
       arg i;
       permitDrop.removeAt(i);
