@@ -32,8 +32,8 @@ SpaceWrite {
     sectionBegin,
     nextBegin,
     nextIsNewSection,
-    written,
     permitDrop,
+    parallelGroupIndex,
     
     // Second pass reassign
     line,
@@ -249,6 +249,7 @@ SpaceWrite {
   drop {
     index = pauseIndex;
     indent = 0;
+    ("dropped" + index).postln;
   }
 
   determineSection {
@@ -269,11 +270,14 @@ SpaceWrite {
       if (nextIsNewSection, {
         ("        "++\parallelSetIndex).postln;
         index = begins.minIndex;
+        parallelGroupIndex = index;
       },{
-        ("        "++\parallelLeaveIndex).postln;
+        ("        "++\parallelKeepIndex).postln;
+        index = parallelGroupIndex;
       });
     },{
       index = begins.minIndex;
+      parallelGroupIndex = -1; // Cause exception if used while sequential for safety
     });
     previousEnd = currentEnd;
     currentEnd = ends.at(index);
@@ -337,7 +341,6 @@ SpaceWrite {
 
   isDrop {
     var drop;
-
     drop = pauseIndex.notNil && permitDrop.at(index);
 
     ^ drop;
