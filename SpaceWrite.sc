@@ -33,6 +33,7 @@ SpaceWrite {
     nextBegin,
     nextIsNewSection,
     written,
+    permitDrop,
     
     // Second pass reassign
     line,
@@ -276,6 +277,13 @@ SpaceWrite {
     });
     previousEnd = currentEnd;
     currentEnd = ends.at(index);
+    
+  }
+
+  holdDrop { 
+    if (permitDrop.at(index)) {
+      permitDrop.put(index, false);
+    };
   }
 
   determineIndent {
@@ -297,7 +305,6 @@ SpaceWrite {
 
   writeLine {
     tree.write(line, indent);
-    written.put(index, true);
   }
 
   moreInPresentSection {
@@ -331,18 +338,30 @@ SpaceWrite {
   isDrop {
     var drop;
 
-    drop = pauseIndex.notNil && (written.at(index) == false);
+    drop = pauseIndex.notNil && permitDrop.at(index);
 
     ^ drop;
   }
 
+  depletePermitDrop {
+    depleted.do({
+      arg i;
+      permitDrop.removeAt(i);
+    });
+  }
+
   secondPass {
 
-    this.soundsDo({ 
+    this.soundsDo({
+
+      this.depletePermitDrop;
+        
+      permitDrop.copy.addFirst(\permitDrop).postln;
 
       if (this.isDrop, {
         this.drop;
       },{
+        
         
         this.determineIndex;
         
@@ -351,11 +370,14 @@ SpaceWrite {
         this.prepareLine;
         
         this.writeLine;
-                
+        
+        this.holdDrop;
+
         // Debug output, keep around
         [
           String.fill(indent, $ ),
           line[2], $ ,
+  
           //if(index.isNil, if(this.nextIsNewSection, $o, $.), $-),
           switch(sectionParallel,nil,$|, true, $=, false, $-), $ ,
           \previousEnd++$:++if(index.isNil, $-, previousEnd), $ ,
