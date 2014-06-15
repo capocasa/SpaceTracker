@@ -52,6 +52,7 @@ SpaceWrite {
     polyphony,
     numChannels,
     consumed,
+    depleted,
     isNote
   ;
 
@@ -72,13 +73,15 @@ SpaceWrite {
     begins = Array.fill(polyphony, 0);
     ends = Array.fill(polyphony, 0);
     delta = Array.fill(polyphony, 0);
-      
+
     while ({true}, {
       // Fill up a buffer of one line per polyphonic channel
       // (used to locate note ends and null notes)
 
       // as opposed to lines.size.do or lines.reverseDo, this
       // allows removeAt with correct indices
+      
+      depleted = List[];
       lines.size.reverseDo({
         arg i;
         var line;
@@ -104,6 +107,8 @@ SpaceWrite {
             ends.atInc(i, delta.at(i));
             
           },{
+            depleted.add(i);
+
             sounds.removeAt(i);
             lines.removeAt(i);
             begins.removeAt(i);
