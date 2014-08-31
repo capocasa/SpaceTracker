@@ -79,10 +79,15 @@ SpaceTracker {
 
   init {
 
+    if (treefile.class==PathName) {
+      treefile = treefile.fullPath;
+    }{
+      treefile = treefile.asString;
+    };
+
     tree = treeClass.new(treefile);
 
     this.treefile(treefile);
-
 
     tmp = tmpClass.new(16);
 
@@ -92,6 +97,7 @@ SpaceTracker {
   treefile {
     arg arg_treefile;
     treefile = arg_treefile;
+
     if (treefile.isNil) {
       ("treefile is required").throw;
     };
