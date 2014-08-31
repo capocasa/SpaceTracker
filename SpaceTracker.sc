@@ -250,7 +250,7 @@ SpaceTracker {
     write.fromNumeric;
   }
 
-  loadBuffer {
+  fromBuffer {
     arg buffer, action;
     soundfile = tmp.file(soundExtension);
     buffer.write(soundfile, headerFormat, sampleFormat, -1, 0, false, {
@@ -259,7 +259,13 @@ SpaceTracker {
     });
   }
   
-  saveBuffer {
+  toSoundFile {
+    arg force;
+    soundfile = tmp.file(soundExtension);
+    ^this.writeSounds(force);
+  }
+
+  toBuffer {
     arg action = false;
     this.toSoundFile(true);
     if (Array == soundfile.class, {  
