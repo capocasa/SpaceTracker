@@ -271,10 +271,10 @@ SpaceTracker {
     if (Array == soundfile.class, {  
       ^soundfile.collect({
         arg file;
-        Buffer.read(server, file, 0, -1, action);
+        Buffer.read(server, file, 0, -1, action).path_(treefile);
       });
     }, {
-      ^Buffer.read(server, soundfile, 0, -1, action);
+      ^Buffer.read(server, soundfile, 0, -1, action).path_(treefile);
     });
   }
 
