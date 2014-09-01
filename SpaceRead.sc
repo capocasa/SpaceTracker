@@ -85,7 +85,7 @@ SpaceRead {
       this.setIndex;
 
       if (this.isDrop, {
-        (this.class.name + "dropped note" + line).postln;
+        // (this.class.name + "dropped note" + line).postln;
         ^nil;
       });
     });
@@ -105,7 +105,7 @@ SpaceRead {
 
     // Must keep this debug line!
     
-    [index,linemap.convertToSymbolic(line),times].postln;
+    //[index,linemap.convertToSymbolic(line),times].postln;
   
   }
 
@@ -131,7 +131,7 @@ SpaceRead {
     // Parallel, so relative to indentTime when parallel started
     // Fill up with pause
     if (times[index] < indentTime) {
-      [\prepause, times[index], indentTime].postln;
+      // [\prepause, times[index], indentTime].postln;
       sounds[index].writeData(FloatArray.fill(sounds[index].numChannels, 0).put(0, indentTime-times[index]));
       times[index] = indentTime;
     };
