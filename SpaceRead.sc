@@ -72,10 +72,10 @@ SpaceRead {
     ^isEven;
   }
 
-  iterate {
+  determine {
     //[indent, lastIndent,((lastIndent - indent).abs * 0.5).round,indentTimes].postln;
     if (line.isNil) {
-      ^nil;
+      ^false;
     };
     if (this.isIndentOdd, {
       
@@ -92,7 +92,7 @@ SpaceRead {
 
       if (this.isDrop, {
         // (this.class.name + "dropped note" + line).postln;
-        ^nil;
+        ^false;
       });
     });
 
@@ -102,17 +102,7 @@ SpaceRead {
       };
     });
     
-    //// Good, we figured out which channel we can use from
-    //// indentation. Now insert the note.
-    
-    this.prePause;
-
-    this.write;
-
-    // Must keep this debug line!
-    
-    //[index,linemap.convertToSymbolic(line),times].postln;
-  
+    ^true; 
   }
 
   toNumeric {
@@ -133,8 +123,20 @@ SpaceRead {
       line = arg_line;
       indent = arg_indent;
       lastIndent = arg_lastIndent;
-      this.pad;
-      this.iterate;
+      if (this.determine) {
+        //// Good, we figured out which channel we can use from
+        //// indentation. Now insert the note.
+ 
+        this.pad;
+
+        this.prePause;
+
+        this.write;
+
+        // Must keep this debug line!
+        
+        //[index,linemap.convertToSymbolic(line),times].postln;
+      };
     });
 
     this.close;
