@@ -137,6 +137,7 @@ SpaceTracker {
       if (false == sound.openWrite(file)) {
         ("Could not open"+file+"for writing").throw;
       };
+      sound.path = file; // Workaround for openWrite not assigning path
       sound
     });
   }
@@ -261,22 +262,30 @@ SpaceTracker {
   
   toSoundFile {
     arg force;
-    soundfile = tmp.file(soundExtension);
+    if (soundfile.isNil) {
+      soundfile = tmp.file(soundExtension);
+    };
     ^this.writeSounds(force);
   }
 
   toBuffer {
     arg action = false;
     this.toSoundFile(true);
-    if (Array == soundfile.class, {  
-      ^soundfile.collect({
-        arg file;
-        Buffer.read(server, file, 0, -1, action).path_(treefile);
+    if (Array == sounds.class, {  
+      var count = polyphony;
+      ^sounds.collect({
+        arg sound;
+        Buffer.read(server, sound.path, 0, -1, {
+          count = count - 1;
+          if (count == 0) {
+            action.value;
+          };
+          File.delete(sound.path);
+        }).path_(treefile);
       });
     }, {
       ^Buffer.read(server, soundfile, 0, -1, action).path_(treefile);
     });
   }
-
 }
 
