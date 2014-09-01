@@ -14,7 +14,11 @@ SpaceRead {
     // algorithm by-iteration variables
     line,
     indent,
-    lastIndent
+    lastIndent,
+  
+    // info gathered in first pass
+    lineSize,
+    polyphony
   ;
 
   *new {
@@ -30,6 +34,8 @@ SpaceRead {
     time = 0;
     indentTime = 0;
     times = Array.fill(sounds.size, 0);
+    lineSize = 0;
+    polyphony = 0;
   }
 
   isIndentOdd {
@@ -112,18 +118,34 @@ SpaceRead {
   toNumeric {
     
     this.initNumeric;
-    
+   
+    // first pass: get polyphony and line size
+
+    tree.parse({
+      arg arg_line, arg_indent, arg_lastIndent;
+      if (arg_line.size > lineSize) {
+        lineSize = arg_line.size;
+      };
+    });
+
     tree.parse({
       arg arg_line, arg_indent, arg_lastIndent;
       line = arg_line;
       indent = arg_indent;
       lastIndent = arg_lastIndent;
+      this.pad;
       this.iterate;
     });
 
     this.close;
   
     ^sounds;
+  }
+
+  pad {
+    if(line.size < lineSize) {
+      line = line.addAll(Array.fill(lineSize - line.size, 0));
+    };
   }
 
   prePause {
