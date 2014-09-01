@@ -265,7 +265,8 @@ SpaceTracker {
     if (soundfile.isNil) {
       soundfile = tmp.file(soundExtension);
     };
-    ^this.writeSounds(force);
+    this.writeSounds(force);
+    ^sounds;
   }
 
   toBuffer {
