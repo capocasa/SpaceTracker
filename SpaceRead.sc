@@ -1,10 +1,11 @@
 
 SpaceRead {
   var
-    tree,
-    sounds,
-    linemap,
-  
+    <>tree,
+    <>linemap,
+    <>sounds,
+    <>lineSize,
+
     // algorithm state
     index,
     time,
@@ -14,19 +15,35 @@ SpaceRead {
     // algorithm by-iteration variables
     line,
     indent,
-    lastIndent,
+    lastIndent
   
-    // info gathered in first pass
-    lineSize,
-    polyphony
   ;
 
   *new {
-    arg tree, sounds, linemap;
-    ^super.newCopyArgs(tree, sounds, linemap).init;
+    arg tree, linemap;
+    ^super.newCopyArgs(tree, linemap).init;
   }
 
   init {
+    lineSize = 0;
+    this.pre;
+  }
+  
+  pre {
+    tree.parse({
+      arg arg_line, arg_indent, arg_lastIndent;
+      
+      line = arg_line;
+      indent = arg_indent;
+      lastIndent = arg_lastIndent;
+      
+      if(this.determine) {
+        line = linemap.convertToNumeric(line);
+        if (line.size > lineSize) {
+          lineSize = line.size;
+        };
+      }
+    });
   }
 
   initNumeric {
@@ -34,8 +51,6 @@ SpaceRead {
     time = 0;
     indentTime = 0;
     times = Array.fill(sounds.size, 0);
-    lineSize = 0;
-    polyphony = 0;
   }
 
   isIndentOdd {
@@ -77,6 +92,15 @@ SpaceRead {
     if (line.isNil) {
       ^false;
     };
+    if (line == 0) {
+      ^false;
+    };
+    if (line[0] == 0) {
+      ^false;
+    };
+    if (line[1] == 0) {
+      ^false;
+    };
     if (this.isIndentOdd, {
       
       // Odd indent does parallelization, so we figure out
@@ -91,7 +115,7 @@ SpaceRead {
       this.setIndex;
 
       if (this.isDrop, {
-        // (this.class.name + "dropped note" + line).postln;
+        (this.class.name + "dropped note" + line).postln;
         ^false;
       });
     });
@@ -106,23 +130,15 @@ SpaceRead {
   }
 
   toNumeric {
-    
-    this.initNumeric;
-   
-    // first pass: get polyphony and line size
 
-    tree.parse({
-      arg arg_line, arg_indent, arg_lastIndent;
-      if (arg_line.size > lineSize) {
-        lineSize = arg_line.size;
-      };
-    });
+    this.initNumeric;
 
     tree.parse({
       arg arg_line, arg_indent, arg_lastIndent;
       line = arg_line;
       indent = arg_indent;
       lastIndent = arg_lastIndent;
+      
       if (this.determine) {
         //// Good, we figured out which channel we can use from
         //// indentation. Now insert the note.
@@ -145,9 +161,9 @@ SpaceRead {
   }
 
   pad {
-    if(line.size < lineSize) {
-      line = line.addAll(Array.fill(lineSize - line.size, 0));
-    };
+    if (line.class==Array && line.size < sounds[index].numChannels) {
+      line = line.addAll(Array.fill(sounds[index].numChannels-line.size, 0));
+    }
   }
 
   prePause {

@@ -111,15 +111,6 @@ SpaceTracker {
     ^filename.splitext[1].asSymbol
   }
 
-  initChannels {
-    tree.parse({
-      arg line;
-      line = linemap.convertToNumeric(line);
-      numChannels = line.size;
-      if (numChannels >1, \break, nil); // break only if not a pause
-    });
-  }
-
   soundFileName {
     arg channel;
     ^soundfile++if(channel > 0, $.++channel, "");
@@ -230,11 +221,10 @@ SpaceTracker {
     if (false == force) {
       this.validateSoundWrite;
     };
-
-    this.initChannels;
+    read = readClass.new(tree, linemap);
+    numChannels = read.lineSize;
     this.initSounds;
-
-    read = readClass.new(tree, sounds, linemap);
+    read.sounds = sounds;
     read.toNumeric;
   }
 
