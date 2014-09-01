@@ -15,8 +15,11 @@ SpaceRead {
     // algorithm by-iteration variables
     line,
     indent,
-    lastIndent
+    lastIndent,
   
+    // preprocess state
+    <>polyphony = 64, // gets auto-reduced
+    simulatedWrites
   ;
 
   *new {
@@ -30,6 +33,9 @@ SpaceRead {
   }
   
   pre {
+    
+    this.initNumeric;
+
     tree.parse({
       arg arg_line, arg_indent, arg_lastIndent;
       
@@ -38,19 +44,26 @@ SpaceRead {
       lastIndent = arg_lastIndent;
       
       if(this.determine) {
-        line = linemap.convertToNumeric(line);
+        this.prePauseRecord;
+
+        this.convert;
+        
         if (line.size > lineSize) {
           lineSize = line.size;
         };
+        
+        this.record;
       }
     });
+  
+    polyphony = times.select({arg time; time > 0}).size;
   }
 
   initNumeric {
     index = 0;
     time = 0;
     indentTime = 0;
-    times = Array.fill(sounds.size, 0);
+    times = Array.fill(polyphony, 0);
   }
 
   isIndentOdd {
@@ -143,11 +156,13 @@ SpaceRead {
         //// Good, we figured out which channel we can use from
         //// indentation. Now insert the note.
  
-        this.pad;
-
         this.prePause;
+        this.prePauseRecord;
 
+        this.convert;
+        this.pad;
         this.write;
+        this.record;
 
         // Must keep this debug line!
         
@@ -161,8 +176,14 @@ SpaceRead {
   }
 
   pad {
-    if (line.class==Array && line.size < sounds[index].numChannels) {
+    if (line.size < sounds[index].numChannels) {
       line = line.addAll(Array.fill(sounds[index].numChannels-line.size, 0));
+    }
+  }
+
+  prePauseRecord {
+    if (times[index] < indentTime) {
+      times[index] = indentTime;
     }
   }
 
@@ -173,14 +194,19 @@ SpaceRead {
     if (times[index] < indentTime) {
       // [\prepause, times[index], indentTime].postln;
       sounds[index].writeData(FloatArray.fill(sounds[index].numChannels, 0).put(0, indentTime-times[index]));
-      times[index] = indentTime;
     };
   }
 
   write {
     // Insert main line
-    line = linemap.convertToNumeric(line);
     sounds[index].writeData(line);
+  }
+
+  convert {
+    line = linemap.convertToNumeric(line);
+  }
+
+  record {
     times.atInc(index, line[0]);
   }
 

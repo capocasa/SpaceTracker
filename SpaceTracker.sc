@@ -30,7 +30,7 @@ SpaceTracker {
     <>soundfile,
     <>tree,
     <>linemap,
-    <>polyphony = 8,
+    <>polyphony,
     <>numChannels,
     <>headerFormat="AIFF",
     <>sampleFormat="float",
@@ -223,6 +223,7 @@ SpaceTracker {
     };
     read = readClass.new(tree, linemap);
     numChannels = read.lineSize;
+    polyphony = read.polyphony;
     this.initSounds;
     read.sounds = sounds;
     read.toNumeric;
