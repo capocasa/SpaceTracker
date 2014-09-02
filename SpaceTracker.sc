@@ -257,13 +257,13 @@ SpaceTracker {
       soundfile = tmp.file(soundExtension);
     };
     this.writeSounds(force);
-    ^sounds;
+    ^if(polyphony==1,sounds[0],sounds);
   }
 
   toBuffer {
     arg action = false;
     this.toSoundFile(true);
-    if (Array == sounds.class, {  
+    if (polyphony > 1, {
       var count = polyphony;
       ^sounds.collect({
         arg sound;
@@ -276,7 +276,7 @@ SpaceTracker {
         }).path_(treefile);
       });
     }, {
-      ^Buffer.read(server, soundfile, 0, -1, action).path_(treefile);
+      ^Buffer.read(server, sounds[0].path, 0, -1, action).path_(treefile);
     });
   }
 }
