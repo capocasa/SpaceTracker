@@ -10,6 +10,7 @@ SpaceLinemap {
     naming,
     namingMapper,
     namingClass,
+    <>barLength = 4,
     <>defaultDivisor = 4,
     <>zeroNote = 0 // avoid magic number
   ;
@@ -133,7 +134,8 @@ SpaceLinemap {
 
   convertToNumericTime {
     arg time, divisor;
-    ^time / divisor;
+    if(divisor==0, { ^0 });
+    ^time * barLength / divisor;
   }
 
   convertToSymbolicNote {
