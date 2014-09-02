@@ -18,7 +18,7 @@ SpaceRead {
     lastIndent,
   
     // preprocess state
-    <>polyphony = 64, // gets auto-reduced
+    <>polyphony = 1, // gets auto-adjusted
     simulatedWrites
   ;
 
@@ -88,7 +88,11 @@ SpaceRead {
   setIndex {
     //index = times.minIndex; // Spread out; original rudimentary
     //index = times.indexOf(times.select({arg time; time <= indentTime;}).maxItem); // Use shortest distance
-    index = times.detectIndex({arg t; t < indentTime;}) ? 0; // Use first available
+    index = times.detectIndex({arg t; t < indentTime;}); // Use first available
+    if (index.isNil) {
+      index = times.size;
+      times=times.add(0);
+    };
     time = times[index];
   }
 
