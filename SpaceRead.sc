@@ -86,7 +86,9 @@ SpaceRead {
   }
 
   setIndex {
-    index = times.minIndex;
+    //index = times.minIndex; // Spread out; original rudimentary
+    //index = times.indexOf(times.select({arg time; time <= indentTime;}).maxItem); // Use shortest distance
+    index = times.detectIndex({arg t; t < indentTime;}) ? 0; // Use first available
     time = times[index];
   }
 
