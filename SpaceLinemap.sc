@@ -7,9 +7,9 @@
 SpaceLinemap {
 
   var
-    naming,
-    namingMapper,
-    namingClass,
+    <>naming,
+    <>namingMapper,
+    <>namingClass,
     <>barLength = 4,
     <>defaultDivisor = 4,
     <>zeroNote = 0 // avoid magic number
@@ -61,24 +61,22 @@ SpaceLinemap {
 
   convertToSymbolic {
     arg line;
-    var time, divisor, note;
+    var time, divisor;
   
     line = Array.newFrom(line);
    
-    time = line[0];
-    note = line[1];
+    time = line.removeAt(0);
+
+    line=this.mapSymbolic(line);
     
     // For note length, just make everything specified
     // in quarter notes. This could be made more powerful later.
     divisor = if(time == 0, 0, defaultDivisor);
-    
-    note = this.convertToSymbolicNote(note);
-    time = time * divisor;
 
-    line[0] = time;
-    line[1] = note;
+    time = time * divisor;
     
-    line = line.insert(1, divisor);
+    line.addFirst(divisor);
+    line.addFirst(time);
 
     if (line.occurrencesOf(0) == line.size) {
       line = [0]; // Syntactic sugar: null line is a single zero
@@ -91,8 +89,7 @@ SpaceLinemap {
     arg line;
     var
       time,
-      divisor,
-      note
+      divisor
     ;
     
     if (false == line.isArray) {
@@ -108,21 +105,17 @@ SpaceLinemap {
     };
 
     // Detect note convertToSymbolic
-    time = line[0];
-    divisor = line[1];
-    
+    time = line.removeAt(0);
+    divisor = line.removeAt(0);
+
+    line = this.mapNumeric(line);
+
     // First two numbers are integers - assume "note" style line
     // So calculate time float from first two numbers, and shorten
     // the line
     time = this.convertToNumericTime(time, divisor);
-    note = line[2];
-
-    line.removeAt(1);
-    
-    note = this.convertToNumericNote(note);
-
-    line[0] = time;
-    line[1] = note;
+ 
+    line = line.addFirst(time);
 
     for(0, line.size-1, {
       arg i;
@@ -138,15 +131,20 @@ SpaceLinemap {
     ^time * barLength / divisor;
   }
 
-  convertToSymbolicNote {
-    arg note;
-    ^namingMapper.string(note);
+  mapSymbolic {
+    arg line;
+    if (namingMapper.respondsTo(\strings)) {
+      ^namingMapper.strings(line);
+    };
+    ^namingMapper.string(line[1]);
   }
 
-  convertToNumericNote {
-    arg note;
-    ^namingMapper.number(note);
+  mapNumeric {
+    arg line;
+    if (namingMapper.respondsTo(\numbers)) {
+      ^namingMapper.numbers(line);
+    };
+    ^namingMapper.number(line[1]);
   }
-
 }
 
