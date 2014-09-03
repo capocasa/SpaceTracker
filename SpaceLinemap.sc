@@ -136,7 +136,8 @@ SpaceLinemap {
     if (namingMapper.respondsTo(\strings)) {
       ^namingMapper.strings(line);
     };
-    ^namingMapper.string(line[1]);
+    line[0] = namingMapper.string(line[0]);
+    ^line;
   }
 
   mapNumeric {
@@ -144,7 +145,8 @@ SpaceLinemap {
     if (namingMapper.respondsTo(\numbers)) {
       ^namingMapper.numbers(line);
     };
-    ^namingMapper.number(line[1]);
+    line[0] = namingMapper.number(line[0]);
+    ^line;
   }
 }
 
