@@ -99,7 +99,7 @@ SpaceTracker {
     treefile = arg_treefile;
 
     if (treefile.isNil) {
-      ("treefile is required").throw;
+      SpaceTrackerError("treefile is required").throw;
     };
     tree.path = treefile;
     
@@ -126,7 +126,7 @@ SpaceTracker {
         .numChannels_(numChannels);
       File.delete(file);
       if (false == sound.openWrite(file)) {
-        ("Could not open"+file+"for writing").throw;
+        SpaceTrackerError("Could not open"+file+"for writing").throw;
       };
       sound.path = file; // Workaround for openWrite not assigning path
       sound
@@ -160,13 +160,13 @@ SpaceTracker {
 
   validateTreeRead {
     if (false == File.exists(tree.path)) {
-      (tree.path + "does not exist").throw;
+      SpaceTrackerError(tree.path + "does not exist").throw;
     };
   }
   
   validateTreeWrite {
     if (File.exists(tree.path)) {
-      (tree.path + "exists, use 'force' to overwrite").throw;
+      SpaceTrackerError(tree.path + "exists, use 'force' to overwrite").throw;
     };
   }
 
@@ -176,7 +176,7 @@ SpaceTracker {
       var file;
       file = this.soundFileName(i);
       if (false == File.exists(file)) {
-        (file + "does not exist").throw;
+        SpaceTrackerError(file + "does not exist").throw;
       };
     });
   }
@@ -187,7 +187,7 @@ SpaceTracker {
       var file;
       file = this.soundFileName(i);
       if (File.exists(file)) {
-        (file + "exists, use 'force' to overwrite").throw
+        SpaceTrackerError(file + "exists, use 'force' to overwrite").throw
       };
     });
   }
@@ -196,7 +196,7 @@ SpaceTracker {
     sounds = List.new;
     
     if (false == File.exists(soundfile)) {
-      (soundfile + "does not exist").throw;
+      SpaceTrackerError(soundfile + "does not exist").throw;
     };
     block {
       var i, sound, file;
@@ -273,11 +273,14 @@ SpaceTracker {
             action.value;
           };
           File.delete(sound.path);
-        }).path_(treefile);
+        }).path_(treefile).numChannels_(1);
       });
     }, {
-      ^Buffer.read(server, sounds[0].path, 0, -1, action).path_(treefile);
+      ^Buffer.read(server, sounds[0].path, 0, -1, action).path_(treefile).numChannels_(1);
     });
   }
+}
+
+SpaceTrackerError : Error {
 }
 
