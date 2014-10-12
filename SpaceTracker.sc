@@ -284,3 +284,6 @@ SpaceTracker {
 SpaceTrackerError : Error {
 }
 
+SpaceNamingError: Error {
+}
+

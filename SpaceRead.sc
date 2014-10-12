@@ -224,3 +224,6 @@ SpaceRead {
   }
 }
 
+SpaceReadError : Error {
+}
+

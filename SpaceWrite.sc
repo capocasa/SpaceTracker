@@ -133,7 +133,7 @@ SpaceWrite {
       consumed = action.value;
 
       if (consumed.isNil) {
-        "Please return the index to consume".throw;
+        SpaceWriteError("Please return the index to consume").throw;
       };
 
       // Beginning and end of consumed note are not the same.
@@ -424,5 +424,8 @@ SpaceWrite {
     this.initSecondPass;
     this.secondPass;
   }
+}
+
+SpaceWriteError : Error {
 }
 

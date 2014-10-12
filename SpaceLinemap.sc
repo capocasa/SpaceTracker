@@ -28,7 +28,7 @@ SpaceLinemap {
     naming = naming.asSymbol;
     namingClass = this.namingClassName.asClass;
     if (namingClass.isNil) {
-      (
+      SpaceLinemapError(
         "Could not find naming class"
         + this.namingClassName.asCompileString
         + "for naming"
@@ -148,5 +148,8 @@ SpaceLinemap {
     line[0] = namingMapper.number(line[0]);
     ^line;
   }
+}
+
+SpaceLinemapError : Error {
 }
 

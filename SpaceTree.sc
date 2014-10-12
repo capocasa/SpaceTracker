@@ -69,7 +69,7 @@ SpaceTree {
     this.parse({
       arg line, indent, lastindent;
       if (indent > maxindent) {
-        throw("Can only indent up to " ++ maxindent ++ " indentations");
+        SpaceTreeError("Can only indent up to " ++ maxindent ++ " indentations").throw;
       };
       case
       { indent == lastindent } {
@@ -95,7 +95,7 @@ SpaceTree {
     arg callback;
     var file,line,indent,lastindent,change;
     if (File.exists(path) == false) {
-      (path + "does not exist").throw;
+      SpaceTreeError(path + "does not exist").throw;
     };
 		lastindent = 0;
     file=File.open(path, "r");
@@ -144,4 +144,5 @@ SpaceTree {
   }
 }
 
-
+SpaceTreeError : Error {
+}

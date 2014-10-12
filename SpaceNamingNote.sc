@@ -88,7 +88,7 @@ SpaceNamingNote {
       mod = mods.at(note[2]) ? 0;
       ^12 * octave + tone + mod;
     },{
-      ("Could not understand the notation for the note value"+note).throw;
+      SpaceNamingError("Could not understand the notation for the note value"+note).throw;
     });
   }
 }
