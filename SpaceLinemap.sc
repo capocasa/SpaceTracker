@@ -153,3 +153,6 @@ SpaceLinemap {
 SpaceLinemapError : Error {
 }
 
+SpaceNamingError : Error {
+}
+
