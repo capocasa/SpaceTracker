@@ -28,8 +28,8 @@ SpaceTracker {
   var
     >treefile,
     <>soundfile,
-    <>tree,
     <>linemap,
+    <>tree,
     <>polyphony,
     <>numChannels,
     <>headerFormat="AIFF",
@@ -53,8 +53,8 @@ SpaceTracker {
   }
 
   *new {
-    arg treefile, soundfile;
-    ^super.newCopyArgs(treefile, soundfile).init;
+    arg treefile, soundfile, linemap = nil;
+    ^super.newCopyArgs(treefile, soundfile, linemap).init;
   }
 
   *toSoundFile {
@@ -88,6 +88,10 @@ SpaceTracker {
     tree = treeClass.new(treefile);
 
     this.treefile(treefile);
+    
+    if (linemap.isNil) {
+      linemap = linemapClass.new(this.namingFromExtension(treefile));
+    };
 
     tmp = tmpClass.new(16);
 
@@ -103,7 +107,6 @@ SpaceTracker {
     };
     tree.path = treefile;
     
-    linemap = linemapClass.new(this.namingFromExtension(treefile));
   }
 
   namingFromExtension {
