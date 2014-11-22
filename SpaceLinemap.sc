@@ -24,6 +24,10 @@ SpaceLinemap {
     ^super.newCopyArgs(naming).init;
   }
 
+  *basicNew {
+    ^super.new;
+  }
+
   init {
     naming = naming.asSymbol;
     namingClass = this.namingClassName.asClass;
