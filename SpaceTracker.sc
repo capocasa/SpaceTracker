@@ -74,7 +74,7 @@ SpaceTracker {
   
   *fromBuffer {
     arg treefile, buffer, action;
-    ^this.newCopyArgs(treefile).init.fromBuffer(buffer);
+    ^this.newCopyArgs(treefile).init.fromBuffer(buffer, action);
   }
 
   init {
