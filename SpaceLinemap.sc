@@ -71,6 +71,10 @@ SpaceLinemap {
    
     time = line.removeAt(0);
 
+    if (line.size == 0) {
+      SpaceLinemapError("Time but no value found").throw;
+    };
+
     line=this.mapSymbolic(line);
     
     // For note length, just make everything specified
