@@ -210,7 +210,7 @@ SpaceWrite {
         previousOverlap = overlap;
       });
         
-      [\overlaps, linemap.convertToSymbolicNote(notes[index]), overlap, previousOverlap].postln;
+      //[\overlaps, linemap.convertToSymbolicNote(notes[index]), overlap, previousOverlap].postln;
       
       // Debug
       
