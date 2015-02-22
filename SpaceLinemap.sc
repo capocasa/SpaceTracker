@@ -83,8 +83,8 @@ SpaceLinemap {
 
     time = time * divisor;
     
-    line.addFirst(divisor);
-    line.addFirst(time);
+    line=line.addFirst(divisor);
+    line=line.addFirst(time);
 
     if (line.occurrencesOf(0) == line.size) {
       line = [0]; // Syntactic sugar: null line is a single zero
