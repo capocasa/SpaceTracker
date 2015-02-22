@@ -73,8 +73,8 @@ SpaceTracker {
   }
   
   *fromBuffer {
-    arg treefile, buffer, action;
-    ^this.newCopyArgs(treefile).init.fromBuffer(buffer, action);
+    arg treefile, buffer, action=false, polyphony=5, force=false;
+    ^this.newCopyArgs(treefile).polyphony_(polyphony).init.fromBuffer(buffer, action, force);
   }
 
   init {
