@@ -79,9 +79,10 @@ SpaceLinemap {
     
     // For note length, just make everything specified
     // in quarter notes. This could be made more powerful later.
+    // It is assumed that a quarter note corresponds to one second by default
+    // TODO: allow other default quarter notes as a first step towards
+    // making recorded SpaceTracker more readable
     divisor = if(time == 0, 0, defaultDivisor);
-
-    time = time * divisor;
     
     line=line.addFirst(divisor);
     line=line.addFirst(time);
