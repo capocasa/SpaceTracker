@@ -246,12 +246,18 @@ SpaceTracker {
   }
 
   fromBuffer {
-    arg buffer, action;
+    arg buffer, action, force;
     soundfile = tmp.file(soundExtension);
-    buffer.write(soundfile, headerFormat, sampleFormat, -1, 0, false, {
-      this.writeSounds(soundfile);
-      action.value(this);
-    });
+    if (polyphony > 1) {
+      // TODO
+    }{
+      forkIfNeeded {
+        buffer.write(soundfile, headerFormat, sampleFormat);
+        server.sync;
+        this.writeTree(force);
+        action.value(this);
+      };
+    }
   }
   
   toSoundFile {
