@@ -69,12 +69,12 @@ SpaceTracker {
 
   *soundFileTo {
     arg treefile, soundfile, force=false;
-    ^this.newCopyArgs(treefile, soundfile).init.fromSoundFile(force);
+    ^this.newCopyArgs(treefile, soundfile).init.soundFileTo(force);
   }
   
   *bufferTo {
     arg treefile, buffer, action=false, force=false;
-    ^this.newCopyArgs(treefile).init.fromBuffer(buffer, action, force);
+    ^this.newCopyArgs(treefile).init.bufferTo(buffer, action, force);
   }
 
   init {
@@ -248,16 +248,17 @@ SpaceTracker {
   bufferTo {
     arg buffer, action, force;
     soundfile = tmp.file(soundExtension);
-    if (polyphony > 1) {
-      // TODO
-    }{
-      forkIfNeeded {
-        buffer.write(soundfile, headerFormat, sampleFormat);
-        server.sync;
-        this.writeTree(force);
-        action.value(this);
+    polyphony = 0;
+    forkIfNeeded {
+      buffer.do {
+        arg buffer, i;
+        buffer.write(this.soundFileName(i), headerFormat, sampleFormat);
+        polyphony = polyphony + 1;
       };
-    }
+      server.sync;
+      this.writeTree(force);
+      action.value(this);
+    };
   }
   
   toSoundFile {
