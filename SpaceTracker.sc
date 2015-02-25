@@ -67,12 +67,12 @@ SpaceTracker {
     ^this.newCopyArgs(treefile).init.toBuffer(treefile,action);
   }
 
-  *fromSoundFile {
+  *soundFileTo {
     arg treefile, soundfile, force=false;
     ^this.newCopyArgs(treefile, soundfile).init.fromSoundFile(force);
   }
   
-  *fromBuffer {
+  *bufferTo {
     arg treefile, buffer, action=false, force=false;
     ^this.newCopyArgs(treefile).init.fromBuffer(buffer, action, force);
   }
@@ -245,7 +245,7 @@ SpaceTracker {
     write.fromNumeric;
   }
 
-  fromBuffer {
+  bufferTo {
     arg buffer, action, force;
     soundfile = tmp.file(soundExtension);
     if (polyphony > 1) {
