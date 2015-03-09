@@ -283,10 +283,11 @@ SpaceTracker {
             action.value;
           };
           File.delete(sound.path);
-        }).path_(treefile).numChannels_(1);
+        }).path_(treefile).numChannels_(sound.numChannels);
       });
     }, {
-      ^Buffer.read(server, sounds[0].path, 0, -1, action).path_(treefile).numChannels_(1);
+      var sound = sounds[0];
+      ^Buffer.read(server, sound.path, 0, -1, action).path_(treefile).numChannels_(sound.numChannels);
     });
   }
 }
