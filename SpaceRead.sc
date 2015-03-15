@@ -273,7 +273,9 @@ SpaceRead {
     //(this.class.asString ++ $: + tag.asString + "recorded at" + times[index]).postln;
     if (false == tags.includesKey(line)) {
       tags.put(line, times[index]);
-    };
+    }{
+      (this.class.asString+"Warning: Ignoring tag '"++line++"' already encountered in '"++tree.path++"'").postln;
+    }
   }
 
   stripTag {
