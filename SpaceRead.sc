@@ -212,6 +212,11 @@ SpaceRead {
 
     length = times.maxItem;
     
+    // Implicit end tag
+    // Unlike length, this is overridden if there is already an
+    // end tag in the SpaceTracker file
+    //this.recordTag(\end, length);
+
     this.close;
   
     ^sounds;
