@@ -64,7 +64,8 @@ SpaceRead {
     index = 0;
     time = 0;
     indentTime = 0;
-    times = Array.fill(polyphony, 0);
+    //times = Array.fill(polyphony, 0);
+    times = [0];
   }
 
   isIndentOdd {
