@@ -184,9 +184,9 @@ SpaceRead {
       lastIndent = arg_lastIndent;
   
       // Tagging. Not used for algorithm, see detectTag
-      if (this.detectTag) {
-        this.setTime;
-        this.recordTag;
+      tag = this.detectTag;
+      if (tag) {
+        tag = line;
         this.stripTag;
       };
 
@@ -201,12 +201,17 @@ SpaceRead {
         this.pad;
         this.write;
         this.record;
-
+        
         // Must keep this debug line!
         
         //[index,linemap.convertToSymbolic(line),times].postln;
 
       };
+      
+      if (tag != false) {
+        this.recordTag;
+      };
+
     });
 
     // Record final section
@@ -271,7 +276,18 @@ SpaceRead {
   }
 
   recordTag {
-    (this.class.asString ++ $: + line.asString + "recorded at" + time).postln;
+    (this.class.asString ++ $: + tag.asString + "recorded at" + time).postln;
+    [
+      index,
+    time,
+    times,
+    indentTime,
+  
+    // algorithm by-iteration variables
+    line,
+    indent,
+    lastIndent,
+  ].postln;
   }
 
   stripTag {
