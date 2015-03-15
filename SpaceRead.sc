@@ -23,8 +23,7 @@ SpaceRead {
 
     // not used by algorithm, recorded for use by other objects
     <>indentTimes,
-    <>tags,
-    <>tag
+    <>tags
   ;
 
   *new {
@@ -77,6 +76,7 @@ SpaceRead {
     indentTime = 0;
     //times = Array.fill(polyphony, 0);
     times = [0];
+    tags = IdentityDictionary[];
   }
 
   isIndentOdd {
@@ -184,9 +184,8 @@ SpaceRead {
       lastIndent = arg_lastIndent;
   
       // Tagging. Not used for algorithm, see detectTag
-      tag = this.detectTag;
-      if (tag) {
-        tag = line;
+      if (this.detectTag) {
+        this.recordTag;
         this.stripTag;
       };
 
@@ -201,17 +200,13 @@ SpaceRead {
         this.pad;
         this.write;
         this.record;
-        
+ 
         // Must keep this debug line!
         
         //[index,linemap.convertToSymbolic(line),times].postln;
 
       };
       
-      if (tag != false) {
-        this.recordTag;
-      };
-
     });
 
     // Record final section
@@ -276,18 +271,8 @@ SpaceRead {
   }
 
   recordTag {
-    (this.class.asString ++ $: + tag.asString + "recorded at" + time).postln;
-    [
-      index,
-    time,
-    times,
-    indentTime,
-  
-    // algorithm by-iteration variables
-    line,
-    indent,
-    lastIndent,
-  ].postln;
+    //(this.class.asString ++ $: + tag.asString + "recorded at" + times[index]).postln;
+    tags.put(line, times[index]);
   }
 
   stripTag {
