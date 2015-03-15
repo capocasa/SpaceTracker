@@ -242,7 +242,7 @@ SpaceTracker {
     this.openSounds(soundfile);
 
     write = writeClass.new(sounds, tree, linemap);
-    write.fromNumeric;
+    write.numericTo;
   }
 
   bufferTo {

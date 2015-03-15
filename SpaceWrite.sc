@@ -401,7 +401,7 @@ SpaceWrite {
     });
   }
 
-  fromNumeric {
+  numericTo {
     // First pass: Discover overlaps in sound files
     this.resetSounds;
     this.initFirstPass;
