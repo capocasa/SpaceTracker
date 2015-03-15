@@ -21,8 +21,8 @@ SpaceRead {
     <>polyphony = 1, // gets auto-adjusted
     simulatedWrites,
 
-    // remember sections for external use
-    <>sections
+    // not used by algorithm, recorded for use by other objects
+    <>indentTimes
   ;
 
   *new {
@@ -32,7 +32,7 @@ SpaceRead {
 
   init {
     lineSize = 0;
-    sections = List[0];
+    indentTimes = List[0];
     this.pre;
   }
   
@@ -91,9 +91,9 @@ SpaceRead {
     indentTime = times.maxItem;
   }
 
-  recordSection {
-    if (indentTime > sections[sections.size-1]) {
-      sections.add(indentTime);
+  recordIndentTime {
+    if (indentTime > indentTimes[indentTimes.size-1]) {
+      indentTimes.add(indentTime);
     };
   }
 
@@ -144,7 +144,7 @@ SpaceRead {
       // No note of a higher indent can come sooner than this
       if (this.hasIndentIncreased) {
         this.setIndentTime;
-        this.recordSection;
+        this.recordIndentTime;
       };
       
       this.setIndex;
@@ -159,7 +159,7 @@ SpaceRead {
     if (this.isIndentEven, {
       if (this.hasIndentDecreased) {
         this.setIndentTime;
-        this.recordSection;
+        this.recordIndentTime;
       };
     });
     
@@ -197,7 +197,7 @@ SpaceRead {
 
     // Record final section
     this.setIndentTime;
-    this.recordSection;
+    this.recordIndentTime;
 
     this.close;
   
