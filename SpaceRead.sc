@@ -22,7 +22,9 @@ SpaceRead {
     simulatedWrites,
 
     // not used by algorithm, recorded for use by other objects
-    <>indentTimes
+    <>indentTimes,
+    <>tags,
+    <>tag
   ;
 
   *new {
@@ -183,10 +185,11 @@ SpaceRead {
   
       // Tagging. Not used for algorithm, see detectTag
       if (this.detectTag) {
+        this.setTime;
         this.recordTag;
         this.stripTag;
       };
-     
+
       if (this.determine) {
         //// Good, we figured out which channel we can use from
         //// indentation. Now insert the note.
@@ -268,7 +271,7 @@ SpaceRead {
   }
 
   recordTag {
-    (line.asString + "recorded").postln;
+    (this.class.asString ++ $: + line.asString + "recorded at" + time).postln;
   }
 
   stripTag {
