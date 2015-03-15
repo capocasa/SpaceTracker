@@ -23,7 +23,8 @@ SpaceRead {
 
     // not used by algorithm, recorded for use by other objects
     <>indentTimes,
-    <>tags
+    <>tags,
+    <>length
   ;
 
   *new {
@@ -209,10 +210,8 @@ SpaceRead {
       
     });
 
-    // Record final section
-    this.setIndentTime;
-    this.recordIndentTime;
-
+    length = times.maxItem;
+    
     this.close;
   
     ^sounds;
