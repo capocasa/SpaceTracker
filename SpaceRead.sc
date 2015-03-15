@@ -271,7 +271,9 @@ SpaceRead {
 
   recordTag {
     //(this.class.asString ++ $: + tag.asString + "recorded at" + times[index]).postln;
-    tags.put(line, times[index]);
+    if (false == tags.includesKey(line)) {
+      tags.put(line, times[index]);
+    };
   }
 
   stripTag {
