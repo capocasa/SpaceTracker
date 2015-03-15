@@ -53,8 +53,9 @@ SpaceRead {
         };
         
         this.record;
-      }
+      };
     });
+
   
     polyphony = times.select({arg time; time > 0}).size;
   }
@@ -89,6 +90,9 @@ SpaceRead {
     //index = times.minIndex; // Spread out; original rudimentary
     //index = times.indexOf(times.select({arg time; time <= indentTime;}).maxItem); // Use shortest distance
     index = times.detectIndex({arg t; t < indentTime;}); // Use first available
+  }
+
+  setTime {
     if (index.isNil) {
       index = times.size;
       times=times.add(0);
@@ -132,6 +136,7 @@ SpaceRead {
       };
       
       this.setIndex;
+      this.setTime;
 
       if (this.isDrop, {
         (this.class.name + "dropped note" + line).postln;
