@@ -19,7 +19,10 @@ SpaceRead {
   
     // preprocess state
     <>polyphony = 1, // gets auto-adjusted
-    simulatedWrites
+    simulatedWrites,
+
+    // remember sections for external use
+    <>sections
   ;
 
   *new {
@@ -29,6 +32,7 @@ SpaceRead {
 
   init {
     lineSize = 0;
+    sections = List[0];
     this.pre;
   }
   
@@ -87,6 +91,12 @@ SpaceRead {
     indentTime = times.maxItem;
   }
 
+  recordSection {
+    if (indentTime > sections[sections.size-1]) {
+      sections.add(indentTime);
+    };
+  }
+
   setIndex {
     //index = times.minIndex; // Spread out; original rudimentary
     //index = times.indexOf(times.select({arg time; time <= indentTime;}).maxItem); // Use shortest distance
@@ -134,6 +144,7 @@ SpaceRead {
       // No note of a higher indent can come sooner than this
       if (this.hasIndentIncreased) {
         this.setIndentTime;
+        this.recordSection;
       };
       
       this.setIndex;
@@ -148,6 +159,7 @@ SpaceRead {
     if (this.isIndentEven, {
       if (this.hasIndentDecreased) {
         this.setIndentTime;
+        this.recordSection;
       };
     });
     
@@ -179,8 +191,13 @@ SpaceRead {
         // Must keep this debug line!
         
         //[index,linemap.convertToSymbolic(line),times].postln;
+
       };
     });
+
+    // Record final section
+    this.setIndentTime;
+    this.recordSection;
 
     this.close;
   
