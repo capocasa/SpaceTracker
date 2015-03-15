@@ -47,6 +47,11 @@ SpaceRead {
       indent = arg_indent;
       lastIndent = arg_lastIndent;
       
+      // Tagging. Not used for algorithm, see detectTag
+      if (this.detectTag) {
+        this.stripTag;
+      };
+      
       if(this.determine) {
         this.prePauseRecord;
 
@@ -175,19 +180,19 @@ SpaceRead {
       line = arg_line;
       indent = arg_indent;
       lastIndent = arg_lastIndent;
-      
+  
+      // Tagging. Not used for algorithm, see detectTag
+      if (this.detectTag) {
+        this.recordTag;
+        this.stripTag;
+      };
+     
       if (this.determine) {
         //// Good, we figured out which channel we can use from
         //// indentation. Now insert the note.
  
         this.prePause;
         this.prePauseRecord;
-
-        if (this.detectTag) {
-          // Tagging, see detectTag comments for an explanation
-          this.recordTag;
-          this.stripTag;
-        };
 
         this.convert;
         this.pad;
@@ -257,17 +262,17 @@ SpaceRead {
   // pause for the purposes of the algorithm,
   // but the time of the tag will be stored
   // for further use by other objects.
-
+     
   detectTag {
-    ^false;
+    ^line.class == Symbol;
   }
 
   recordTag {
+    (line.asString + "recorded").postln;
   }
 
   stripTag {
-    arg line;
-    ^line;
+    line = 0;
   }
 
 }
