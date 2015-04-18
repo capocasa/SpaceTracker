@@ -34,7 +34,7 @@ SpaceTracker {
     <>numChannels,
     <>headerFormat="AIFF",
     <>sampleFormat="float",
-    <>soundExtension="aif",
+    <>soundExtension="aiff",
     <>server,
     <>sounds,
     <>tmp,
