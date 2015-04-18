@@ -28,6 +28,7 @@ SpaceLinemap {
     namingClasses = Class
       .allClasses
       .select({|class| class.name.asString.beginsWith(namingPrefix) })
+      .reject({|class| class == SpaceNamingError })
       .collect({|class| class.name.asString })
     ;
     namings = this.namingClasses
