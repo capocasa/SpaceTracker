@@ -6,6 +6,11 @@
 
 SpaceLinemap {
 
+  classvar
+    <namings,
+    <namingClasses
+  ;
+
   var
     <>naming,
     <>namingMapper,
@@ -18,6 +23,17 @@ SpaceLinemap {
   classvar
     namingPrefix = "SpaceNaming"
   ;
+
+  *initClass {
+    namingClasses = Class
+      .allClasses
+      .select({|class| class.name.asString.beginsWith(namingPrefix) })
+      .collect({|class| class.name.asString })
+    ;
+    namings = this.namingClasses
+      .collect({|name| name.copyRange(namingPrefix.size,name.size).toLower.asSymbol })
+    ;
+  }
 
   *new {
     arg naming;
@@ -38,25 +54,11 @@ SpaceLinemap {
         + "for naming"
         + naming.asCompileString
         ++ ".\nPlease make it available, or use one of:"
-        + this.namings.collect({|n|n.asCompileString}).join(",")
+        + this.class.namings.collect({|n|n.asCompileString}).join(",")
       ).throw;
     };
     namingMapper = namingClass.new;
   }
-
-  namingClasses {
-    ^Class
-      .allClasses
-      .select({|class| class.name.asString.beginsWith(namingPrefix) })
-      .collect({|class| class.name.asString })
-    ;
-  }
-
-  namings {
-    ^this.namingClasses
-      .collect({|name| name.copyRange(namingPrefix.size,name.size).toLower.asSymbol })
-    ;
-  } 
 
   namingClassName {
     var str = naming.asString;
