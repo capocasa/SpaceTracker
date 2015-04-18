@@ -71,6 +71,12 @@ SpaceNamingNote {
     tone= tones.getID(tone);
     octave=octaves.getID(octave);
     mod=mods.getID(mod)?"";
+    
+    if (octave.isNil) {
+      "Note value % does not match naming % saving as number.".format(note, this.class.name).warn;
+      ^note;
+    };
+
     ^tone++octave++mod;
   }
 
