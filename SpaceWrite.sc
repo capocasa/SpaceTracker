@@ -249,7 +249,7 @@ SpaceWrite {
   drop {
     index = pauseIndex;
     indent = 0;
-    ("dropped" + index).postln;
+    //("dropped" + index).postln;
   }
 
   determineSection {
@@ -268,11 +268,11 @@ SpaceWrite {
   determineIndex {
     if (sectionParallel, {
       if (nextIsNewSection, {
-        ("        "++\parallelSetIndex).postln;
+        //("        "++\parallelSetIndex).postln;
         index = begins.minIndex;
         parallelGroupIndex = index;
       },{
-        ("        "++\parallelKeepIndex).postln;
+        //("        "++\parallelKeepIndex).postln;
         index = parallelGroupIndex;
       });
     },{
@@ -314,14 +314,14 @@ SpaceWrite {
   moreInPresentSection {
     var return;
     return = (ends.minItem < nextBegin);
-    ("     "+ends.minItem+nextBegin+if(return,\moreInPresent,\noMoreInPresent)).postln;
+    //("     "+ends.minItem+nextBegin+if(return,\moreInPresent,\noMoreInPresent)).postln;
     ^ return;
   }
 
   nextIsNewSection {
     var return;
     return = (currentEnd >= nextBegin);
-    ("     "+currentEnd+nextBegin+if(return,\nextNew,\nextNotNew)).postln;
+    //("     "+currentEnd+nextBegin+if(return,\nextNew,\nextNotNew)).postln;
     ^return;
   }
 
@@ -362,7 +362,7 @@ SpaceWrite {
 
       this.depletePermitDrop;
         
-      permitDrop.copy.addFirst(\permitDrop).postln;
+      //permitDrop.copy.addFirst(\permitDrop).postln;
 
       if (this.isDrop, {
         this.drop;
@@ -380,6 +380,7 @@ SpaceWrite {
         this.holdDrop;
 
         // Debug output, keep around
+        /*
         [
           String.fill(indent, $ ),
           line[2], $ ,
@@ -392,6 +393,7 @@ SpaceWrite {
           //begins,
           //ends,
         ].join.postln;
+        */
 
         this.determineSection;
         
