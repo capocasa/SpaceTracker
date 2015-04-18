@@ -42,18 +42,6 @@ SpaceNamingNote {
       $b -> 6
     ];
 
-    octaves = TwoWayIdentityDictionary[
-      $0 -> 2,
-      $1 -> 3,
-      $2 -> 4,
-      $3 -> 5,
-      $4 -> 6,
-      $5 -> 7,
-      $6 -> 8,
-      $7 -> 9,
-      $8 -> 10,
-      $9 -> 11
-    ];
   }
 
   string {
@@ -64,18 +52,13 @@ SpaceNamingNote {
     };
     semi = scale.semitones;
     tone = (note % 12).asFloat;
-    octave = ((note - tone)/12).asInteger;
+    octave = ((note - tone)/12).asInteger - 2;
     mod = if(semi.indexOf(tone).isNil,1,0);
     tone = (tone-mod).asFloat;
     tone = semi.indexOf(tone);
     tone= tones.getID(tone);
-    octave=octaves.getID(octave);
-    mod=mods.getID(mod)?"";
     
-    if (octave.isNil) {
-      "Note value % does not match naming % saving as number.".format(note, this.class.name).warn;
-      ^note;
-    };
+    mod=mods.getID(mod)?"";
 
     ^tone++octave++mod;
   }
@@ -90,7 +73,7 @@ SpaceNamingNote {
     if ("^[a-g][0-9]?[bxcy]?$".matchRegexp(note), {
       tone = tones.at(note[0]);
       tone = scale.at(tone);
-      octave = octaves.at(note[1]);
+      octave = octave + 2;
       mod = mods.at(note[2]) ? 0;
       ^12 * octave + tone + mod;
     },{
