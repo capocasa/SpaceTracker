@@ -65,20 +65,22 @@ SpaceNamingNote {
 
   number {
     arg note;
-    var octave, tone, mod;
+    var found, octave, tone, mod;
     if (note ? 0 == 0) {
       ^0;
     };
     note = note.asString.toLower;
-    if ("^[a-g][0-9]?[bxcy]?$".matchRegexp(note), {
+    found = note.findRegexp("^[a-g](-?[0-9]+)[bxcy]?$");
+    if (found.size > 0) {
       tone = tones.at(note[0]);
       tone = scale.at(tone);
+      octave = found[1][1].asInteger;
       octave = octave + 2;
       mod = mods.at(note[2]) ? 0;
       ^12 * octave + tone + mod;
-    },{
+    } {
       SpaceNamingError("Could not understand the notation for the note value"+note).throw;
-    });
+    };
   }
 }
 
