@@ -108,7 +108,8 @@ SpaceRead {
   setIndex {
     //index = times.minIndex; // Spread out; original rudimentary
     //index = times.indexOf(times.select({arg time; time <= indentTime;}).maxItem); // Use shortest distance
-    index = times.detectIndex({arg t; t < indentTime;}); // Use first available
+    index = times.detectIndex({arg t; t <= indentTime;}); // Use first available
+    //[\index, index, times, indentTime].postln;
   }
 
   setTime {
@@ -144,7 +145,9 @@ SpaceRead {
       ^false;
     };
     if (this.isIndentOdd, {
-      
+    
+      //[\odd, index, sounds].postln;
+
       // Odd indent does parallelization, so we figure out
       // which channel to use
       
@@ -165,6 +168,7 @@ SpaceRead {
     });
 
     if (this.isIndentEven, {
+      //[\even, index, sounds].postln;
       if (this.hasIndentDecreased) {
         this.setIndentTime;
         this.recordIndentTime;
