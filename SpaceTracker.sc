@@ -272,23 +272,27 @@ SpaceTracker {
 
   toBuffer {
     arg action = false;
+    var buffer, count;
     this.toSoundFile(true);
-    if (polyphony > 1, {
-      var count = polyphony;
-      ^sounds.collect({
-        arg sound;
-        Buffer.read(server, sound.path, 0, -1, {
-          count = count - 1;
-          if (count == 0) {
-            action.value;
-          };
-          File.delete(sound.path);
-        }).path_(treefile).numChannels_(sound.numChannels);
-      });
-    }, {
-      var sound = sounds[0];
-      ^Buffer.read(server, sound.path, 0, -1, action).path_(treefile).numChannels_(sound.numChannels);
+    count = polyphony;
+    buffer = sounds.collect({
+      arg sound, buffer;
+      Buffer.read(server, sound.path, 0, -1, {
+        count = count - 1;
+        if (count == 0) {
+          action.value;
+        };
+        File.delete(sound.path);
+      }).path_(treefile).numChannels_(sound.numChannels);
     });
+    if (server.serverRunning == false) {
+      // No server? At least clean up
+      sounds.do {
+        arg sound;
+        File.delete(sound.path);
+      };
+    };
+    ^buffer;
   }
 }
 
