@@ -292,6 +292,8 @@ SpaceTracker {
         File.delete(sound.path);
       };
     };
+    // TODO: convert to single element array if only one channel
+    buffer=if(buffer.size == 1, buffer.first, buffer)
     ^buffer;
   }
 }
