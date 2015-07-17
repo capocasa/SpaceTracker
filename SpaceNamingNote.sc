@@ -76,7 +76,7 @@ SpaceNamingNote {
       tone = scale.at(tone);
       octave = found[1][1].asInteger;
       octave = octave + 2;
-      mod = mods.at(note[2]) ? 0;
+      mod = mods.at(note[note.size-1]) ? 0;
       ^12 * octave + tone + mod;
     } {
       SpaceNamingError("Could not understand the notation for the note value"+note).throw;
