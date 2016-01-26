@@ -253,6 +253,7 @@ SpaceTracker {
       buffer.do {
         arg buffer, i;
         frames = frames.first;
+        frames = frames.asInteger; // Workaround bug [#1827](https://github.com/supercollider/supercollider/issues/1827)
         buffer.write(this.soundFileName(i), headerFormat, sampleFormat, frames);
         polyphony = polyphony + 1;
       };
