@@ -252,7 +252,8 @@ SpaceTracker {
     forkIfNeeded {
       buffer.do {
         arg buffer, i;
-        buffer.write(this.soundFileName(i), headerFormat, sampleFormat, if(frames.isCollection) { frames[i] } { frames });
+        frames = frames.first;
+        buffer.write(this.soundFileName(i), headerFormat, sampleFormat, frames);
         polyphony = polyphony + 1;
       };
       server.sync;
