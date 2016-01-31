@@ -273,7 +273,10 @@ SpaceTracker {
   toBuffer {
     arg action = false;
     var buffer, count;
-    this.toSoundFile(true);
+    if (sounds.isNil) {
+      // If sounds already exist, create buffer from those
+      this.toSoundFile(true);
+    };
     count = polyphony;
     buffer = sounds.collect({
       arg sound, buffer;
