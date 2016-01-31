@@ -127,7 +127,7 @@ SpaceTracker {
         .headerFormat_(headerFormat)
         .sampleFormat_(sampleFormat)
         .numChannels_(numChannels);
-      File.delete(file);
+      File.delete(file); // Delete if already exists, will be recreated
       if (false == sound.openWrite(file)) {
         SpaceTrackerError("Could not open"+file+"for writing").throw;
       };
