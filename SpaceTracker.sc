@@ -35,7 +35,6 @@ SpaceTracker {
     <>headerFormat="AIFF",
     <>sampleFormat="float",
     <>soundExtension="aiff",
-    <>server,
     <>sounds,
     <>tmp,
     <>read,
@@ -49,7 +48,6 @@ SpaceTracker {
     linemapClass = SpaceLinemap;
     tmpClass = SpaceTmp;
     soundfileClass = SoundFile;
-    defaultServer = Server.default;
   }
 
   *new {
@@ -63,8 +61,8 @@ SpaceTracker {
   }
   
   *toBuffer {
-    arg treefile, action = false;
-    ^this.newCopyArgs(treefile).init.toBuffer(treefile,action);
+    arg server, treefile, action = false;
+    ^this.newCopyArgs(treefile).init.toBuffer(server, action);
   }
 
   *soundFileTo {
@@ -73,8 +71,8 @@ SpaceTracker {
   }
   
   *bufferTo {
-    arg treefile, buffer, frames, action=false, force=false;
-    ^this.newCopyArgs(treefile).init.bufferTo(buffer, frames, action, force);
+    arg server, treefile, buffer, frames, action=false, force=false;
+    ^this.newCopyArgs(treefile).init.bufferTo(server, buffer, frames, action, force);
   }
 
   init {
@@ -94,8 +92,6 @@ SpaceTracker {
     };
 
     tmp = tmpClass.new(16);
-
-    server=defaultServer;
   }
 
   treefile {
@@ -246,7 +242,7 @@ SpaceTracker {
   }
 
   bufferTo {
-    arg buffer, frames, action, force;
+    arg server, buffer, frames, action, force;
     soundfile = tmp.file(soundExtension);
     polyphony = 0;
     forkIfNeeded {
@@ -273,7 +269,7 @@ SpaceTracker {
   }
 
   toBuffer {
-    arg action = false;
+    arg server, action = false;
     var buffer, count;
     if (sounds.isNil) {
       // If sounds already exist, create buffer from those
@@ -297,8 +293,6 @@ SpaceTracker {
         File.delete(sound.path);
       };
     };
-    // TODO: convert to single element array if only one channel
-    buffer=if(buffer.size == 1, buffer.first, buffer)
     ^buffer;
   }
 }
