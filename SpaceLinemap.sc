@@ -148,7 +148,7 @@ SpaceLinemap {
     if (namingMapper.respondsTo(\strings)) {
       ^namingMapper.strings(line);
     };
-    line[0] = namingMapper.string(line[0]);
+    line[0] = namingMapper.string(line[0].asInteger) ?? 0;
     ^line;
   }
 
