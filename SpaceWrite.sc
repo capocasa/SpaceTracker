@@ -304,10 +304,10 @@ SpaceWrite {
 
   prepareLine {
     line = lines[index];
-    ([\preConvert]++line).postln;
-    ([\naming, linemap.naming]).postln;
+    //([\preConvert]++line).postln;
+    //([\naming, linemap.naming]).postln;
     line = linemap.convertToSymbolic(line);
-    ([\postConvert]++line).postln;
+    //([\postConvert]++line).postln;
   }
 
   writeLine {
