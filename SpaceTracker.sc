@@ -26,7 +26,7 @@ SpaceTracker {
   ;
 
   var
-    >treefile,
+    <treefile,
     <>soundfile,
     <>linemap,
     <>tree,
@@ -85,7 +85,7 @@ SpaceTracker {
 
     tree = treeClass.new(treefile);
 
-    this.treefile(treefile);
+    this.treefile_(treefile);
     
     if (linemap.isNil) {
       linemap = linemapClass.new(this.namingFromExtension(treefile));
@@ -94,7 +94,7 @@ SpaceTracker {
     tmp = tmpClass.new(16);
   }
 
-  treefile {
+  treefile_ {
     arg arg_treefile;
     treefile = arg_treefile;
 
@@ -239,6 +239,11 @@ SpaceTracker {
 
     write = writeClass.new(sounds, tree, linemap);
     write.numericTo;
+  }
+  
+  soundFileTo {
+    arg force;
+    this.writeTree(force);
   }
 
   bufferTo {
