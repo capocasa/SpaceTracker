@@ -279,6 +279,9 @@ SpaceWrite {
       index = begins.minIndex;
       parallelGroupIndex = -1; // Cause exception if used while sequential for safety
     });
+    if (index >= ends.size) {
+      index = ends.size-1;
+    };
     previousEnd = currentEnd;
     currentEnd = ends.at(index);
     
