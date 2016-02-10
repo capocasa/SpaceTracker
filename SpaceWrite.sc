@@ -155,7 +155,7 @@ SpaceWrite {
   }
 
   initFirstPass {
-    sections = List[false, 0]; // TODO: Do not assume the file begins sequential
+    sections = List[];
     previousOverlap=false;
     latestEnd=0;
     previousEnd=0;
@@ -233,11 +233,16 @@ SpaceWrite {
       //sections=sections.add(type);
       //sections=sections.add(0);
       //sections.atInc(sections.size-1);
-      if (sectionParallel.notNil, {
+      if (sectionParallel.notNil) {
         sections.add(sectionParallel);
         sections.add(begins[index]);
-      });
-
+      }{
+        // TODO: prettier solution for initial section when not parallel begin
+        if (sections.size==0) {
+          sections.add(false);
+          sections.add(0);
+        };
+      };
 
       // Return value marks consumed
       index;
