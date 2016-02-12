@@ -32,7 +32,6 @@ SpaceWrite {
     sectionBegin,
     nextBegin,
     nextIsNewSection,
-    permitDrop,
     parallelGroupIndex,
     
     // Second pass reassign
@@ -251,12 +250,6 @@ SpaceWrite {
 
   // Second pass submethods
 
-  drop {
-    index = pauseIndex;
-    indent = 0;
-    //("dropped" + index).postln;
-  }
-
   determineSection {
     nextIsNewSection = this.nextIsNewSection;
     if (nextIsNewSection) {
@@ -289,13 +282,6 @@ SpaceWrite {
     });
     previousEnd = currentEnd;
     currentEnd = ends.at(index);
-    
-  }
-
-  holdDrop { 
-    if (permitDrop.at(index)) {
-      permitDrop.put(index, false);
-    };
   }
 
   determineIndent {
@@ -340,7 +326,6 @@ SpaceWrite {
     sectionParallel = sections.removeAt(0);
     sectionBegin = sections.removeAt(0);
     nextBegin = sections.at(1) ?? 2147483647; // TODO: replace maxInt with song length
-    permitDrop = Array.fill(sounds.size, true);
   }
 
   initSecondPass {
@@ -350,65 +335,33 @@ SpaceWrite {
     previousEnd = nil;
   }
 
-  isDrop {
-    var drop;
-    drop = pauseIndex.notNil && permitDrop.at(index);
-
-    ^ drop;
-  }
-
-  depletePermitDrop {
-    
-    // Pass specific state needs to be depleted in the pass rather than in soundsDo
-    
-    depleted.do({
-      arg i;
-      permitDrop.removeAt(i);
-    });
-  }
-
   secondPass {
 
     this.soundsDo({
 
-      this.depletePermitDrop;
-        
-      //permitDrop.copy.addFirst(\permitDrop).postln;
+      this.determineIndex;
+      
+      this.determineIndent;
+      
+      this.prepareLine;
+      
+      this.writeLine;
+      
+      // Debug output, keep around
+      [
+        String.fill(indent, $ ),
+        line[2], $ ,
 
-      if (this.isDrop, {
-        this.drop;
-      },{
-        
-        
-        this.determineIndex;
-        
-        this.determineIndent;
-        
-        this.prepareLine;
-        
-        this.writeLine;
-        
-        this.holdDrop;
+        //if(index.isNil, if(this.nextIsNewSection, $o, $.), $-),
+        switch(sectionParallel,nil,$|, true, $=, false, $-), $ ,
+        \previousEnd++$:++if(index.isNil, $-, previousEnd), $ ,
+        \currentEnd++$:++if(index.isNil, $-, currentEnd), $ ,
+        \nextBegin++$:++nextBegin, $ ,
+        //begins,
+        //ends,
+      ].join.postln;
 
-        // Debug output, keep around
-        /*
-        [
-          String.fill(indent, $ ),
-          line[2], $ ,
-  
-          //if(index.isNil, if(this.nextIsNewSection, $o, $.), $-),
-          switch(sectionParallel,nil,$|, true, $=, false, $-), $ ,
-          \previousEnd++$:++if(index.isNil, $-, previousEnd), $ ,
-          \currentEnd++$:++if(index.isNil, $-, currentEnd), $ ,
-          \nextBegin++$:++nextBegin, $ ,
-          //begins,
-          //ends,
-        ].join.postln;
-        */
-
-        this.determineSection;
-        
-      });
+      this.determineSection;
 
       index;
     });
