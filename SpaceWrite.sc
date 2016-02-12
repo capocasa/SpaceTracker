@@ -278,15 +278,15 @@ SpaceWrite {
         parallelGroupIndex = index;
       },{
         //("        "++\parallelKeepIndex).postln;
+        if (parallelGroupIndex >= begins.size) {
+          parallelGroupIndex = begins.minIndex; // TODO: Should this be minIndex or something else?
+        };
         index = parallelGroupIndex;
       });
     },{
       index = begins.minIndex;
       parallelGroupIndex = -1; // Cause exception if used while sequential for safety
     });
-    if (index >= ends.size) {
-      index = ends.size-1;
-    };
     previousEnd = currentEnd;
     currentEnd = ends.at(index);
     
