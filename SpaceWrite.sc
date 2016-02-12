@@ -39,7 +39,8 @@ SpaceWrite {
     indent,
 
     // Transfer state (used to convey information from the first to the second pass)
-    sections,
+    <sections,
+    sectionIndex,
   
     // Iteration state (used by soundsDo)
     lines,
@@ -323,12 +324,14 @@ SpaceWrite {
   }
 
   initSection {
-    sectionParallel = sections.removeAt(0);
-    sectionBegin = sections.removeAt(0);
-    nextBegin = sections.at(1) ?? 2147483647; // TODO: replace maxInt with song length
+    sectionParallel = sections[sectionIndex];
+    sectionBegin = sections[sectionIndex + 1];
+    sectionIndex = sectionIndex + 2;
+    nextBegin = sections[sectionIndex + 1] ?? 2147483647; // TODO: replace maxInt with song length
   }
 
   initSecondPass {
+    sectionIndex = 0;
     this.initSection;
     nextIsNewSection = true;
     currentEnd = nil;
