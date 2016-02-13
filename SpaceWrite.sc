@@ -49,7 +49,9 @@ SpaceWrite {
     polyphony,
     numChannels,
     consumed,
-    depleted
+    depleted,
+
+    notesWrittenInSection
   ;
 
   init {
@@ -288,6 +290,7 @@ SpaceWrite {
 
   writeLine {
     tree.write(line, indent);
+    notesWrittenInSection = notesWrittenInSection + 1;
   }
 
   moreInPresentSection {
@@ -305,17 +308,26 @@ SpaceWrite {
     currentSectionParallel = sections[currentSectionIndex];
     currentSectionBegin = sections[currentSectionIndex + 1];
     nextSectionBegin = sections[currentSectionIndex + 3] ?? 2147483647; // TODO: replace maxInt with song length
+    notesWrittenInSection = 0;
   }
 
   initSecondPass {
     currentSectionIndex = -2;
     this.advanceSection;
+
     currentNoteEnd = 0;
     previousNoteEnd = 0;
   }
 
   writeBreakIfRequired {
-    
+    var storeIndent;
+    if (notesWrittenInSection == 0 && currentSectionParallel && (sections[currentSectionIndex-2] ?? false)) {
+      storeIndent = indent;
+      indent = 0;
+      line = [0];
+      this.writeLine;
+      indent = storeIndent;
+    };
   }
 
   shortenOverlappingPauses {
