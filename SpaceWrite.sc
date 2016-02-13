@@ -16,7 +16,6 @@ SpaceWrite {
     previousType,
     
     // First pass reassign (gets reassigned after each iteration)
-    isNote,
     index,
     overlapBackward,
     overlapForward,
@@ -46,15 +45,12 @@ SpaceWrite {
     lines,
     begins,
     ends,
-    notes,
     times,
     pauseIndex,
-    delta,
     polyphony,
     numChannels,
     consumed,
-    depleted,
-    isNote
+    depleted
   ;
 
   init {
@@ -73,7 +69,6 @@ SpaceWrite {
     lines = Array.newClear(polyphony);
     begins = Array.fill(polyphony, 0);
     ends = Array.fill(polyphony, 0);
-    delta = Array.fill(polyphony, 0);
 
     while ({true}, {
       // Fill up a buffer of one line per polyphonic channel
@@ -103,9 +98,7 @@ SpaceWrite {
           if (line.size == numChannels, {
             lines.put(i, line);
             
-            delta.put(i, line.at(0));
-            
-            ends.atInc(i, delta.at(i));
+            ends.atInc(i, line[0]);
             
           },{
             depleted.add(i);
@@ -114,7 +107,6 @@ SpaceWrite {
             lines.removeAt(i);
             begins.removeAt(i);
             ends.removeAt(i);
-            delta.removeAt(i);
           });
         };
       });
@@ -124,11 +116,7 @@ SpaceWrite {
         ^this;
       };
       
-      notes = lines.collect({arg line; line[1]});
-      times = lines.collect({arg line; line[0]});
-      isNote = notes.collect({arg note, i; note != 0 });
-      
-      pauseIndex = isNote.indexOf(false);
+      pauseIndex = lines.collect {|line| line[1]}.collect{|note| note != 0}.indexOf(false);
 
       consumed = action.value;
 
@@ -338,12 +326,20 @@ SpaceWrite {
     previousEnd = nil;
   }
 
+  shave {
+    if (begins[index] < sectionBegin && lines[index][1] == 0 ) {
+      \shave.postln;
+    };
+  }
+
   secondPass {
 
     this.soundsDo({
 
       this.determineIndex;
-      
+
+      this.shave;
+
       this.determineIndent;
       
       this.prepareLine;
@@ -354,12 +350,14 @@ SpaceWrite {
       [
         String.fill(indent, $ ),
         line[2], $ ,
-
         //if(index.isNil, if(this.nextIsNewSection, $o, $.), $-),
         switch(sectionParallel,nil,$|, true, $=, false, $-), $ ,
         \previousEnd++$:++if(index.isNil, $-, previousEnd), $ ,
         \currentEnd++$:++if(index.isNil, $-, currentEnd), $ ,
         \nextBegin++$:++nextBegin, $ ,
+        \sectionBegin++$:++sectionBegin, $ ,
+        \nextBegin++$:++nextBegin, $ ,
+        'begins[index]'++$:++begins[index],$ ,
         //begins,
         //ends,
       ].join.postln;
