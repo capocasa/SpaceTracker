@@ -4,53 +4,47 @@
 SpaceWrite {
   
   var
-    soundsInit,
+    sounds,
     tree,
     linemap,
-    sounds,
     
-    // First pass state (sections with iteration)
-    previousOverlap,
-    latestEnd,
-    previousNoteEnd,
-    previousType,
+    // State is in object vars for precedurality; other class methods can access it
     
-    // First pass reassign (gets reassigned after each iteration)
+    // Iteration state (used by soundsDo)
+    lines,
+    begins,
+    ends,
+    times,
+    notes,
+    polyphony,
+    numChannels,
+    consume,
+
+    // First pass state
     index,
-    overlapBackward,
-    overlapForward,
     overlap,
-    currentSectionParallel,
-    type,
-    
-    // Second pass state (commented out if re-used from first pass)
-      // index,
-      // currentSectionParallel,
-      // previousNoteEnd,
+    previousOverlap,
+
+    // Second pass state
+    index,
     currentNoteEnd,
     currentSectionBegin,
     nextSectionBegin,
     parallelGroupIndex,
-    
+    currentSectionParallel,
+    previousNoteEnd,
+    previousType,
+    previousEnd,
+
     // Second pass reassign
     line,
     indent,
 
     // Transfer state (used to convey information from the first to the second pass)
     <sections,
+    <length,
     currentSectionIndex,
   
-    // Iteration state (used by soundsDo)
-    lines,
-    begins,
-    ends,
-    times,
-    pauseIndex,
-    polyphony,
-    numChannels,
-    consumed,
-    depleted,
-
     notesWrittenInSection
   ;
 
@@ -64,24 +58,27 @@ SpaceWrite {
 
   soundsDo {
     arg action;
-    
+
     polyphony = sounds.size;
-    numChannels = sounds[0].numChannels;
+    numChannels = sounds.first.numChannels;
     lines = Array.newClear(polyphony);
+    notes = Array.newClear(polyphony);
     begins = Array.fill(polyphony, 0);
     ends = Array.fill(polyphony, 0);
 
-    while ({true}, {
+    sounds.do {|sound|sound.openRead};
+
+    while {
       // Fill up a buffer of one line per polyphonic channel
       // (used to locate note ends and null notes)
 
       // as opposed to lines.size.do or lines.reverseDo, this
       // allows removeAt with correct indices
-      
-      depleted = List[];
-      lines.size.reverseDo({
+
+      lines.size.reverseDo {
         arg i;
         var line;
+        
         line = lines[i];
 
         // Make sure this element of the lines buffer is full, not nil
@@ -89,52 +86,53 @@ SpaceWrite {
 
         // Line can be nil, when:
         // - just initialized
-        // - consumed and made note of pause
+        // - consume and made note of pause
 
-        // - consumed and written to tree file
+        // - consume and written to tree file
         if ( line.isNil ) {
           line = FloatArray.newClear(numChannels);
           sounds[i].readData(line);
           
-          if (line.size == numChannels, {
+          if (line.size == numChannels) {
             lines.put(i, line);
             
+            notes.put(i, line[1]);
+
             ends.atInc(i, line[0]);
             
-          },{
-            depleted.add(i);
-
+          }{
+            length = ends.maxItem;
             sounds.removeAt(i);
             lines.removeAt(i);
             begins.removeAt(i);
             ends.removeAt(i);
-          });
+            notes.removeAt(i);
+          };
         };
-      });
-    
-      // Termination when all soundfiles depleted
-      if (lines.size == 0) {
-        ^this;
       };
       
-      pauseIndex = lines.collect {|line| line[1]}.collect{|note| note != 0}.indexOf(false);
+      // Termination when all soundfiles depleted
+      lines.size > 0;
+    }{
 
-      consumed = action.value; // Return index of note to consume, or nil to not consume any note
-
-      if (consumed.notNil) {
-        // Beginning and end of consumed note are not the same.
-        // End of consumed note will increase again when received new
-        // line from soundfile
-        begins.atInc(consumed, lines.at(consumed).at(0));
-
-        lines.put(consumed, nil);
+      consume = block { |consume|
+        action.value(consume);
       };
 
-    });
+      if (consume.notNil) {
+        // Beginning and end of consume note are not the same.
+        // End of consume note will increase again when received new
+        // line from soundfile
+        begins.atInc(consume, lines.at(consume).at(0));
+
+        lines.put(consume, nil);
+      };
+    };
+
+    sounds.do {|sound|sound.close;};
   }
   
   resetSounds {
-    sounds = soundsInit.copy;
     sounds.do({
       arg sound;
       sound.seek(0);
@@ -142,98 +140,35 @@ SpaceWrite {
   }
 
   initFirstPass {
-    sections = List[];
-    previousOverlap=false;
-    latestEnd=0;
-    previousNoteEnd=0;
-    previousType=nil; 
+    index = nil;
+    overlap = nil;
+    previousOverlap = nil;
+    sections = [];
   }
 
   firstPass {
-    
-    this.soundsDo({
-      // Default values
-      overlap = false;
-      overlapBackward = false;
-      overlapForward = false;
+    this.soundsDo({|consume|
+      
+      index = ends.minIndex;
 
-      // Let's get started!
+      previousOverlap = overlap;
+      overlap = notes.select{|n| n != 0}.size > 1;
 
-      // Loop until all lines from all sound files have been consumed   
-      if (pauseIndex.isNil, {
-        index = begins.minIndex;
-      },{
-        index = pauseIndex;
-      });
-      
-      if (pauseIndex.isNil, {
-        // detect overlap
-        overlapBackward = previousNoteEnd > begins[index];
-        
-        if (begins.size > 1, {
-          var index2 = begins.order[1];
-          if (ends[index] > latestEnd) {
-            latestEnd = ends[index];
-          };
-          overlapForward = latestEnd > begins[index2];
-        },{
-          overlapForward = false;
-        });
-
-        overlap = overlapBackward || overlapForward;
-        // detect section change
-        currentSectionParallel = nil;
-        if (overlap && (false == previousOverlap)) {
-          currentSectionParallel = true;
-        };
-        
-        if ((false == overlap) && previousOverlap) {
-          currentSectionParallel = false;
-        };
- 
-        previousNoteEnd = ends[index];
-      
-        // Lookbehind
-        previousOverlap = overlap;
-      });
-        
-      //[\overlaps, linemap.convertToSymbolicNote(notes[index]), overlap, previousOverlap].postln;
-      
-      // Debug
-      
-      // Keep this debug output around, it's the bread
-      // and butter of developing this algorithm more easily
-      /*
-      [
-        switch(currentSectionParallel, false, "<", nil, " ", true, ">"),
-        if(overlap, "8", "o"),
-        //if(previousOverlap, \previousOverlap, \nopreviousOverlap),
-        if(overlapBackward, ":", "."),
-        if(overlapForward, "=", "-"),
-        end: ends[index],
-        note: linemap.convertToSymbolicNote(notes[index]),
-        index: index
-        //time: times[index]
-      ].postln;
-      */
-      // Save guidance to inform the second pass
-      //sections=sections.add(type);
-      //sections=sections.add(0);
-      //sections.atInc(sections.size-1);
-      if (currentSectionParallel.notNil) {
-        sections.add(currentSectionParallel);
-        sections.add(begins[index]);
-      }{
-        // TODO: prettier solution for initial section when not parallel begin
-        if (sections.size==0) {
-          sections.add(false);
-          sections.add(0);
+      case { previousOverlap.isNil }{
+        sections=sections.add(overlap).add(0);
+      } { previousOverlap != overlap } {
+        sections=sections.add(overlap);
+        if (overlap) {
+          sections=sections.add(begins.select{|b, i| notes[i]!=0}.minItem);
+        }{
+          sections=sections.add(ends[index]);
         };
       };
 
-      // Return value marks consumed
-      index;
+      consume.(index);
     });
+  
+    sections=sections.collect {|e|if(e.class==Float) {e.round(0.000001)}{ e }};
   }
 
   // Second pass submethods
@@ -343,7 +278,6 @@ SpaceWrite {
   }
 
   secondPass {
-
     this.soundsDo({
 
       while {
@@ -377,13 +311,12 @@ SpaceWrite {
       \moreInPresentSection++$:++this.moreInPresentSection, $ ,
       \currentSectionParallel++$:++currentSectionParallel, $ , 
       \nextNoteIsInNextSection++$:++this.nextNoteIsInNextSection, $  ,
-      \pauseIndex++$:++pauseIndex, $  
       //begins,
       //ends,
     ].join.postln;
   }
 
-  numericTo {
+  analyze {
     // First pass: Discover overlaps in sound files
     this.resetSounds;
     this.initFirstPass;
@@ -400,6 +333,10 @@ SpaceWrite {
 //      });
 //      debug.postln;
 //    };
+
+  }
+
+  apply {
 
     // Second pass: Write to tree using information collected in first pass
     this.resetSounds;
