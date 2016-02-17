@@ -186,21 +186,35 @@ SpaceWrite {
   }
 
   firstPass {
+    var overlapAtLeastUntil = 0, numNotes = nil;
     this.soundsDo({|consume|
-      
+
       index = ends.minIndex;
+      numNotes = notes.select{|n| n != 0}.size;
 
       previousOverlap = overlap;
-      overlap = notes.select{|n| n != 0}.size > 1;
+      overlap = (numNotes > 1);
+      
+      if (overlap) {
+        overlapAtLeastUntil=ends.select{|d, i| notes[i]!=0}.maxItem;
+      };
+
+      if (overlapAtLeastUntil >= ends[index]) {
+        overlap = true;
+      };
 
       case { previousOverlap.isNil }{
         sections=sections.add(overlap).add(0);
       } { previousOverlap != overlap } {
         sections=sections.add(overlap);
         if (overlap) {
-          sections=sections.add(begins.select{|b, i| notes[i]!=0}.minItem);
+          sections=sections.add(begins.select{|d, i| notes[i]!=0}.minItem);
         }{
-          sections=sections.add(ends[index]);
+          if (numNotes == 0) {
+            sections=sections.add(begins.maxItem);
+          }{
+            sections=sections.add(begins.select{|d, i| notes[i]!=0}.minItem);
+          };
         };
       };
 
