@@ -171,13 +171,6 @@ SpaceWrite {
     };
   }
 
-  resetSounds {
-    sounds.do({
-      arg sound;
-      sound.seek(0);
-    });
-  }
-
   initFirstPass {
     index = nil;
     overlap = nil;
@@ -371,7 +364,6 @@ SpaceWrite {
 
   analyze {
     // First pass: Discover overlaps in sound files
-    this.resetSounds;
     this.initFirstPass;
     this.firstPass;
 
@@ -392,7 +384,6 @@ SpaceWrite {
   apply {
 
     // Second pass: Write to tree using information collected in first pass
-    this.resetSounds;
     this.initSecondPass;
     this.secondPass;
   }
