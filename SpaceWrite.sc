@@ -57,7 +57,7 @@ SpaceWrite {
   }
 
   soundsDo {
-    arg action;
+    arg action, merge = nil;
 
     polyphony = sounds.size;
     numChannels = sounds.first.numChannels;
@@ -65,6 +65,8 @@ SpaceWrite {
     notes = Array.newClear(polyphony);
     begins = Array.fill(polyphony, 0);
     ends = Array.fill(polyphony, 0);
+
+    line = nil;
 
     sounds.do {|sound|sound.openRead};
 
@@ -77,7 +79,6 @@ SpaceWrite {
 
       lines.size.reverseDo {
         arg i;
-        var line;
         
         line = lines[i];
 
@@ -94,6 +95,16 @@ SpaceWrite {
           sounds[i].readData(line);
           
           if (line.size == numChannels) {
+            switch (merge) {nil}{
+              // noop
+            }{\all} {
+              this.merge(i);
+            }{\pauses}{
+              if (line[1] == 0) {
+                this.merge(i);
+              };
+            };
+            
             lines.put(i, line);
             
             notes.put(i, line[1]);
@@ -116,7 +127,7 @@ SpaceWrite {
     }{
 
       consume = block { |consume|
-        action.value(consume);
+        action.value(consume, line);
       };
 
       if (consume.notNil) {
@@ -132,6 +143,34 @@ SpaceWrite {
     sounds.do {|sound|sound.close;};
   }
   
+  merge {
+    arg i;
+
+    // Merged mode turns all notes not separated by pauses
+    // into one note, and all pauses not seperated by notes
+    // into one pause.
+    // This helps determining sections with simple criteria
+    // (consume earliest end and compare line)
+    while {
+      var nextLine;
+      nextLine = FloatArray.newClear(numChannels);
+      sounds[i].readData(nextLine);
+     
+      if (nextLine.size == numChannels) {
+        
+        if ((nextLine[1] == 0) == (line[1] == 0)) {
+          line[0] = line[0] + nextLine[0];
+          true;
+        }{
+          sounds[i].seek(-1, 1);
+          false;
+        };
+      }{
+        false;
+      };
+    };
+  }
+
   resetSounds {
     sounds.do({
       arg sound;
@@ -166,7 +205,7 @@ SpaceWrite {
       };
 
       consume.(index);
-    });
+    }, merge: \pauses);
   
     sections=sections.collect {|e|if(e.class==Float) {e.round(0.000001)}{ e }};
   }
