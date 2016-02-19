@@ -4,7 +4,7 @@
 SpaceWrite {
   
   var
-    sounds,
+    soundsInit,
     tree,
     linemap,
     
@@ -16,6 +16,7 @@ SpaceWrite {
     ends,
     times,
     notes,
+    sounds,
     polyphony,
     numChannels,
     consume,
@@ -27,14 +28,10 @@ SpaceWrite {
 
     // Second pass state
     index,
-    currentNoteEnd,
     currentSectionBegin,
     nextSectionBegin,
-    parallelGroupIndex,
     currentSectionParallel,
-    previousNoteEnd,
-    previousType,
-    previousEnd,
+    previousSectionParallel,
 
     // Second pass reassign
     line,
@@ -43,9 +40,8 @@ SpaceWrite {
     // Transfer state (used to convey information from the first to the second pass)
     <sections,
     <length,
-    currentSectionIndex,
+    currentSectionIndex
   
-    notesWrittenInSection
   ;
 
   init {
@@ -113,6 +109,7 @@ SpaceWrite {
             
           }{
             length = ends.maxItem;
+            sounds[i].close;
             sounds.removeAt(i);
             lines.removeAt(i);
             begins.removeAt(i);
@@ -139,8 +136,6 @@ SpaceWrite {
         lines.put(consume, nil);
       };
     };
-
-    sounds.do {|sound|sound.close;};
   }
   
   merge {
@@ -176,6 +171,7 @@ SpaceWrite {
     overlap = nil;
     previousOverlap = nil;
     sections = [];
+    sounds = soundsInit.copy;
   }
 
   firstPass {
@@ -218,128 +214,66 @@ SpaceWrite {
   }
 
   // Second pass submethods
-
-  determineSection {
-    //([\val, begins.minItem] ++ begins ++ [nextSectionBegin]).postln;
-    if (begins.minItem >= nextSectionBegin) {
-      this.advanceSection;
-    }
-  }
-
-  determineIndex {
-    if (currentSectionParallel, {
-      if (this.nextNoteIsInNextSection, {
-        //("        "++\parallelSetIndex).postln;
-        index = begins.minIndex;
-        parallelGroupIndex = index;
-      },{
-
-        index = parallelGroupIndex;
-        if (index >= begins.size) {
-          // depleted before group finish
-          index = begins.minIndex;
-          parallelGroupIndex = index;
-        };
-      });
-    },{
-      index = begins.minIndex;
-      parallelGroupIndex = index;
-    });
-    previousNoteEnd = currentNoteEnd;
-    currentNoteEnd = ends.at(index);
-  }
-
-  determineIndent {
-    if (currentSectionParallel) {
-      if (begins[index] == currentSectionBegin) {
-        indent = 1;
-      } {
-        indent = 2;
-      }
-    }{
-      indent = 0;
-    };
-  }
-
-  prepareLine {
-    line = lines[index];
-    //([\preConvert]++line).postln;
-    //([\naming, linemap.naming]).postln;
-    line = linemap.convertToSymbolic(line);
-    //([\postConvert]++line).postln;
-  }
-
-  writeLine {
-    tree.write(line, indent);
-    notesWrittenInSection = notesWrittenInSection + 1;
-  }
-
-  moreInPresentSection {
-    var return;
-    return = (ends.minItem < nextSectionBegin);
-    ^ return;
-  }
-
-  nextNoteIsInNextSection {
-    ^ (currentNoteEnd >= nextSectionBegin);
-  }
-
   advanceSection {
     currentSectionIndex = currentSectionIndex + 2;
+    previousSectionParallel = currentSectionParallel;
     currentSectionParallel = sections[currentSectionIndex];
     currentSectionBegin = sections[currentSectionIndex + 1];
     nextSectionBegin = sections[currentSectionIndex + 3] ?? 2147483647; // TODO: replace maxInt with song length
-    notesWrittenInSection = 0;
+//this.writeLine;
   }
 
-  initSecondPass {
-    currentSectionIndex = -2;
-    this.advanceSection;
-
-    currentNoteEnd = 0;
-    previousNoteEnd = 0;
+  writeLine { |line, indent = 0|
+    line = linemap.convertToSymbolic(line);
+    tree.write(line, indent);
   }
 
-  writeBreakIfRequired {
-    var storeIndent;
-    if (notesWrittenInSection == 0 && currentSectionParallel && (sections[currentSectionIndex-2] ?? false)) {
-      storeIndent = indent;
-      indent = 0;
-      line = [0];
-      this.writeLine;
-      indent = storeIndent;
+  writePause { |length, indent = 0|
+    this.writeLine(Array.fill(numChannels, 0).put(0, length), indent);
+  }
+
+  writePauseIfNotZero { |length, indent=0| 
+    if (length > 0) {
+      this.writeLine(Array.fill(numChannels, 0).put(0, length), indent);
     };
   }
 
-  shortenOverlappingPauses {
-    var startOver;
-    if ((lines[index][1] == 0) && (currentNoteEnd > nextSectionBegin)) {
-      lines[index].atDec(0, nextSectionBegin - begins[index]);
-      begins.atInc(index, nextSectionBegin - begins[index]);
-      startOver = true;
-    }{
-      startOver = false;
-    }
-    ^startOver;
+  initSecondPass {
+    sounds = soundsInit.copy;
+    currentSectionIndex = -2;
+    nextSectionBegin = 0;
   }
 
   secondPass {
-    this.soundsDo({
+    var lastEnd = 0, advance, pauseLength;
+    this.soundsDo({ |consume|
+     
+      advance = begins.minItem >= nextSectionBegin;
+      if (advance) {
+        this.advanceSection;
+      };
 
-      while {
-        this.determineSection;
-        this.determineIndex;
-        this.shortenOverlappingPauses;
+      if(currentSectionParallel == false) {
+
+        index = begins.minIndex;
+        if (notes[index] != 0) {
+          this.writePauseIfNotZero(begins[index] - lastEnd, 0);
+          lastEnd = ends[index];
+          this.writeLine(lines[index], 0);
+          consume.(index);
+        }{
+          consume.(index);
+        };
+
+      }{
+
+        this.writeLine(lines[index], 2);
+
+
       };
-      if (index.notNil) {
-        this.determineIndent;
-        this.writeBreakIfRequired;
-        this.prepareLine;
-        this.writeLine;
-        this.debugSecondPass;
-      };
-      index;
+      
     });
+
   }
 
   debugSecondPass {
@@ -349,14 +283,11 @@ SpaceWrite {
       line[2], $ ,
       //if(index.isNil, if(this.nextNoteIsInNextSection, $o, $.), $-),
       switch(currentSectionParallel,nil,$|, true, $=, false, $-), $ ,
-      \previousNoteEnd++$:++if(index.isNil, $-, previousNoteEnd), $ ,
-      \currentNoteEnd++$:++if(index.isNil, $-, currentNoteEnd), $ ,
       \currentSectionBegin++$:++currentSectionBegin, $ ,
       \nextSectionBegin++$:++nextSectionBegin, $ ,
       'begins[index]'++$:++begins[index],$ ,
-      \moreInPresentSection++$:++this.moreInPresentSection, $ ,
       \currentSectionParallel++$:++currentSectionParallel, $ , 
-      \nextNoteIsInNextSection++$:++this.nextNoteIsInNextSection, $  ,
+      //\nextNoteIsInNextSection++$:++this.nextNoteIsInNextSection, $  ,
       //begins,
       //ends,
     ].join.postln;
