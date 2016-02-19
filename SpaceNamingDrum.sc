@@ -59,12 +59,12 @@ SpaceNamingDrum {
 
   string {
     arg note;
-    ^names[note];
+    ^names[note] ?? note;
   }
 
   number {
     arg note;
-    ^names.getID(note);
+    ^names.getID(note) ?? note;
   }
 }
 
