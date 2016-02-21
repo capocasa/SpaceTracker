@@ -50,6 +50,13 @@ SpaceWrite {
     ^super.newCopyArgs(sounds,tree,linemap).init;
   }
 
+  roundTime { |n|
+    // This rounds to 6 digit decimal format for internal use and uses
+    // a normal array rather than a float array to avoid rounding errors
+    // https://github.com/supercollider/supercollider/issues/1873
+    ^n.round(0.000001);
+  }
+
   soundsDo {
     arg action, merge = nil;
 
@@ -89,8 +96,13 @@ SpaceWrite {
         if ( line.isNil ) {
           line = FloatArray.newClear(numChannels);
           sounds[i].readData(line);
-          
+
+
           if (line.size == numChannels) {
+            
+            line = line.as(Array);
+            line[0] = this.roundTime(line[0]);
+            
             switch (merge) {nil}{
               // noop
             }{\all} {
@@ -100,13 +112,13 @@ SpaceWrite {
                 this.merge(i);
               };
             };
-            
+
             lines.put(i, line);
             
             notes.put(i, line[1]);
 
-            ends.atInc(i, line[0]);
-            
+            ends.atInc(i, this.roundTime(line[0]));
+
           }{
             length = ends.maxItem;
             sounds[i].close;
@@ -131,7 +143,7 @@ SpaceWrite {
         // Beginning and end of consume note are not the same.
         // End of consume note will increase again when received new
         // line from soundfile
-        begins.atInc(consume, lines.at(consume).at(0));
+        begins.atInc(consume, this.roundTime(lines.at(consume)).at(0));
 
         lines.put(consume, nil);
       
