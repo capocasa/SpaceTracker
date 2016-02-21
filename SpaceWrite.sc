@@ -53,6 +53,8 @@ SpaceWrite {
   soundsDo {
     arg action, merge = nil;
 
+    var safety = 0;
+
     polyphony = sounds.size;
     numChannels = sounds.first.numChannels;
     lines = Array.newClear(polyphony);
@@ -132,6 +134,13 @@ SpaceWrite {
         begins.atInc(consume, lines.at(consume).at(0));
 
         lines.put(consume, nil);
+      
+        safety = 0;
+      }{
+        safety = safety + 1;
+        if (safety > (polyphony * 2)) {
+        SpaceWriteError("No notes consumed more than % times, internal error".format(polyphony*2)).throw;
+        };
       };
     };
   }
@@ -242,14 +251,14 @@ SpaceWrite {
   }
 
   secondPass {
-    var lastEnd = 0, advance, nextChannel;
+    var lastEnd = 0, advance, rechannel, indent;
     this.soundsDo({ |consume|
       
       advance = begins.minItem >= nextSectionBegin;
 
       if (advance) {
         this.advanceSection;
-        ([\advance, currentSectionParallel, nextSectionBegin]++begins).postln;
+        ([\advance, currentSectionParallel, nextSectionBegin, \begins]++begins++[\ends]++ends++[\lengths]++lines.collect{|l|l[0]}).postln;
       };
      
       if(currentSectionParallel == false) {
@@ -263,7 +272,6 @@ SpaceWrite {
           [\sequential_write].postln;
         }{
           if (ends[index] >= nextSectionBegin) {
-            ([\foo]++ends++[nextSectionBegin]).postln;
             if (begins.select{|b|b >= nextSectionBegin}.size == 1) {
               this.writePauseIfNotZero(nextSectionBegin - begins[index], 0);
               [\sequential_split_write].postln;
@@ -288,23 +296,30 @@ SpaceWrite {
           index = 0;
         };
         
-        nextChannel = ends[index] >= nextSectionBegin;
+        rechannel = ends[index] > nextSectionBegin;
 
-        if (nextChannel) {
-          ([\nextChannel, ends[index], nextSectionBegin]++begins).postln;
+        indent = if(begins[index] == currentSectionBegin, 1, 2);
+
+        if (rechannel && (advance == false)) {
+          ([\rechannel, nextSectionBegin, ends[index]]++begins).postln;
           
           if (notes[index] == 0) {
-            this.writePauseIfNotZero(nextSectionBegin - begins[index], 2);
+            this.writePauseIfNotZero(nextSectionBegin - begins[index], indent);
+            indent = 2;
             [\parallel_split_write, nextSectionBegin - begins[index], ends[index] - nextSectionBegin].postln;
             lines[index][0] = ends[index] - nextSectionBegin;
             begins[index] = nextSectionBegin;
           };
-          
+        
           index = begins.minIndex;
+
+          consume.(nil);
+          
         };
         
-        this.writeLine(lines[index], if(advance || nextChannel, 1, 2));
+        this.writeLine(lines[index], indent);
         [\parallel_write, lines[index][0], lines[index][1] ].postln;
+        
         consume.(index);
 
       };
