@@ -277,8 +277,8 @@ SpaceWrite {
 
         index = begins.minIndex;
         if (notes[index] != 0) {
-          this.writePauseIfNotZero(begins[index] - lastEnd, 0);
-          [\sequential_write_pause].postln;
+          this.writePauseIfNotZero(lastEnd - begins[index], 0);
+          [\sequential_write_pause, begins[index], lastEnd, lastEnd - begins[index] ].postm;
           lastEnd = ends[index];
           this.writeLine(lines[index], 0);
           [\sequential_write, lines[index][0]].postm;
