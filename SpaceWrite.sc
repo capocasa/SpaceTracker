@@ -270,7 +270,7 @@ SpaceWrite {
 
       if (advance) {
         this.advanceSection;
-        ([\advance, currentSectionParallel, nextSectionBegin, \begins]++begins++[\ends]++ends++[\lengths]++lines.collect{|l|l[0]}).postln;
+        ([\advance, currentSectionParallel, nextSectionBegin, \begins]++begins++[\ends]++ends++[\lengths]++lines.collect{|l|l[0]}).postm;
       };
      
       if(currentSectionParallel == false) {
@@ -281,12 +281,12 @@ SpaceWrite {
           [\sequential_write_pause].postln;
           lastEnd = ends[index];
           this.writeLine(lines[index], 0);
-          [\sequential_write].postln;
+          [\sequential_write, lines[index][0]].postm;
         }{
           if (ends[index] >= nextSectionBegin) {
             if (begins.select{|b|b >= nextSectionBegin}.size == 1) {
               this.writePauseIfNotZero(nextSectionBegin - begins[index], 0);
-              [\sequential_split_write].postln;
+              [\sequential_split_write].postm;
             };
             lines[index][0] = ends[index] - nextSectionBegin;
             begins[index] = nextSectionBegin;
@@ -311,14 +311,14 @@ SpaceWrite {
         rechannel = ends[index] > nextSectionBegin;
 
         indent = if(begins[index] == currentSectionBegin, 1, 2);
-
+        
         if (rechannel && (advance == false)) {
-          ([\rechannel, nextSectionBegin, ends[index]]++begins).postln;
+          ([\rechannel, nextSectionBegin, ends[index]]++begins).postm;
           
           if (notes[index] == 0) {
             this.writePauseIfNotZero(nextSectionBegin - begins[index], indent);
             indent = 2;
-            [\parallel_split_write, nextSectionBegin - begins[index], ends[index] - nextSectionBegin].postln;
+            [\parallel_split_write, nextSectionBegin - begins[index], ends[index] - nextSectionBegin].postm;
             lines[index][0] = ends[index] - nextSectionBegin;
             begins[index] = nextSectionBegin;
           };
@@ -330,7 +330,7 @@ SpaceWrite {
         };
         
         this.writeLine(lines[index], indent);
-        [\parallel_write, lines[index][0], lines[index][1] ].postln;
+        [\parallel_write, lines[index][0], lines[index][1] ].postm;
         
         consume.(index);
 
@@ -354,7 +354,7 @@ SpaceWrite {
       //\nextNoteIsInNextSection++$:++this.nextNoteIsInNextSection, $  ,
       //begins,
       //ends,
-    ].join.postln;
+    ].join.postm;
   }
 
   analyze {
@@ -371,8 +371,9 @@ SpaceWrite {
 //          .add(time)
 //        ;
 //      });
-//      debug.postln;
+//      debug.postm;
 //    };
+
 
   }
 
