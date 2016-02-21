@@ -271,7 +271,11 @@ SpaceWrite {
             lines[index][0] = ends[index] - nextSectionBegin;
             begins[index] = nextSectionBegin;
             lastEnd = ends[index];
-            consume.(index);
+            if (lines[index][0] == 0) {
+              consume.(index);
+            }{
+              consume.(nil);
+            };
           };
           lastEnd = ends[index];
         };
