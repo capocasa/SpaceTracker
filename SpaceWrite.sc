@@ -21,6 +21,8 @@ SpaceWrite {
     numChannels,
     consume,
 
+    line,
+
     // First pass state
     index,
     overlap,
@@ -32,10 +34,6 @@ SpaceWrite {
     nextSectionBegin,
     currentSectionParallel,
     previousSectionParallel,
-
-    // Second pass reassign
-    line,
-    indent,
 
     // Transfer state (used to convey information from the first to the second pass)
     <sections,
@@ -220,7 +218,6 @@ SpaceWrite {
     currentSectionParallel = sections[currentSectionIndex];
     currentSectionBegin = sections[currentSectionIndex + 1];
     nextSectionBegin = sections[currentSectionIndex + 3] ?? 2147483647; // TODO: replace maxInt with song length
-//this.writeLine;
   }
 
   writeLine { |line, indent = 0|
@@ -245,33 +242,70 @@ SpaceWrite {
   }
 
   secondPass {
-    var lastEnd = 0, advance, pauseLength;
+    var lastEnd = 0, advance, nextChannel;
     this.soundsDo({ |consume|
-     
+      
       advance = begins.minItem >= nextSectionBegin;
+
       if (advance) {
         this.advanceSection;
+        ([\advance, currentSectionParallel, nextSectionBegin]++begins).postln;
       };
-
+     
       if(currentSectionParallel == false) {
 
         index = begins.minIndex;
         if (notes[index] != 0) {
           this.writePauseIfNotZero(begins[index] - lastEnd, 0);
+          [\sequential_write_pause].postln;
           lastEnd = ends[index];
           this.writeLine(lines[index], 0);
-          consume.(index);
+          [\sequential_write].postln;
         }{
-          consume.(index);
+          if (ends[index] >= nextSectionBegin) {
+            ([\foo]++ends++[nextSectionBegin]).postln;
+            if (begins.select{|b|b >= nextSectionBegin}.size == 1) {
+              this.writePauseIfNotZero(nextSectionBegin - begins[index], 0);
+              [\sequential_split_write].postln;
+            };
+            lines[index][0] = ends[index] - nextSectionBegin;
+            begins[index] = nextSectionBegin;
+            lastEnd = ends[index];
+            consume.(index);
+          };
+          lastEnd = ends[index];
         };
+        
+        consume.(index);
 
       }{
 
-        this.writeLine(lines[index], 2);
+        if (advance) {
+          index = 0;
+        };
+        
+        nextChannel = ends[index] >= nextSectionBegin;
 
+        if (nextChannel) {
+          ([\nextChannel, ends[index], nextSectionBegin]++begins).postln;
+          
+          if (notes[index] == 0) {
+            this.writePauseIfNotZero(nextSectionBegin - begins[index], 2);
+            [\parallel_split_write, nextSectionBegin - begins[index], ends[index] - nextSectionBegin].postln;
+            lines[index][0] = ends[index] - nextSectionBegin;
+            begins[index] = nextSectionBegin;
+          };
+          
+          index = begins.minIndex;
+        };
+        
+        this.writeLine(lines[index], if(advance || nextChannel, 1, 2));
+        [\parallel_write, lines[index][0], lines[index][1] ].postln;
+        consume.(index);
 
       };
-      
+
+ 
     });
 
   }
@@ -279,7 +313,6 @@ SpaceWrite {
   debugSecondPass {
     // Debug output, keep around
     [
-      String.fill(indent, $ ),
       line[2], $ ,
       //if(index.isNil, if(this.nextNoteIsInNextSection, $o, $.), $-),
       switch(currentSectionParallel,nil,$|, true, $=, false, $-), $ ,
