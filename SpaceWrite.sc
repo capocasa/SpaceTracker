@@ -151,7 +151,7 @@ SpaceWrite {
       }{
         safety = safety + 1;
         if (safety > (polyphony * 2)) {
-        SpaceWriteError("No notes consumed more than % times, internal error".format(polyphony*2)).throw;
+        SpaceWriteError("Note not consumed more than % times, internal error".format(polyphony*2)).throw;
         };
       };
     };
