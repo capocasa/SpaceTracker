@@ -228,8 +228,8 @@ SpaceWrite {
 
       consume.(index);
     }, merge: \pauses);
-  
-    sections=sections.collect {|e|if(e.class==Float) {e.round(0.000001)}{ e }};
+     
+    //sections=sections.collect {|e|if(e.class==Float) {e.round(0.000001)}{ e }};
   }
 
   // Second pass submethods
