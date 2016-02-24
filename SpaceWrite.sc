@@ -50,13 +50,6 @@ SpaceWrite {
     ^super.newCopyArgs(sounds,tree,linemap).init;
   }
 
-  roundTime { |n|
-    // This rounds to 6 digit decimal format for internal use and uses
-    // a normal array rather than a float array to avoid rounding errors
-    // https://github.com/supercollider/supercollider/issues/1873
-    ^n.round(0.000001);
-  }
-
   soundsDo {
     arg action, merge = nil;
 
@@ -101,7 +94,6 @@ SpaceWrite {
           if (line.size == numChannels) {
             
             line = line.as(Array);
-            line[0] = this.roundTime(line[0]);
             
             switch (merge) {nil}{
               // noop
@@ -117,7 +109,7 @@ SpaceWrite {
             
             notes.put(i, line[1]);
 
-            ends.atInc(i, this.roundTime(line[0]));
+            ends.atInc(i, line[0]);
 
           }{
             length = ends.maxItem;
@@ -136,14 +128,18 @@ SpaceWrite {
     }{
 
       consume = block { |consume|
-        action.value(consume, line);
+        action.value(consume);
+      };
+
+      if (consume.isNumber == false) {
+        SpaceWriteError("Must");
       };
 
       if (consume.notNil) {
         // Beginning and end of consume note are not the same.
         // End of consume note will increase again when received new
         // line from soundfile
-        begins.atInc(consume, this.roundTime(lines.at(consume)).at(0));
+        begins.atInc(consume, lines[consume][0]);
 
         lines.put(consume, nil);
       
@@ -270,36 +266,31 @@ SpaceWrite {
 
       if (advance) {
         this.advanceSection;
+        lastEnd = lastEnd.max(currentSectionBegin);
         ([\advance, currentSectionParallel, nextSectionBegin, \begins]++begins++[\ends]++ends++[\lengths]++lines.collect{|l|l[0]}).postm;
       };
      
       if(currentSectionParallel == false) {
 
-        index = begins.minIndex;
-        if (notes[index] != 0) {
-          this.writePauseIfNotZero(lastEnd - begins[index], 0);
-          [\sequential_write_pause, begins[index], lastEnd, lastEnd - begins[index] ].postm;
-          lastEnd = ends[index];
-          this.writeLine(lines[index], 0);
-          [\sequential_write, lines[index][0]].postm;
-        }{
-          if (ends[index] >= nextSectionBegin) {
-            if (begins.select{|b|b >= nextSectionBegin}.size == 1) {
-              this.writePauseIfNotZero(nextSectionBegin - begins[index], 0);
-              [\sequential_split_write].postm;
-            };
-            lines[index][0] = ends[index] - nextSectionBegin;
-            begins[index] = nextSectionBegin;
-            lastEnd = ends[index];
-            if (lines[index][0] == 0) {
-              consume.(index);
-            }{
-              consume.(nil);
-            };
+        notes.do {|n, i|
+          if (n.equalWithPrecision(0) == false) {
+            this.writeLine(lines[i], 0);
+            lastEnd = ends[i];
+            consume.(i);
           };
-          lastEnd = ends[index];
         };
-        
+
+        ends.do {|e, i|
+          if (e < lastEnd || e.equalWithPrecision(lastEnd)) {
+            consume.(i);
+          };
+        };
+
+        index = ends.minIndex;
+        begins[index] = lastEnd;
+        lines[index][0] = ends[index] - lastEnd;
+        this.writeLine(lines[index]);
+        lastEnd = ends[index];
         consume.(index);
 
       }{
@@ -321,6 +312,7 @@ SpaceWrite {
             [\parallel_split_write, nextSectionBegin - begins[index], ends[index] - nextSectionBegin].postm;
             lines[index][0] = ends[index] - nextSectionBegin;
             begins[index] = nextSectionBegin;
+            lastEnd = ends[index];
           };
         
           index = begins.minIndex;
@@ -335,8 +327,7 @@ SpaceWrite {
         consume.(index);
 
       };
-
- 
+           
     });
 
   }
