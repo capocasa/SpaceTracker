@@ -8,7 +8,7 @@ SpaceWrite {
     tree,
     linemap,
     
-    // State is in object vars for precedurality; other class methods can access it
+    // State is in object vars for ; other class methods can access it
     
     // Iteration state (used by soundsDo)
     lines,
