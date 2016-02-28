@@ -308,7 +308,7 @@ SpaceWrite {
         index = ends.minIndex;
         begins[index] = lastEnd;
         lines[index][0] = ends[index] - lastEnd;
-        this.writeLine(lines[index]);
+        this.writePause(lines[index][0]);
         lastEnd = ends[index];
         [\shorten, index].postm;
         consume.(index);
