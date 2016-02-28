@@ -339,9 +339,6 @@ SpaceWrite {
           ([\parallelReindex, lines[index][0]]).postm;
           this.writeLine(lines[index], indent);
           index = index + 1;
-          if (index >= lines.size) {
-            SpaceWriteError("Index got too large, internal error");
-          };
           consume.(index - 1);
         };
         
@@ -352,18 +349,12 @@ SpaceWrite {
           begins[index] = nextSectionBegin;
           lines[index][0] = ends[index] - nextSectionBegin;
           index = index + 1;
-          if (index >= lines.size) {
-            SpaceWriteError("Index got too large, internal error 2");
-          };
           consume.(nil);
         };
         
         if ((ends[index] > nextSectionBegin) && ((begins[index] > nextSectionBegin) || (false == begins[index].equalWithPrecision(nextSectionBegin)))) {
           ([\parallelNilReindex, lines[index][0]]).postm;
           index = index + 1;
-          if (index >= lines.size) {
-            SpaceWriteError("Index got too large, internal error 3");
-          };
           consume.(nil);
         };
  
