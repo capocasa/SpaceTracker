@@ -53,7 +53,9 @@ SpaceWrite {
   soundsDo {
     arg action, merge = nil;
 
-    var safety = 0;
+    var safety;
+
+    safety = 0;
 
     polyphony = sounds.size;
     numChannels = sounds.first.numChannels;
@@ -146,8 +148,8 @@ SpaceWrite {
         safety = 0;
       }{
         safety = safety + 1;
-        if (safety > (polyphony * 2)) {
-        SpaceWriteError("Note not consumed more than % times, internal error".format(polyphony*2)).throw;
+        if (safety > (polyphony * 4)) {
+        SpaceWriteError("No note consumed over % times, internal error".format(polyphony*4)).throw;
         };
       };
     };
