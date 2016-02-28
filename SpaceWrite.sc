@@ -288,6 +288,15 @@ SpaceWrite {
             }
           };
         };
+        
+        ends.do {|e, i|
+          if (e > nextSectionBegin && (begins[i] < nextSectionBegin)) {
+            [\endshorten, i].postm;
+            begins[i] = nextSectionBegin;
+            lines[i][0] = ends[i] - nextSectionBegin;
+            consume.(nil);
+          };
+        };
 
         ends.do {|e, i|
           if (e < lastEnd || e.equalWithPrecision(lastEnd)) {
