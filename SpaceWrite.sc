@@ -263,27 +263,35 @@ SpaceWrite {
   secondPass {
     var lastEnd = 0, advance, rechannel, indent;
     this.soundsDo({ |consume|
-      
-      advance = begins.minItem >= nextSectionBegin;
-
+       
+      advance = begins.minItem.equalWithPrecision(nextSectionBegin);
       if (advance) {
         this.advanceSection;
-        lastEnd = lastEnd.max(currentSectionBegin);
         ([\advance, currentSectionParallel, nextSectionBegin, \begins]++begins++[\ends]++ends++[\lengths]++lines.collect{|l|l[0]}).postm;
       };
      
       if(currentSectionParallel == false) {
+      
+        ([\sequential, \lastEnd, lastEnd, \begins]++begins++[\ends]++ends++[\lengths]++lines.collect{|l|l[0]}).postm;
+      
+        if (advance) {
+          lastEnd = currentSectionBegin;
+        };
 
         notes.do {|n, i|
           if (n.equalWithPrecision(0) == false) {
-            this.writeLine(lines[i], 0);
-            lastEnd = ends[i];
-            consume.(i);
+            if (ends[i].equalWithPrecision(nextSectionBegin) || (ends[i] < nextSectionBegin)) {
+              this.writeLine(lines[i], 0);
+              lastEnd = ends[i];
+              [\note, i].postm;
+              consume.(i);
+            }
           };
         };
 
         ends.do {|e, i|
           if (e < lastEnd || e.equalWithPrecision(lastEnd)) {
+            [\drop, i].postm;
             consume.(i);
           };
         };
@@ -293,43 +301,44 @@ SpaceWrite {
         lines[index][0] = ends[index] - lastEnd;
         this.writeLine(lines[index]);
         lastEnd = ends[index];
+        [\shorten, index].postm;
         consume.(index);
 
       }{
 
         if (advance) {
           index = 0;
+          this.writeLine(lines[index], 1);
+          consume.(index);
         };
-        
-        rechannel = ends[index] > nextSectionBegin;
-
-        indent = if(begins[index] == currentSectionBegin, 1, 2);
-        
-        if (rechannel && (advance == false)) {
-          ([\rechannel, nextSectionBegin, ends[index]]++begins).postm;
-          
-          if (notes[index] == 0) {
-            this.writePauseIfNotZero(nextSectionBegin - begins[index], indent);
-            indent = 2;
-            [\parallel_split_write, nextSectionBegin - begins[index], ends[index] - nextSectionBegin].postm;
-            lines[index][0] = ends[index] - nextSectionBegin;
-            begins[index] = nextSectionBegin;
-            lastEnd = ends[index];
+ 
+        if (ends[index].equalWithPrecision(nextSectionBegin)) {
+          indent = if(begins[index].equalWithPrecision(currentSectionBegin), 1, 2);
+          this.writeLine(lines[index], indent);
+          index = index + 1;
+          if (index >= lines.size) {
+            SpaceWriteError("Index got too large, internal error");
           };
-        
-          index = begins.minIndex;
-
-          consume.(nil);
-          
+          consume.(index - 1);
         };
         
+        if ((ends[index] > nextSectionBegin) && (begins[index] < nextSectionBegin) && (false == begins[index].equalWithPrecision(nextSectionBegin))) {
+          indent = if(begins[index].equalWithPrecision(currentSectionBegin), 1, 2);
+          this.writePause(nextSectionBegin - begins[index], indent);
+          begins[index] = nextSectionBegin;
+          lines[index][0] = ends[index] - nextSectionBegin;
+          index = index + 1;
+          if (index >= lines.size) {
+            SpaceWriteError("Index got too large, internal error");
+          };
+          consume.(nil);
+        };
+ 
+        indent = if(begins[index].equalWithPrecision(currentSectionBegin), 1, 2);
         this.writeLine(lines[index], indent);
-        [\parallel_write, lines[index][0], lines[index][1] ].postm;
-        
         consume.(index);
-
       };
-           
+
     });
 
   }
