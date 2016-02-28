@@ -294,6 +294,10 @@ SpaceWrite {
             [\endshorten, i].postm;
             begins[i] = nextSectionBegin;
             lines[i][0] = ends[i] - nextSectionBegin;
+            if (lastEnd < nextSectionBegin) {
+              this.writePause(lines[i][0]);
+            };
+            lastEnd = nextSectionBegin;
             consume.(nil);
           };
         };
