@@ -318,9 +318,12 @@ SpaceWrite {
         consume.(index);
 
       }{
+        
+        ([\parallel, \nextSectionBegin, nextSectionBegin, \begins]++begins++[\ends]++ends++[\lengths]++lines.collect{|l|l[0]}).postm;
 
         if (advance) {
           index = 0;
+          ([\parallelAdvance, lines[index][0]]).postm;
           this.writeLine(lines[index], 1);
           consume.(index);
         };
@@ -333,6 +336,7 @@ SpaceWrite {
 
         if (ends[index].equalWithPrecision(nextSectionBegin)) {
           indent = if(begins[index].equalWithPrecision(currentSectionBegin), 1, 2);
+          ([\parallelReindex, lines[index][0]]).postm;
           this.writeLine(lines[index], indent);
           index = index + 1;
           if (index >= lines.size) {
@@ -343,6 +347,7 @@ SpaceWrite {
         
         if ((ends[index] > nextSectionBegin) && (begins[index] < nextSectionBegin) && (false == begins[index].equalWithPrecision(nextSectionBegin))) {
           indent = if(begins[index].equalWithPrecision(currentSectionBegin), 1, 2);
+          ([\parallelShorten, lines[index][0]]).postm;
           this.writePause(nextSectionBegin - begins[index], indent);
           begins[index] = nextSectionBegin;
           lines[index][0] = ends[index] - nextSectionBegin;
@@ -363,6 +368,7 @@ SpaceWrite {
         };
  
         indent = if(begins[index].equalWithPrecision(currentSectionBegin), 1, 2);
+        ([\parallelWrite, lines[index][0]]).postm;
         this.writeLine(lines[index], indent);
         consume.(index);
       };
