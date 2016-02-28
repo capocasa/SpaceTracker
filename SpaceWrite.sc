@@ -324,7 +324,13 @@ SpaceWrite {
           this.writeLine(lines[index], 1);
           consume.(index);
         };
- 
+
+        if (index >= lines.size) {
+          [\depleteReindex, index].postm;
+          index = lines.size-1;
+        };
+
+
         if (ends[index].equalWithPrecision(nextSectionBegin)) {
           indent = if(begins[index].equalWithPrecision(currentSectionBegin), 1, 2);
           this.writeLine(lines[index], indent);
