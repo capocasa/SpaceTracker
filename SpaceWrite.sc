@@ -226,8 +226,25 @@ SpaceWrite {
 
       consume.(index);
     }, merge: \pauses);
-     
+
     //sections=sections.collect {|e|if(e.class==Float) {e.round(0.000001)}{ e }};
+  }
+
+  // remove sections with identical start times (seems to only happen false->true)
+  dedup {
+    var kill = List[];
+    sections.pairsDo { |p, t, i|
+      var p1 = sections[i+2], t1=sections[i+3];
+      if (t1.notNil) {
+        if(p.not && p1 && t1.equalWithPrecision(t)) {
+          kill.add(i);
+        };
+      };
+    };
+    kill.reverseDo { |i|
+      sections.removeAt(i+1);
+      sections.removeAt(i);
+    };
   }
 
   // Second pass submethods
@@ -388,6 +405,7 @@ SpaceWrite {
     // First pass: Discover overlaps in sound files
     this.initFirstPass;
     this.firstPass;
+    this.dedup;
 
 //    block {
 //      var debug = [\sections];
