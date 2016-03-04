@@ -205,7 +205,7 @@ SpaceWrite {
         overlapAtLeastUntil=ends.select{|d, i| notes[i]!=0}.maxItem;
       };
 
-      if (overlapAtLeastUntil >= ends[index]) {
+      if (overlapAtLeastUntil < ends[index] == false) {
         overlap = true;
       };
 
