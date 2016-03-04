@@ -264,7 +264,7 @@ SpaceWrite {
     var lastEnd = 0, advance, rechannel, indent;
     this.soundsDo({ |consume|
        
-      advance = begins.minItem.equalWithPrecision(nextSectionBegin);
+      advance = begins.minItem < nextSectionBegin == false;
       if (advance) {
         this.advanceSection;
         ([\advance, currentSectionParallel, nextSectionBegin, \begins]++begins++[\ends]++ends++[\lengths]++lines.collect{|l|l[0]}).postm;
@@ -300,22 +300,23 @@ SpaceWrite {
 
         // Shorten pauses to the end of the latest note
         index = ends.minIndex;
-       
-        /*
-        if (ends[index] > nextSectionBegin && (begins[index] < nextSectionBegin)) {
-          this.writePause(nextSectionBegin - lastEnd);
-          begins[index] = nextSectionBegin;
-          lines[index][0] = ends[index] - nextSectionBegin;
-          consume.(nil);
+
+        if (ends[index] < nextSectionBegin) {
+          lines[index][0] = ends[index] - lastEnd;
+          this.writePause(lines[index][0]);
+          lastEnd = ends[index];
+          [\shorten, index].postm;
+          consume.(index);
         };
-        */
-
-        lines[index][0] = ends[index] - lastEnd;
-        this.writePause(lines[index][0]);
-        lastEnd = ends[index];
-        [\shorten, index].postm;
-        consume.(index);
-
+        
+        index = begins.minIndex;
+        
+        lines[index][0] = ends[index] - nextSectionBegin;
+        begins[index] = nextSectionBegin;
+        this.writePauseIfNotZero(nextSectionBegin - lastEnd);
+        lastEnd = nextSectionBegin;
+        [\endShorten, index].postm;
+        consume.(nil);
       }{
         
         ([\parallel, \nextSectionBegin, nextSectionBegin, \begins]++begins++[\ends]++ends++[\lengths]++lines.collect{|l|l[0]}).postm;
