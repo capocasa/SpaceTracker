@@ -278,6 +278,7 @@ SpaceWrite {
           lastEnd = currentSectionBegin;
         };
 
+        // Preferentially consume notes
         notes.do {|n, i|
           if (n.equalWithPrecision(0) == false) {
             if (ends[i].equalWithPrecision(nextSectionBegin) || (ends[i] < nextSectionBegin)) {
@@ -288,20 +289,8 @@ SpaceWrite {
             }
           };
         };
-        
-        ends.do {|e, i|
-          if (e > nextSectionBegin && (begins[i] < nextSectionBegin)) {
-            [\endshorten, i].postm;
-            begins[i] = nextSectionBegin;
-            lines[i][0] = ends[i] - nextSectionBegin;
-            if (lastEnd < nextSectionBegin) {
-              this.writePause(lines[i][0]);
-            };
-            lastEnd = nextSectionBegin;
-            consume.(nil);
-          };
-        };
 
+        // Drop pauses that end before the latest note does
         ends.do {|e, i|
           if (e < lastEnd || e.equalWithPrecision(lastEnd)) {
             [\drop, i].postm;
@@ -309,8 +298,18 @@ SpaceWrite {
           };
         };
 
+        // Shorten pauses to the end of the latest note
         index = ends.minIndex;
-        begins[index] = lastEnd;
+       
+        /*
+        if (ends[index] > nextSectionBegin && (begins[index] < nextSectionBegin)) {
+          this.writePause(nextSectionBegin - lastEnd);
+          begins[index] = nextSectionBegin;
+          lines[index][0] = ends[index] - nextSectionBegin;
+          consume.(nil);
+        };
+        */
+
         lines[index][0] = ends[index] - lastEnd;
         this.writePause(lines[index][0]);
         lastEnd = ends[index];
@@ -352,7 +351,7 @@ SpaceWrite {
           consume.(nil);
         };
         
-        if ((ends[index] > nextSectionBegin) && ((begins[index] > nextSectionBegin) || (false == begins[index].equalWithPrecision(nextSectionBegin)))) {
+        if ((ends[index] > nextSectionBegin || ends[index].equalWithPrecision(nextSectionBegin)) && ((begins[index] > nextSectionBegin) || (begins[index].equalWithPrecision(nextSectionBegin)))) {
           ([\parallelNilReindex, lines[index][0]]).postm;
           index = index + 1;
           consume.(nil);
