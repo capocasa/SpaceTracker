@@ -281,7 +281,7 @@ SpaceWrite {
     var lastEnd = 0, advance, rechannel, indent;
     this.soundsDo({ |consume|
        
-      advance = begins.minItem < nextSectionBegin == false;
+      advance = begins.minItem > nextSectionBegin || begins.minItem.equalWithPrecision(nextSectionBegin);
       if (advance) {
         this.advanceSection;
         ([\advance, currentSectionParallel, nextSectionBegin, \begins]++begins++[\ends]++ends++[\lengths]++lines.collect{|l|l[0]}).postm;
