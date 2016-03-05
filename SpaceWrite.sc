@@ -217,9 +217,9 @@ SpaceWrite {
           sections=sections.add(begins.select{|d, i| notes[i]!=0}.minItem);
         }{
           if (numNotes == 0) {
-            sections=sections.add(begins.maxItem);
+            sections=sections.add(begins.maxItem.max(overlapAtLeastUntil));
           }{
-            sections=sections.add(begins.select{|d, i| notes[i]!=0}.minItem);
+            sections=sections.add(begins.select{|d, i| notes[i]!=0}.minItem.max(overlapAtLeastUntil));
           };
         };
       };
