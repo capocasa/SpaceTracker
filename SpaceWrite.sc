@@ -202,11 +202,17 @@ SpaceWrite {
       overlap = (numNotes > 1);
       
       if (overlap) {
+//        [\naturalOverlap, ends[index], overlapAtLeastUntil].postm;
         overlapAtLeastUntil=ends.select{|d, i| notes[i]!=0}.maxItem;
       };
 
-      if (overlapAtLeastUntil < ends[index] == false) {
+      if (overlap == false && ((overlapAtLeastUntil > ends[index]) || overlapAtLeastUntil.equalWithPrecision(ends[index]))) {
+//        [\forcedOverlap, ends[index], overlapAtLeastUntil].postm;
         overlap = true;
+      };
+
+      if (overlap == false) {
+//        [\noOverlap, ends[index], overlapAtLeastUntil].postm;
       };
 
       case { previousOverlap.isNil }{
