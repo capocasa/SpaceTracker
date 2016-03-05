@@ -291,6 +291,9 @@ SpaceWrite {
       if (advance) {
         this.advanceSection;
         ([\advance, currentSectionParallel, nextSectionBegin, \begins]++begins++[\ends]++ends++[\lengths]++lines.collect{|l|l[0]}).postm;
+        if(previousSectionParallel == true && currentSectionParallel == true) {
+          this.writePause(0, 0);
+        };
       };
      
       if(currentSectionParallel == false) {
