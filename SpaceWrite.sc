@@ -356,8 +356,8 @@ SpaceWrite {
           ([\parallelAdvance, lines[index][0]]).postm;
         };
 
-        if (depleted.notNil && previousReindexed) {
-          [\depleteUnindex, index].postm;
+        if (depleted.notNil && previousReindexed && {depleted <= index}) {
+          [\depleteUnindex, \index, index, index, \depleted, depleted].postm;
           index = index - 1;
         };
 
