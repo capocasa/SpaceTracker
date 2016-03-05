@@ -387,7 +387,8 @@ SpaceWrite {
         
         if ((ends[index] > nextSectionBegin || ends[index].equalWithPrecision(nextSectionBegin)) && ((begins[index] > nextSectionBegin) || (begins[index].equalWithPrecision(nextSectionBegin)))) {
           ([\parallelNilReindex, lines[index][0]]).postm;
-          previousReindexed = false;
+          index = index + 1;
+          previousReindexed = true;
           consume.(nil);
         };
  
