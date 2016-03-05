@@ -22,6 +22,7 @@ SpaceWrite {
     consume,
 
     line,
+    depleted,
 
     // First pass state
     index,
@@ -113,6 +114,7 @@ SpaceWrite {
 
             ends.atInc(i, line[0]);
 
+            depleted = nil;
           }{
             length = ends.maxItem;
             sounds[i].close;
@@ -121,6 +123,7 @@ SpaceWrite {
             begins.removeAt(i);
             ends.removeAt(i);
             notes.removeAt(i);
+            depleted = i;
           };
         };
       };
@@ -284,7 +287,7 @@ SpaceWrite {
   }
 
   secondPass {
-    var lastEnd = 0, advance, rechannel, indent;
+    var lastEnd = 0, advance, rechannel, indent, previousReindexed = false;
     this.soundsDo({ |consume|
        
       advance = begins.minItem > nextSectionBegin || begins.minItem.equalWithPrecision(nextSectionBegin);
@@ -350,21 +353,23 @@ SpaceWrite {
         if (advance) {
           index = 0;
           ([\parallelAdvance, lines[index][0]]).postm;
-          this.writeLine(lines[index], 1);
-          consume.(index);
+        };
+
+        if (depleted.notNil && previousReindexed) {
+          [\depleteUnindex, index].postm;
+          index = index - 1;
         };
 
         if (index >= lines.size) {
-          [\depleteReindex, index].postm;
-          index = lines.size-1;
+          SpaceWriteError("Index % depleted, internal error".format(index)).throw;
         };
-
 
         if (ends[index].equalWithPrecision(nextSectionBegin)) {
           indent = if(begins[index].equalWithPrecision(currentSectionBegin), 1, 2);
           ([\parallelReindex, lines[index][0]]).postm;
           this.writeLine(lines[index], indent);
           index = index + 1;
+          previousReindexed = true;
           consume.(index - 1);
         };
         
@@ -375,18 +380,20 @@ SpaceWrite {
           begins[index] = nextSectionBegin;
           lines[index][0] = ends[index] - nextSectionBegin;
           index = index + 1;
+          previousReindexed = true;
           consume.(nil);
         };
         
         if ((ends[index] > nextSectionBegin || ends[index].equalWithPrecision(nextSectionBegin)) && ((begins[index] > nextSectionBegin) || (begins[index].equalWithPrecision(nextSectionBegin)))) {
           ([\parallelNilReindex, lines[index][0]]).postm;
-          index = index + 1;
+          previousReindexed = false;
           consume.(nil);
         };
  
         indent = if(begins[index].equalWithPrecision(currentSectionBegin), 1, 2);
         ([\parallelWrite, lines[index][0]]).postm;
         this.writeLine(lines[index], indent);
+        previousReindexed = false;
         consume.(index);
       };
 
