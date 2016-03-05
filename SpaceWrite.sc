@@ -394,41 +394,11 @@ SpaceWrite {
 
   }
 
-  debugSecondPass {
-    // Debug output, keep around
-    [
-      line[2], $ ,
-      //if(index.isNil, if(this.nextNoteIsInNextSection, $o, $.), $-),
-      switch(currentSectionParallel,nil,$|, true, $=, false, $-), $ ,
-      \currentSectionBegin++$:++currentSectionBegin, $ ,
-      \nextSectionBegin++$:++nextSectionBegin, $ ,
-      'begins[index]'++$:++begins[index],$ ,
-      \currentSectionParallel++$:++currentSectionParallel, $ , 
-      //\nextNoteIsInNextSection++$:++this.nextNoteIsInNextSection, $  ,
-      //begins,
-      //ends,
-    ].join.postm;
-  }
-
   analyze {
     // First pass: Discover overlaps in sound files
     this.initFirstPass;
     this.firstPass;
     this.dedup;
-
-//    block {
-//      var debug = [\sections];
-//      sections.pairsDo({
-//        arg parallel, time;
-//        debug=debug
-//          .add(if(parallel, \parallel, \sequential))
-//          .add(time)
-//        ;
-//      });
-//      debug.postm;
-//    };
-
-
   }
 
   apply {
