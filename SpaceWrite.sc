@@ -154,6 +154,7 @@ SpaceWrite {
         if (safety > (polyphony * 4)) {
         SpaceWriteError("No note consumed over % times, internal error".format(polyphony*4)).throw;
         };
+        depleted = nil;
       };
     };
   }
