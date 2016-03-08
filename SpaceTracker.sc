@@ -269,7 +269,7 @@ SpaceTracker {
       soundfile = tmp.file(soundExtension);
     };
     this.writeSounds(force);
-    ^if(polyphony==1,sounds[0],sounds);
+    ^sounds;
   }
 
   toBuffer {
