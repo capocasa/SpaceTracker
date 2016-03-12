@@ -223,6 +223,7 @@ SpaceTracker {
     read = readClass.new(tree, linemap);
     numChannels = read.lineSize;
     polyphony = read.polyphony;
+    this.initSounds;
     read.sounds = sounds;
     read.toNumeric;
   }
