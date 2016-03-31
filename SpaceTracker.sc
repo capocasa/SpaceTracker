@@ -15,16 +15,6 @@ only be good for the artistic quality of music written with it.
 
 SpaceTracker {
 
-  classvar
-    treeClass,
-    readClass,
-    writeClass,
-    linemapClass,
-    tmpClass,
-    soundfileClass,
-    defaultServer
-  ;
-
   var
     <treefile,
     <>soundfile,
@@ -40,15 +30,6 @@ SpaceTracker {
     <>read,
     <>write
   ;
-
-  *initClass {
-    treeClass = SpaceTree;
-    readClass = SpaceRead;
-    writeClass = SpaceWrite;
-    linemapClass = SpaceLinemap;
-    tmpClass = SpaceTmp;
-    soundfileClass = SoundFile;
-  }
 
   *new {
     arg treefile, soundfile, linemap = nil;
@@ -76,22 +57,17 @@ SpaceTracker {
   }
 
   init {
-
+    tree = SpaceTree(treefile);
+    this.treefile_(treefile);
+    tmp = SpaceTmp(16);
+    if (linemap.isNil) {
+      linemap = SpaceLinemap.new(this.namingFromExtension(treefile));
+    };
     if (treefile.class==PathName) {
       treefile = treefile.fullPath;
     }{
       treefile = treefile.asString;
     };
-
-    tree = treeClass.new(treefile);
-
-    this.treefile_(treefile);
-    
-    if (linemap.isNil) {
-      linemap = linemapClass.new(this.namingFromExtension(treefile));
-    };
-
-    tmp = tmpClass.new(16);
   }
 
   treefile_ {
@@ -119,7 +95,7 @@ SpaceTracker {
     sounds = this.soundFilesCollect({
       arg file;
       var sound;
-      sound = soundfileClass.new
+      sound = SoundFile.new
         .headerFormat_(headerFormat)
         .sampleFormat_(sampleFormat)
         .numChannels_(numChannels);
@@ -204,7 +180,7 @@ SpaceTracker {
       while ({
         File.exists(file);
       }, {
-        sound = soundfileClass.openRead(file);
+        sound = SoundFile.openRead(file);
         sounds.add(sound);
         //sources.add(i);
         i = i + 1;
@@ -220,7 +196,7 @@ SpaceTracker {
     if (false == force) {
       this.validateSoundWrite;
     };
-    read = readClass.new(tree, linemap);
+    read = SpaceRead(tree, linemap);
     numChannels = read.lineSize;
     polyphony = read.polyphony;
     this.initSounds;
@@ -237,7 +213,7 @@ SpaceTracker {
     File.delete(treefile);
     this.openSounds(soundfile);
 
-    write = writeClass.new(sounds, tree, linemap);
+    write = SpaceWrite(sounds, tree, linemap);
     write.analyze.apply;
   }
   
