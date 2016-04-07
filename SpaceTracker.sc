@@ -37,23 +37,23 @@ SpaceTracker {
   }
 
   *toSoundFile {
-    arg treefile, soundfile, force=false;
-    ^this.newCopyArgs(treefile,soundfile).init.toSoundFile(force);
+    arg treefile, soundfile;
+    ^this.newCopyArgs(treefile,soundfile).init.toSoundFile;
   }
   
   *toBuffer {
-    arg server, treefile, action = false;
-    ^this.newCopyArgs(treefile).init.toBuffer(server, action);
+    arg server, treefile;
+    ^this.newCopyArgs(treefile).init.toBuffer(server);
   }
 
   *soundFileTo {
-    arg treefile, soundfile, force=false;
-    ^this.newCopyArgs(treefile, soundfile).init.soundFileTo(force);
+    arg treefile, soundfile;
+    ^this.newCopyArgs(treefile, soundfile).init.soundFileTo;
   }
   
   *bufferTo {
-    arg server, treefile, buffer, frames, action=false, force=false;
-    ^this.newCopyArgs(treefile).init.bufferTo(server, buffer, frames, action, force);
+    arg treefile, buffer;
+    ^this.newCopyArgs(treefile).init.bufferTo(buffer);
   }
 
   init {
@@ -139,12 +139,6 @@ SpaceTracker {
     };
   }
   
-  validateTreeWrite {
-    if (File.exists(tree.path)) {
-      SpaceTrackerError(tree.path + "exists, use 'force' to overwrite").throw;
-    };
-  }
-
   validateSoundRead {
     polyphony.do({
       arg i;
@@ -152,17 +146,6 @@ SpaceTracker {
       file = this.soundFileName(i);
       if (false == File.exists(file)) {
         SpaceTrackerError(file + "does not exist").throw;
-      };
-    });
-  }
-  
-  validateSoundWrite {
-    polyphony.do({
-      arg i;
-      var file;
-      file = this.soundFileName(i);
-      if (File.exists(file)) {
-        SpaceTrackerError(file + "exists, use 'force' to overwrite").throw
       };
     });
   }
@@ -190,12 +173,7 @@ SpaceTracker {
   }
 
   writeSounds {
-    arg force = false;
-   
     this.validateTreeRead;
-    if (false == force) {
-      this.validateSoundWrite;
-    };
     read = SpaceRead(tree, linemap);
     numChannels = read.lineSize;
     polyphony = read.polyphony;
@@ -205,11 +183,6 @@ SpaceTracker {
   }
 
   writeTree {
-    arg force = false;
-
-    if (false == force) {
-      this.validateTreeWrite;
-    };
     File.delete(treefile);
     this.openSounds(soundfile);
 
@@ -218,57 +191,48 @@ SpaceTracker {
   }
   
   soundFileTo {
-    arg force;
-    this.writeTree(force);
+    this.writeTree;
   }
 
   bufferToInit {
-    arg buffer, frames;
+    arg buffer;
     soundfile = tmp.file(soundExtension);
     polyphony = 0;
     buffer.do {
       arg buffer, i;
-      frames = frames.first;
-      frames = frames.asInteger; // Workaround bug [#1827](https://github.com/supercollider/supercollider/issues/1827)
+      var frames;
       buffer.write(this.soundFileName(i), headerFormat, sampleFormat, frames);
       polyphony = polyphony + 1;
     };
   }
 
   bufferTo {
-    arg server, buffer, frames, action, force;
+    arg buffer;
     forkIfNeeded {
-      this.bufferToInit(buffer, frames);
-      server.sync;
-      this.writeTree(force);
-      action.value(this);
+      this.bufferToInit(buffer);
+      buffer.server.sync;
+      this.writeTree;
     };
   }
   
   toSoundFile {
-    arg force;
     if (soundfile.isNil) {
       soundfile = tmp.file(soundExtension);
     };
-    this.writeSounds(force);
+    this.writeSounds;
     ^sounds;
   }
 
   toBuffer {
-    arg server, action = false;
-    var buffer, count;
+    arg server;
+    var buffer;
     if (sounds.isNil) {
       // If sounds already exist, create buffer from those
-      this.toSoundFile(true);
+      this.toSoundFile;
     };
-    count = polyphony;
     buffer = sounds.collect({
       arg sound, buffer;
       Buffer.read(server, sound.path, 0, -1, {
-        count = count - 1;
-        if (count == 0) {
-          action.value;
-        };
         File.delete(sound.path);
       }).path_(treefile).numChannels_(sound.numChannels);
     });
