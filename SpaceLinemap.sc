@@ -75,7 +75,7 @@ SpaceLinemap {
     time = line.removeAt(0);
 
     if (line.size == 0) {
-      SpaceLinemapError("Time but no value found").throw;
+      SpaceLinemapError("Time but no value found for line %".format([time]++line)).throw;
     };
 
     line=this.mapSymbolic(line);

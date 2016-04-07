@@ -222,18 +222,23 @@ SpaceTracker {
     this.writeTree(force);
   }
 
-  bufferTo {
-    arg server, buffer, frames, action, force;
+  bufferToInit {
+    arg buffer, frames;
     soundfile = tmp.file(soundExtension);
     polyphony = 0;
+    buffer.do {
+      arg buffer, i;
+      frames = frames.first;
+      frames = frames.asInteger; // Workaround bug [#1827](https://github.com/supercollider/supercollider/issues/1827)
+      buffer.write(this.soundFileName(i), headerFormat, sampleFormat, frames);
+      polyphony = polyphony + 1;
+    };
+  }
+
+  bufferTo {
+    arg server, buffer, frames, action, force;
     forkIfNeeded {
-      buffer.do {
-        arg buffer, i;
-        frames = frames.first;
-        frames = frames.asInteger; // Workaround bug [#1827](https://github.com/supercollider/supercollider/issues/1827)
-        buffer.write(this.soundFileName(i), headerFormat, sampleFormat, frames);
-        polyphony = polyphony + 1;
-      };
+      this.bufferToInit(buffer, frames);
       server.sync;
       this.writeTree(force);
       action.value(this);
