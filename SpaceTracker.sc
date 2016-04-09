@@ -245,6 +245,12 @@ SpaceTracker {
     };
     ^buffer;
   }
+
+  *alloc {
+    arg server, polyphony=1, numChannels=1, frames = 16384;
+    ^polyphony.collect{Buffer.alloc(server, frames, numChannels + 1)};
+  }
+
 }
 
 SpaceTrackerError : Error {
