@@ -52,7 +52,7 @@ SpaceTracker {
   }
   
   *bufferTo {
-    arg treefile, buffer, frames;
+    arg treefile, buffer, frames=nil;
     ^this.newCopyArgs(treefile).init.bufferTo(buffer, frames);
   }
 
@@ -194,10 +194,35 @@ SpaceTracker {
     this.writeTree;
   }
 
+  // RecordBufS can never record a zero pause, because
+  // a trigger will always be at least one control period.
+  // DetectEndS finds the first zero pause, which marks
+  // then end of a recording.
+  autoframes {
+    arg buffer;
+    var path, responder, id, frames;
+    id = 262144.rand;
+    path = '/finalFrameS';
+    responder = OSCFunc({|msg|
+      if (msg[2] == id) {
+        frames = msg[3..];
+      };
+    }, path);
+    {
+      SendReply.kr(Impulse.kr, path, DetectEndS.kr(buffer), id);
+      FreeSelf.kr(Impulse.kr);
+    }.play(buffer[0].server.defaultGroup);
+    buffer[0].server.sync;
+    ^frames;
+  }
+
   bufferToInit {
-    arg buffer, frames;
+    arg buffer, frames = nil;
     soundfile = tmp.file(soundExtension);
     polyphony = buffer.size;
+    if (frames.isNil) {
+      frames = this.autoframes(buffer);
+    };
     buffer.do {
       arg buffer, i;
       var path;
@@ -207,7 +232,7 @@ SpaceTracker {
   }
 
   bufferTo {
-    arg buffer, frames;
+    arg buffer, frames = nil;
     forkIfNeeded {
       this.bufferToInit(buffer, frames);
       buffer[0].server.sync;
