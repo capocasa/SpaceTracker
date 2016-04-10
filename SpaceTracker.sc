@@ -213,6 +213,7 @@ SpaceTracker {
       FreeSelf.kr(Impulse.kr);
     }.play(buffer[0].server.defaultGroup);
     buffer[0].server.sync;
+    responder.free;
     ^frames;
   }
 
