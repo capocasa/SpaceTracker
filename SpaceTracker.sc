@@ -27,6 +27,7 @@ SpaceTracker {
     <>soundExtension="wav",
     <>sounds,
     <>tmp,
+    <>tmpFile = false,
     <>read,
     <>write
   ;
@@ -219,7 +220,10 @@ SpaceTracker {
 
   bufferToInit {
     arg buffer, frames = nil;
-    soundfile = tmp.file(soundExtension);
+    if (soundfile.isNil) {
+      soundfile = tmp.file(soundExtension);
+      tmpFile = true;
+    };
     polyphony = buffer.size;
     if (frames.isNil) {
       frames = this.autoframes(buffer);
@@ -245,6 +249,7 @@ SpaceTracker {
   toSoundFile {
     if (soundfile.isNil) {
       soundfile = tmp.file(soundExtension);
+      tmpFile = true;
     };
     this.writeSounds;
     ^sounds;
@@ -260,14 +265,14 @@ SpaceTracker {
     buffer = sounds.collect({
       arg sound, buffer;
       Buffer.read(server, sound.path, 0, -1, {
-        File.delete(sound.path);
+        if (tmpFile) {File.delete(sound.path);};
       }).path_(treefile).numChannels_(sound.numChannels);
     });
     if (server.serverRunning == false) {
       // No server? At least clean up
       sounds.do {
         arg sound;
-        File.delete(sound.path);
+        if (tmpFile) {File.delete(sound.path);};
       };
     };
     ^buffer;
