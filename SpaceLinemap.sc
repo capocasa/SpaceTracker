@@ -47,7 +47,7 @@ SpaceLinemap {
 
   init {
     naming = naming.asSymbol;
-    namingClass = this.namingClassName.asClass;
+    namingClass = this.class.namingClass(naming);
     if (namingClass.isNil) {
       SpaceLinemapError(
         "Could not find naming class"
@@ -61,9 +61,10 @@ SpaceLinemap {
     namingMapper = namingClass.new;
   }
 
-  namingClassName {
+  *namingClass {
+    arg naming;
     var str = naming.asString;
-    ^(namingPrefix ++ str.removeAt(0).toUpper ++ str.toLower).asSymbol;
+    ^(namingPrefix ++ str.removeAt(0).toUpper ++ str.toLower).asSymbol.asClass;
   }
 
   convertToSymbolic {
