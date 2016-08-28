@@ -231,7 +231,7 @@ SpaceTracker {
     buffer.do {
       arg buffer, i;
       var path, framesi;
-      framesi = if(frames.isArray, frames[i], frames);
+      framesi = if(frames.isArray) { frames[i]} {frames};
       path=this.soundFileName(i);
       buffer.write(path, headerFormat, sampleFormat, framesi);
     };
