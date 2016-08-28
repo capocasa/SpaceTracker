@@ -241,6 +241,10 @@ SpaceTracker {
     arg buffer, frames = nil;
     forkIfNeeded {
       this.bufferToInit(buffer, frames);
+      if (frames.isNil) {
+        "No frames were recorded, not saving %".format(tree.path).warn;
+        ^this;
+      };
       buffer[0].server.sync;
       this.writeTree;
     };
