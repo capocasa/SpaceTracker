@@ -238,7 +238,7 @@ SpaceTracker {
       var path, framesi;
       framesi = if(frames.isArray) { frames[i]} {frames};
       path=this.soundFileName(i);
-      buffer.write(path, headerFormat, sampleFormat, framesi);
+      buffer.write(path, headerFormat, sampleFormat, framesi.asInteger); // asInteger for supernova, see https://github.com/supercollider/supercollider/issues/1827
     };
   }
 
