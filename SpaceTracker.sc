@@ -201,19 +201,23 @@ SpaceTracker {
   // then end of a recording.
   autoframes {
     arg buffer;
-    var path, responder, id, frames;
+    var path, responder, id, frames, cond;
+    cond = Condition.new;
     id = 262144.rand;
     path = '/finalFrameS';
     responder = OSCFunc({|msg|
       if (msg[2] == id) {
         frames = msg[3..];
+        cond.test = true;
+        cond.signal;
       };
     }, path);
     {
       SendReply.kr(Impulse.kr, path, DetectEndS.kr(buffer), id);
       FreeSelf.kr(Impulse.kr);
     }.play(buffer[0].server.defaultGroup);
-    buffer[0].server.sync;
+    cond.test = false;
+    cond.wait;
     responder.free;
     ^frames;
   }
