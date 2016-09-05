@@ -152,26 +152,40 @@ SpaceTracker {
     });
   }
 
-  openSounds {
-    sounds = List.new;
-    
+  readSoundFilesCollect{
+    arg action;
+    var list = List[];
+    this.readSoundFilesDo { |file, i|
+      list.add(action.value(file, i));
+    };
+    ^list.asArray;
+  }
+
+  readSoundFilesDo {
+    arg action;
+    var i, file;
     if (false == File.exists(soundfile)) {
       SpaceTrackerError(soundfile + "does not exist").throw;
     };
-    block {
-      var i, sound, file;
-      i = 0;
-      file = soundfile;
-      while ({
-        File.exists(file);
-      }, {
-        sound = SoundFile.openRead(file);
-        sounds.add(sound);
-        //sources.add(i);
-        i = i + 1;
-        file = soundfile ++ $. ++ i;
-      });
+    i = 0;
+    file = soundfile;
+    while ({
+      File.exists(file);
+    }, {
+      i = i + 1;
+      file = soundfile ++ $. ++ i;
+      action.value(file, i-1);
+    });
+  }
+
+  openSounds {
+    sounds = List.new;
+    this.readSoundFilesDo { |file, i|
+      var sound;
+      sound = SoundFile.openRead(file);
+      sounds.add(sound);
     };
+    ^sounds.asArray;
   }
 
   writeSounds {
