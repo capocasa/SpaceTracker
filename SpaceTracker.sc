@@ -172,9 +172,9 @@ SpaceTracker {
     while ({
       File.exists(file);
     }, {
+      action.value(file, i-1);
       i = i + 1;
       file = soundfile ++ $. ++ i;
-      action.value(file, i-1);
     });
   }
 
