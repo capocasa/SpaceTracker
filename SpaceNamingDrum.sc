@@ -7,6 +7,13 @@ SpaceNamingDrum {
   }
   init {
     names = TwoWayIdentityDictionary[
+      27 -> \laser,
+      28 -> \whip,
+      29 -> \push,
+      30 -> \pull,
+      31 -> \stick,
+      32 -> \click,
+      34 -> \blip,
       35 -> \kicker,
       36 -> \kick,
       37 -> \rim,
@@ -53,7 +60,8 @@ SpaceNamingDrum {
       78 -> \cuicc,
       79 -> \cuic,
       80 -> \tri,
-      81 -> \trii
+      81 -> \trii,
+      82 -> \shake,
     ];
   }
 
