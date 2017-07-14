@@ -1,9 +1,78 @@
 class:: SpaceTracker 
-summary:: A plain-text musical performance description format
+summary:: A plain-text human-writable musical performance description format
 related:: PlayBufS, RecordBufS
 categories:: File
 
 description::
+
+SpaceTracker is a file format to describe musical performances in a roughly similar way that MIDI files do, except that it is designed to be easy to read and write by humans using only a text editor.
+
+It is inspired by the text-based note editing of "Tracker" software from the 80s and 90s and heavily extends it, supporting arbitrary note length, note parameters and polyphony, while maintaining and expanding on the simplicity of design and freedom from visual distraction of the original.
+
+The name derives from its "Tracker" heritage and its syntax, that is so simple it uses only spaces, and can hence be used even when spaced out, which can only be good for creativity.
+
+SpaceTracker maintains the general idea that one line is one musical note or other event. Unlike trackers, notes also have a length, which is specified using two integers that represent a fraction of a bar, like in music notation. The note value can be specified by any means desired- MIDI note numbers are recommended, because unlike physical timing or controller resolution, standardization of musical intent is something MIDI is good at. For convenience, the note value can adhere to a number of standard textual mappings to MIDI notes. For ordinary 12-semitone chromatic scales, a lowercase letter and an octave number with an optional additional x to denote a sharp note or b to denote a flat note is the default. All these values are seperated by one or more space characters. Integers and common MIDI resolutions are used in the examples for readability, but floating point values and integers of any size may be used.
+
+This minimal SpaceTracker file plays "Alle meine Entchen" ("all my ducklings"), a children's tune to introduce scales.
+
+code::
+1 8 c1
+1 8 d1
+1 8 e1
+1 8 f1
+1 4 g1
+1 4 g1
+::
+
+Which is equivalent to writing
+
+code::
+1 8 60
+1 8 62
+1 8 64
+1 8 65
+1 4 67
+1 4 67
+::
+
+Any number of parameters may be added. These are usually purely numeric, denoting things like velocity values or timbre modifications. Unlike MIDI, there are no limits toward resolution, and both integers and floats may be used.
+
+Here is "Alle meine Entchen" with control data for velocity and a filter sweep.
+
+code::
+1 8 c1  32   28
+1 8 d1  48  104
+1 8 e1  64   78
+1 8 f1  96    9
+1 4 g1 127   32
+1 4 g1 127  108
+::
+
+It is advised to keep the values in neat columns by filling them up with space characters, but that is not necessary for the file to be parsed.
+
+A note with a value of zero is a pause. This is a more stacchato rendition of the switched-on "Alle meine Entchen" above. For readability and convenience, any line that is shorter than the longest line is filled up with zero values.
+
+code::
+1 16 c1  32   28
+1 16 0
+1 16 d1  48  104
+1 16 0
+1 16 e1  64   78
+1 16 0
+1 16 f1  96    9
+1 16 0
+1  8 g1 127   32
+1  8 0
+1  8 g1 127  108
+1  8 0
+::
+
+
+
+
+
+The SpaceTracker SuperCollider class converts SpaceTracker formatted files to and from timed buffer formatted audio files or buffers, which can be played back and recorded using the TimedBufferUGens PlayBufS and RecordBufS.
+
 
 classmethods::
 
