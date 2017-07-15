@@ -1,85 +1,149 @@
 class:: SpaceTracker 
 summary:: A plain-text human-writable musical performance description format
-related:: PlayBufS, RecordBufS
+related:: PlayBufS, RecordBufS, SpaceTrackerGuide
 categories:: File
 
-description::
-
-SpaceTracker is a file format to describe musical performances in a roughly similar way that MIDI files do, except that it is designed to be easy to read and write by humans using only a text editor.
-
-It is inspired by the text-based note editing of "Tracker" software from the 80s and 90s and heavily extends it, supporting arbitrary note length, note parameters and polyphony, while maintaining and expanding on the simplicity of design and freedom from visual distraction of the original.
-
-The name derives from its "Tracker" heritage and its syntax, that is so simple it uses only spaces, and can hence be used even when spaced out, which can only be good for creativity.
-
-SpaceTracker maintains the general idea that one line is one musical note or other event. Unlike trackers, notes also have a length, which is specified using two integers that represent a fraction of a bar, like in music notation. The note value can be specified by any means desired- MIDI note numbers are recommended, because unlike physical timing or controller resolution, standardization of musical intent is something MIDI is good at. For convenience, the note value can adhere to a number of standard textual mappings to MIDI notes. For ordinary 12-semitone chromatic scales, a lowercase letter and an octave number with an optional additional x to denote a sharp note or b to denote a flat note is the default. All these values are seperated by one or more space characters. Integers and common MIDI resolutions are used in the examples for readability, but floating point values and integers of any size may be used.
-
-This minimal SpaceTracker file plays "Alle meine Entchen" ("all my ducklings"), a children's tune to introduce scales.
-
-code::
-1 8 c1
-1 8 d1
-1 8 e1
-1 8 f1
-1 4 g1
-1 4 g1
-::
-
-Which is equivalent to writing
-
-code::
-1 8 60
-1 8 62
-1 8 64
-1 8 65
-1 4 67
-1 4 67
-::
-
-Any number of parameters may be added. These are usually purely numeric, denoting things like velocity values or timbre modifications. Unlike MIDI, there are no limits toward resolution, and both integers and floats may be used.
-
-Here is "Alle meine Entchen" with control data for velocity and a filter sweep.
-
-code::
-1 8 c1  32   28
-1 8 d1  48  104
-1 8 e1  64   78
-1 8 f1  96    9
-1 4 g1 127   32
-1 4 g1 127  108
-::
-
-It is advised to keep the values in neat columns by filling them up with space characters, but that is not necessary for the file to be parsed.
-
-A note with a value of zero is a pause. This is a more stacchato rendition of the switched-on "Alle meine Entchen" above. For readability and convenience, any line that is shorter than the longest line is filled up with zero values.
-
-code::
-1 16 c1  32   28
-1 16 0
-1 16 d1  48  104
-1 16 0
-1 16 e1  64   78
-1 16 0
-1 16 f1  96    9
-1 16 0
-1  8 g1 127   32
-1  8 0
-1  8 g1 127  108
-1  8 0
-::
-
-
-
-
+description:
 
 The SpaceTracker SuperCollider class converts SpaceTracker formatted files to and from timed buffer formatted audio files or buffers, which can be played back and recorded using the TimedBufferUGens PlayBufS and RecordBufS.
 
-
 classmethods::
+
+method:: new
+
+argument:: treefile
+
+A String or PathName to a SpaceTracker file that should be read from or written to.
+
+argument:: soundfile
+
+A string or PathName to a sound file in timed format (first channel is the time the other values of the frame should be held, in seconds) that should be read from or written to. If this is omitted, a temporary path is generated. 
 
 methods::
 
+method:: toBuffer
+
+Read from the treefile and allocate and write to an array of timed buffers that may be played back with PlayBufS.
+
+argument:: server
+
+The server the buffer should be created on. Server.default is used if omitted.
+
+method:: fromBuffer
+
+Read from an array of timed buffers that can be recorded with RecordBufS and write to the treefile, creating it if it does not exist.
+
+Warning: treefile will be overwritten without confirmation.
+
+method:: toSoundFile
+
+Read from the treefile and write to the sound file. If the treefile is polyphonic, a seperate indexed sound file is created for each channel of polyphony,
+
+Warning: soundfile and related indexed soundfiles will be overwritten without confirmation.
+
+method:: fromSoundFile
+
+Read from the soundfile, and related indexed soundfiles for polyphony, and generate a treefile.
+
+Warning: tree will be overwritten without confirmation.
+
 examples::
 
+Please place the following example SpaceTracker file into groove.note to run this example.
+
+code::
+1 16 c2 96
+1 16
+1 16 c2 64
+1 16
+1 16 c3 64
+1 16
+1 16 b2b 64
+1 16
+1 16 c3 96
+1 16
+1 16 f2 64
+1 16 g2 64
+1 16
+1 16 b2b 64
+1 16 c3 64
+::
+
+code::
+s.boot;
+b=SpaceTracker("groove.note").toBuffer(s);
+(
+  // playback monophonic file with two controls
+  x={
+    var note, velocity;
+    #note, velocity = PlayBufT.ar(2, b, 120/60);
+    Saw.ar(note.midicps, (velocity/128).lag);
+  };
+  x.play;
+)
+::
+
+Please place the following example SpaceTracker file into chords.note to run this example.
+
+code::
+1 4
+ 3 16 c4 64
+  5 16 c4 64
+ 3 16 b3b 64
+  5 16 a3 64
+ 3 16 g3 64
+  5 16 g3 64
+1 4
+::
+
+code::
+s.boot;
+b=SpaceTracker("myst.note").toBuffer(s);
+c=SpaceTracker("chords.note").toBuffer(s);
+(
+  // playback polyphonic file with two controls
+  y={
+    // polyphony of file is 3
+    PlayBufT.ar(2, c, 120/60).collect{|c|
+      var n,v;
+      #n,v=c;
+      SinOsc.ar(n.midicps.lag,0,(v/128).lag*0.2);
+    }.sum!2;
+  };
+  y.play
+)
+::
+
+
+Now play both together
+
+code::
+(
+  x.play;
+  y.play;
+)
+::
+
+Record monophonic MIDI in
+
+Please refer to the monophonic example in the RecordBufT help file to record MIDI to a timed buffer.
+
+code::
+  // Save timed buffer to SpaceTracker format
+  SpaceTracker("target.note").fromBuffer(b);
+::
+
+Record polyphonic MIDI in
+
+Please refer to the polyphonic example in the RecordBufT help file to record MIDI to a timed buffer.
+
+code::
+  // Save timed buffer to SpaceTracker format
+  SpaceTracker("target.note").fromBuffer(b);
+::
+
 discussion::
+
+A human-readable plain text file is the most universal way to express data, as is recognized by the Unix Philosophy and is used in most modern technologies today, for example HTML. The most natural way to express a sequence of events in a text file is one event per line, as was recognized as early as the 80s in the "Tracker" tradition of music software. There are degrees to the human readability of text, and making a very simple subset even more readable vastly improves the usability of the format, as recognized in the early 2000s by the "markdown" format for writing a subset of HTML by hand. SpaceTracker intends to accomplish for musical performance data such as notes and control data what markdown accomplished for HTML- a simple, human readable non-distracting visually appealing yet very powerful syntax for quickly jotting down and playing back some notes, for serious composition, and for serious recording, editing and playing back musical performances.
 
 
