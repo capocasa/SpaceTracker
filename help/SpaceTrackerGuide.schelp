@@ -121,6 +121,25 @@ backbeat
 1 8 hat 48
 ::
 
+These MIDI-like drum tags are supported.
+
+code::
+27  laser   42  hat      56  cow     70  mar
+28  whip    43  ceil     57  crash   71  whis
+29  push    44  pedal    58  vibe    72  whiss
+30  pull    45  tom      59  rider   73  guiro
+31  stick   46  hatt     60  bongo   74  guiiro
+32  click   47  tomm     61  bongoo  75  clav
+34  blip    48  tommy    62  congga  76  wood
+35  kicker  49  crash    63  conga   77  wod
+36  kick    50  tommyer  64  cong    78  cuicc
+37  rim     51  ride     65  timbb   79  cuic
+38  snarer  52  china    66  timb    80  tri
+39  clap    53  bell     67  aggo    81  trii
+40  snare   54  tam      68  ago     82  shake
+41  floor   55  splash   69  cab
+::
+
 SpaceTracker supports any amount of polyphony. By indenting two or more lines, it is designated that these lines should be played together. Here is an "Alle meine Entchen" that ends with a chord.
 
 code::
@@ -242,5 +261,4 @@ A recorded performance that contains exact timing and floating point values that
 And this concludes the introduction to the SpaceTracker file format.
 
 The SuperCollider class SpaceTracker converts SpaceTracker files from and to timed buffer format, which can be played back and recorded using PlayBufS and RecordBufS from the TimedBufferUGens. It is recommended to continue with the SpaceTracker class help file to get started using SpaceTracker files in your SuperCollider project.
-
 
