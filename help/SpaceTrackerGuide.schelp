@@ -1,0 +1,246 @@
+
+description::
+
+SpaceTracker is a file format to describe musical performances in a roughly similar way that MIDI files do, except that it is designed to be easy to read and write by humans using only a text editor.
+
+It is inspired by the text-based note editing of "Tracker" software from the 80s and 90s and heavily extends it, supporting arbitrary note length, note parameters and polyphony, while maintaining and expanding on the simplicity of design and freedom from visual distraction of the original.
+
+The name derives from its "Tracker" heritage and its syntax, that is so simple it uses only spaces, and can hence be used even when spaced out, which can only be good for creativity.
+
+SpaceTracker maintains the general idea that one line is one musical note or other event. Unlike trackers, notes also have a length, which is specified using two integers that represent a fraction of a bar, like in music notation. The note value can be specified by any means desired- MIDI note numbers are recommended, because unlike physical timing or controller resolution, standardization of musical intent is something MIDI is good at. For convenience, the note value can adhere to a number of standard textual mappings to MIDI notes. For ordinary 12-semitone chromatic scales, a lowercase letter and an octave number with an optional additional x to denote a sharp note or b to denote a flat note is the default. All these values are seperated by one or more space characters. Integers and common MIDI resolutions are used in the examples for readability, but floating point values and integers of any size may be used.
+
+This minimal SpaceTracker file plays "Alle meine Entchen" ("all my ducklings"), a children's tune to introduce scales.
+
+code::
+1 8 c1
+1 8 d1
+1 8 e1
+1 8 f1
+1 4 g1
+1 4 g1
+::
+
+Which is equivalent to writing
+
+code::
+1 8 60
+1 8 62
+1 8 64
+1 8 65
+1 4 67
+1 4 67
+::
+
+Any number of parameters may be added. These are usually purely numeric, denoting things like velocity values or timbre modifications. Unlike MIDI, there are no limits toward resolution, and both integers and floats may be used.
+
+Here is "Alle meine Entchen" with control data for velocity and a filter sweep.
+
+code::
+1 8 c1  32   28
+1 8 d1  48  104
+1 8 e1  64   78
+1 8 f1  96    9
+1 4 g1 127   32
+1 4 g1 127  108
+::
+
+It is advised to keep the values in neat columns by filling them up with space characters, but that is not necessary for the file to be parsed.
+
+A note with a value of zero is a pause. This is a more stacchato rendition of the switched-on "Alle meine Entchen" above. For readability and convenience, any line that is shorter than the longest line is filled up with zero values.
+
+code::
+1 16 c1  32   28
+1 16
+1 16 d1  48  104
+1 16 0
+1 16 e1  64   78
+1 16
+1 16 f1  96    9
+1 16
+1  8 g1 127   32
+1  8
+1  8 g1 127  108
+1  8
+::
+
+Zero length notes are allowed but ignored. Empty lines are filled up with zeroes and also ignored. This can be used to introduce some structure.
+
+code::
+1 16 c1  32   28
+1 16
+1 16 d1  48  104
+1 16
+1 16 e1  64   78
+1 16
+1 16 f1  96    9
+1 16
+
+1  8 g1 127   32
+1  8
+1  8 g1 127  108
+1  8
+::
+
+Alphanumeric characters may be used as tags that are also considered zero notes and ignored. They could be used by preprocessors.
+code::
+entchen
+
+buildup
+1 16 c1  32   28
+1 16 0
+1 16 d1  48  104
+1 16
+1 16 e1  64   78
+1 16
+1 16 f1  96    9
+1 16
+
+drop
+1  8 g1 127   32
+1  8
+1  8 g1 127  108
+1  8
+::
+
+No other comments ore metadata are supported- these should go into simple text files stored beside the SpaceTracker file if required, because the goal of the design is to minimize distraction.
+
+A SpaceTracker file can have any file extension, however, by convention, the extension denotes the mapping used to convert strings to numbers in the third column. At the time of introduction, these are: note, for the note-name-to-midi conversion in the examples, drum, which contains common MIDI drum names, and num, which means no transformation. If in doubt, the generic extension st can be used. 
+
+Here, an archetypical western pop beat is written as a drum file. The decriptive names let one be a bit more lax with the columns while maintaining readability.
+
+code::
+backbeat
+
+1 8 kick 64
+1 8 hat 48
+1 8 snare 96
+1 8 hat 48
+1 8 kick 64
+1 8 hat 48
+1 8 snare 96
+1 8 hat 48
+::
+
+SpaceTracker supports any amount of polyphony. By indenting two or more lines, it is designated that these lines should be played together. Here is an "Alle meine Entchen" that ends with a chord.
+
+code::
+1 8 c1
+1 8 d1
+1 8 e1
+1 8 f1
+1 4 g1
+ 1 4 c1
+ 1 4 e1
+ 1 4 g1
+::
+
+Several chords can be separated with a zero note.
+
+code::
+1 8 c1
+1 8 d1
+1 8 e1
+1 8 f1
+ 1 4 c1
+ 1 4 e1
+ 1 4 g1
+
+ 1 4 c1
+ 1 4 e1
+ 1 4 g1
+::
+
+
+Chords can be made up not just of notes, but of sequences of notes. They are indented with two spaces and can be added below any note that belongs to a chord to extend it into a sequence.
+
+This plays the same notes as above, it is just written differently.
+
+code::
+1 8 c1
+1 8 d1
+1 8 e1
+1 8 f1
+ 1 4 c1
+  1 4 c1
+ 1 4 e1
+  1 4 e1
+ 1 4 g1
+  1 4 g1
+::
+
+The chord note can be a zero note, which improves readability. The first zero is explicit here to show the indentation.
+
+code::
+1 8 c1
+1 8 d1
+1 8 e1
+1 8 f1
+ 0
+  1 4 c1
+  1 4 c1
+ 0
+  1 4 e1
+  1 4 e1
+ 0
+  1 4 g1
+  1 4 g1
+::
+
+By using pauses with lengths, a strum can be written.
+
+code::
+1 8 c1
+1 8 d1
+1 8 e1
+1 8 f1
+ 0
+  1 4 c1
+  1 4 c1
+ 1 128
+  1 4 e1
+  1 4 e1
+ 1 64
+  1 4 g1
+  1 4 g1
+::
+
+A polyphonic sequence is as long as its longest sequence. In this example, it is two beats long.
+
+code::
+1 8 c1
+1 8 d1
+1 8 e1
+1 8 f1
+ 0
+  1 4 c1
+  1 4 g1
+ 1 128
+  1 4 e1
+ 1 64
+  1 4 g1
+::
+
+A long pause may be used to keep the length of a polyphonic sequence constant while writing its components.
+
+code::
+1 8 c1
+1 8 d1
+1 8 e1
+1 8 f1
+ 1 1
+ 0
+  1 4 c1
+ 0
+  1 4 e1
+ 1 64
+  1 4 g1
+  1 4 g1
+::
+
+A recorded performance that contains exact timing and floating point values that was converted to SpaceTracker format automatically is of course far less neat, but still editable.
+
+And this concludes the introduction to the SpaceTracker file format.
+
+The SuperCollider class SpaceTracker converts SpaceTracker files from and to timed buffer format, which can be played back and recorded using PlayBufS and RecordBufS from the TimedBufferUGens. It is recommended to continue with the SpaceTracker class help file to get started using SpaceTracker files in your SuperCollider project.
+
+
