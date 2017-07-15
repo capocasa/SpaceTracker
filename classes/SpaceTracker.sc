@@ -48,14 +48,14 @@ SpaceTracker {
     ^this.newCopyArgs(treefile).init.toBuffer(server);
   }
 
-  *soundFileTo {
+  *fromSoundFile {
     arg treefile, soundfile;
-    ^this.newCopyArgs(treefile, soundfile).init.soundFileTo;
+    ^this.newCopyArgs(treefile, soundfile).init.fromSoundFile;
   }
   
-  *bufferTo {
+  *fromBuffer {
     arg treefile, buffer, frames = nil;
-    ^this.newCopyArgs(treefile).init.bufferTo(buffer, frames);
+    ^this.newCopyArgs(treefile).init.fromBuffer(buffer, frames);
   }
 
   init {
@@ -206,7 +206,7 @@ SpaceTracker {
     write.analyze.apply;
   }
   
-  soundFileTo {
+  fromSoundFile {
     this.writeTree;
   }
 
@@ -237,7 +237,7 @@ SpaceTracker {
     ^frames;
   }
 
-  bufferToInit {
+  fromBufferInit {
     arg buffer;
     if (soundfile.isNil) {
       soundfile = tmp.file(soundExtension);
@@ -256,11 +256,11 @@ SpaceTracker {
     };
   }
 
-  bufferTo {
+  fromBuffer {
     arg buffer, argFrames = nil;
     frames = argFrames;
     forkIfNeeded {
-      this.bufferToInit(buffer);
+      this.fromBufferInit(buffer);
       if (frames.every({|e|e==1})) {
         "No frames were recorded, not saving %".format(tree.path).warn;
         this.yield;
