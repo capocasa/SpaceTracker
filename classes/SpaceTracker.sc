@@ -259,6 +259,9 @@ SpaceTracker {
   fromBuffer {
     arg buffer, argFrames = nil;
     frames = argFrames;
+    if (buffer.first.isArray == false) {
+      buffer=[buffer];
+    };
     forkIfNeeded {
       this.fromBufferInit(buffer);
       if (frames.every({|e|e==1})) {
@@ -299,7 +302,7 @@ SpaceTracker {
         if (tmpFile) {File.delete(sound.path);};
       };
     };
-    ^buffer;
+    ^if(buffer.size==1,buffer.first,buffer);
   }
 
   *alloc {
