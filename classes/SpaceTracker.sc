@@ -29,7 +29,8 @@ SpaceTracker {
     <>tmp,
     <>tmpFile = false,
     <>read,
-    <>write
+    <>write,
+    <>frames
   ;
 
   *new {
@@ -53,7 +54,7 @@ SpaceTracker {
   }
   
   *bufferTo {
-    arg treefile, buffer, frames=nil;
+    arg treefile, buffer, frames = nil;
     ^this.newCopyArgs(treefile).init.bufferTo(buffer, frames);
   }
 
@@ -151,26 +152,40 @@ SpaceTracker {
     });
   }
 
-  openSounds {
-    sounds = List.new;
-    
+  readSoundFilesCollect{
+    arg action;
+    var list = List[];
+    this.readSoundFilesDo { |file, i|
+      list.add(action.value(file, i));
+    };
+    ^list.asArray;
+  }
+
+  readSoundFilesDo {
+    arg action;
+    var i, file;
     if (false == File.exists(soundfile)) {
       SpaceTrackerError(soundfile + "does not exist").throw;
     };
-    block {
-      var i, sound, file;
-      i = 0;
-      file = soundfile;
-      while ({
-        File.exists(file);
-      }, {
-        sound = SoundFile.openRead(file);
-        sounds.add(sound);
-        //sources.add(i);
-        i = i + 1;
-        file = soundfile ++ $. ++ i;
-      });
+    i = 0;
+    file = soundfile;
+    while ({
+      File.exists(file);
+    }, {
+      action.value(file, i-1);
+      i = i + 1;
+      file = soundfile ++ $. ++ i;
+    });
+  }
+
+  openSounds {
+    sounds = List.new;
+    this.readSoundFilesDo { |file, i|
+      var sound;
+      sound = SoundFile.openRead(file);
+      sounds.add(sound);
     };
+    ^sounds.asArray;
   }
 
   writeSounds {
@@ -201,25 +216,29 @@ SpaceTracker {
   // then end of a recording.
   autoframes {
     arg buffer;
-    var path, responder, id, frames;
+    var path, responder, id, frames, cond;
+    cond = Condition.new;
     id = 262144.rand;
     path = '/finalFrameS';
     responder = OSCFunc({|msg|
       if (msg[2] == id) {
         frames = msg[3..];
+        cond.test = true;
+        cond.signal;
       };
     }, path);
     {
       SendReply.kr(Impulse.kr, path, DetectEndS.kr(buffer), id);
       FreeSelf.kr(Impulse.kr);
     }.play(buffer[0].server.defaultGroup);
-    buffer[0].server.sync;
+    cond.test = false;
+    cond.wait;
     responder.free;
     ^frames;
   }
 
   bufferToInit {
-    arg buffer, frames = nil;
+    arg buffer;
     if (soundfile.isNil) {
       soundfile = tmp.file(soundExtension);
       tmpFile = true;
@@ -231,16 +250,21 @@ SpaceTracker {
     buffer.do {
       arg buffer, i;
       var path, framesi;
-      framesi = if(frames.isArray, frames[i], frames);
+      framesi = if(frames.isArray) { frames[i]} {frames};
       path=this.soundFileName(i);
-      buffer.write(path, headerFormat, sampleFormat, framesi);
+      buffer.write(path, headerFormat, sampleFormat, framesi.asInteger); // asInteger for supernova, see https://github.com/supercollider/supercollider/issues/1827
     };
   }
 
   bufferTo {
-    arg buffer, frames = nil;
+    arg buffer, argFrames = nil;
+    frames = argFrames;
     forkIfNeeded {
-      this.bufferToInit(buffer, frames);
+      this.bufferToInit(buffer);
+      if (frames.every({|e|e==1})) {
+        "No frames were recorded, not saving %".format(tree.path).warn;
+        this.yield;
+      };
       buffer[0].server.sync;
       this.writeTree;
     };
