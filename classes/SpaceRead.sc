@@ -132,18 +132,6 @@ SpaceRead {
 
   determine {
     //[indent, lastIndent,((lastIndent - indent).abs * 0.5).round,indentTimes].postln;
-    if (line.isNil) {
-      ^false;
-    };
-    if (line == 0) {
-      ^false;
-    };
-    if (line[0] == 0) {
-      ^false;
-    };
-    if (line[1] == 0) {
-      ^false;
-    };
     if (this.isIndentOdd, {
     
       //[\odd, index, sounds].postln;
@@ -174,6 +162,18 @@ SpaceRead {
         this.recordIndentTime;
       };
     });
+    if (line.isNil) {
+      ^false;
+    };
+    if (line == 0) {
+      ^false;
+    };
+    if (line[0] == 0) {
+      ^false;
+    };
+    if (line[1] == 0) {
+      ^false;
+    };
     
     ^true; 
   }
