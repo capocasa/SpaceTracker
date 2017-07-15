@@ -81,6 +81,15 @@ SpaceTree {
   }
 
   init {
+    var tmp;
+    if (path.contains("\n")) {
+      tmp = thisProcess.platform.defaultTempDir +/+ "spacetree" ++ 2147483647.rand;
+      File.use(tmp, "w") {|f|
+        f.write(path);
+        path = tmp;
+        ShutDown.add{ File.delete(tmp) };
+      }
+    }
   }
 
   asArray {
