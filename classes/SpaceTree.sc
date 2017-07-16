@@ -77,7 +77,7 @@ SpaceTree {
 
   *new {
     arg path;
-    ^super.newCopyArgs(path);
+    ^super.new.path_(path);
   }
 
   path_ {
