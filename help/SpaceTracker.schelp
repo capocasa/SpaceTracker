@@ -15,6 +15,8 @@ argument:: treefile
 
 A String or PathName to a SpaceTracker file that should be read from or written to.
 
+Alternatively, SpaceTracker code may be provided directly as a string, if you prefer have it inline in your SuperCollider code.
+
 argument:: soundfile
 
 A string or PathName to a sound file in timed format (first channel is the time the other values of the frame should be held, in seconds) that should be read from or written to. If this is omitted, a temporary path is generated. 
@@ -87,18 +89,20 @@ Please place the following example SpaceTracker file into chords.note to run thi
 
 code::
 1 4
- 3 16 c4 64
+ 0
+  3 16 c4 64
   5 16 c4 64
- 3 16 b3b 64
+ 0
+  3 16 b3b 64
   5 16 a3 64
- 3 16 g3 64
+ 0
+  3 16 g3 64
   5 16 g3 64
 1 4
 ::
 
 code::
 s.boot;
-b=SpaceTracker("myst.note").toBuffer(s);
 c=SpaceTracker("chords.note").toBuffer(s);
 (
   // playback polyphonic file with two controls
@@ -124,6 +128,50 @@ code::
 )
 ::
 
+You may also run the example above by providing the SpaceTracker code inline instead of a file name. Note that indenting the SpaceTracker code will result in an error. You may however add empty lines for readability.
+
+
+code::
+(
+  b = SpaceTracker("
+1 16 c2 96
+1 16
+1 16 c2 64
+1 16
+1 16 c3 64
+1 16
+1 16 b2b 64
+1 16
+1 16 c3 96
+1 16
+1 16 f2 64
+1 16 g2 64
+1 16
+1 16 b2b 64
+1 16 c3 64
+").toBuffer(s);
+)
+::
+
+code::
+(
+  c = SpaceTracker("
+1 4
+ 0
+  3 16 c4 64
+  5 16 c4 64
+ 0
+  3 16 b3b 64
+  5 16 a3 64
+ 0
+  3 16 g3 64
+  5 16 g3 64
+1 4
+").toBuffer(s);
+)
+::
+
+
 Record monophonic MIDI in
 
 Please refer to the monophonic example in the RecordBufT help file to record MIDI to a timed buffer.
@@ -144,6 +192,8 @@ code::
 
 discussion::
 
-A human-readable plain text file is the most universal way to express data, as is recognized by the Unix Philosophy and is used in most modern technologies today, for example HTML. The most natural way to express a sequence of events in a text file is one event per line, as was recognized as early as the 80s in the "Tracker" tradition of music software. There are degrees to the human readability of text, and making a very simple subset even more readable vastly improves the usability of the format, as recognized in the early 2000s by the "markdown" format for writing a subset of HTML by hand. SpaceTracker intends to accomplish for musical performance data such as notes and control data what markdown accomplished for HTML- a simple, human readable non-distracting visually appealing yet very powerful syntax for quickly jotting down and playing back some notes, for serious composition, and for serious recording, editing and playing back musical performances.
+A human-readable plain text file is the most universal way to express data, as is recognized by the Unix Philosophy and is used in most modern technologies today, for example HTML. The most natural way to express a sequence of events in a text file is one event per line, as was recognized as early as the 80s in the "Tracker" tradition of music software. There are degrees to the human readability of text, and making a very simple subset even more readable vastly improves the usability of the format, as recognized in the early 2000s by the "markdown" format for writing a subset of HTML by hand.
+
+SpaceTracker intends to accomplish for musical performance data such as notes and control data what markdown accomplished for HTML- a simple, human readable non-distracting visually appealing yet very powerful syntax for quickly jotting down and playing back some notes, for serious composition, and for serious recording, editing and playing back musical performances.
 
 
