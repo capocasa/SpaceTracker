@@ -15,7 +15,7 @@ Install
 Update
 ------
 
-    cd $MY_SUPERCOLLIDER_EXTENSIONS_DIR
+    cd $MY_SUPERCOLLIDER_EXTENSIONS_DIR/SpaceTracker
     git pull
     # restart language 
 
