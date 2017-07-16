@@ -205,11 +205,13 @@ SpaceLinemap {
     tree.parse {
       arg line;
       ns.do {|n|
-        if (line[2] != 0 && line[2].notNil) {
-          if (n.number(line[2]).notNil) {
-            ^this.new(this.namingFromClass(n.class));
+        if (line.isArray) {
+          if (line[2] != 0 && line[2].notNil) {
+            if (n.number(line[2]).notNil) {
+              ^this.new(this.namingFromClass(n.class));
+            }
           }
-        }
+        };
       }
     };
     ^nil;
