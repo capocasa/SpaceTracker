@@ -82,7 +82,7 @@ SpaceTree {
 
   path_ {
     arg p;
-    if (p.contains("\n")) {
+    if (p.notNil&&{p.contains("\n")}) {
       path = thisProcess.platform.defaultTempDir +/+ "spacetree" ++ 2147483647.rand;
       File.use(path, "w") {|f|
         f.write(p);
