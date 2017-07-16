@@ -190,6 +190,12 @@ code::
   SpaceTracker("target.note").fromBuffer(b);
 ::
 
+When converting recorded polyphonic timed buffer data to a single polyphonic SpaceTracker file, it is guaranteed that every note will play back just as recorded, but not that each note will be on the same channel as during recording. If this is a requirement, you may convert each channel to its own SpaceTracker file.
+
+code::
+  b.do{|b,i| SpaceTracker("target"++i++".note").fromBuffer(b) };
+::
+
 discussion::
 
 A human-readable plain text file is the most universal way to express data, as is recognized by the Unix Philosophy and is used in most modern technologies today, for example HTML. The most natural way to express a sequence of events in a text file is one event per line, as was recognized as early as the 80s in the "Tracker" tradition of music software. There are degrees to the human readability of text, and making a very simple subset even more readable vastly improves the usability of the format, as recognized in the early 2000s by the "markdown" format for writing a subset of HTML by hand.
