@@ -71,24 +71,25 @@ SpaceTree {
   ;
 
   var
-    <>path,
+    <path,
     levels
   ;
 
   *new {
     arg path;
-    ^super.newCopyArgs(path).init;
+    ^super.newCopyArgs(path);
   }
 
-  init {
-    var tmp;
-    if (path.contains("\n")) {
-      tmp = thisProcess.platform.defaultTempDir +/+ "spacetree" ++ 2147483647.rand;
-      File.use(tmp, "w") {|f|
-        f.write(path);
-        path = tmp;
-        ShutDown.add{ File.delete(tmp) };
+  path_ {
+    arg p;
+    if (p.contains("\n")) {
+      path = thisProcess.platform.defaultTempDir +/+ "spacetree" ++ 2147483647.rand;
+      File.use(path, "w") {|f|
+        f.write(p);
+        ShutDown.add{ var d = path; File.delete(d) };
       }
+    } {
+      path = p;
     }
   }
 
