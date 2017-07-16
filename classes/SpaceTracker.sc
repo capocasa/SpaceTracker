@@ -36,7 +36,6 @@ only be good for the artistic quality of music written with it.
 SpaceTracker {
 
   var
-    <treefile,
     <>soundfile,
     <>linemap,
     <>tree,
@@ -55,57 +54,42 @@ SpaceTracker {
 
   *new {
     arg treefile, soundfile, linemap = nil;
-    ^super.newCopyArgs(treefile, soundfile, linemap).init;
+    ^super.newCopyArgs(soundfile, linemap).init(treefile);
   }
 
   *toSoundFile {
     arg treefile, soundfile;
-    ^this.newCopyArgs(treefile,soundfile).init.toSoundFile;
+    ^this.newCopyArgs(soundfile).init(treefile).toSoundFile;
   }
   
   *toBuffer {
     arg server, treefile;
-    ^this.newCopyArgs(treefile).init.toBuffer(server);
+    ^this.new.init(treefile).toBuffer(server);
   }
 
   *fromSoundFile {
     arg treefile, soundfile;
-    ^this.newCopyArgs(treefile, soundfile).init.fromSoundFile;
+    ^this.newCopyArgs(soundfile).init(treefile).fromSoundFile;
   }
   
   *fromBuffer {
     arg treefile, buffer, frames = nil;
-    ^this.newCopyArgs(treefile).init.fromBuffer(buffer, frames);
+    ^this.new.init(treefile).fromBuffer(buffer, frames);
   }
 
   init {
+    arg treefile;
     tree = SpaceTree(treefile);
-    this.treefile_(treefile);
     tmp = SpaceTmp(16);
     if (linemap.isNil) {
-      linemap = SpaceLinemap.new(this.namingFromExtension(treefile));
-    };
-    if (treefile.class==PathName) {
-      treefile = treefile.fullPath;
-    }{
-      treefile = treefile.asString;
-    };
-  }
-
-  treefile_ {
-    arg arg_treefile;
-    treefile = arg_treefile;
-
-    if (treefile.isNil) {
-      SpaceTrackerError("treefile is required").throw;
-    };
-    tree.path = treefile;
-    
-  }
-
-  namingFromExtension {
-    arg filename;
-    ^filename.splitext[1].asSymbol
+      linemap = SpaceLinemap.newFromExtension(tree.path);
+      if (linemap.isNil) {
+        linemap=SpaceLinemap.newFromTree(tree);
+      };
+      if (linemap.isNil) {
+        SpaceNamingError("Could not detect naming from file extension or automatically").throw;
+      }
+    }
   }
 
   soundFileName {
@@ -219,7 +203,7 @@ SpaceTracker {
   }
 
   writeTree {
-    File.delete(treefile);
+    File.delete(tree.path);
     this.openSounds(soundfile);
 
     write = SpaceWrite(sounds, tree, linemap);
@@ -313,7 +297,7 @@ SpaceTracker {
       arg sound, buffer;
       Buffer.read(server, sound.path, 0, -1, {
         if (tmpFile) {File.delete(sound.path);};
-      }).path_(treefile).numChannels_(sound.numChannels);
+      }).path_(tree.path).numChannels_(sound.numChannels);
     });
     if (server.serverRunning == false) {
       // No server? At least clean up

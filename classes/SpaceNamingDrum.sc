@@ -92,7 +92,7 @@ SpaceNamingDrum {
 
   number {
     arg note;
-    ^names.getID(note) ?? note;
+    ^names.getID(note);
   }
 }
 

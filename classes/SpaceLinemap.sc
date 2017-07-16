@@ -28,7 +28,8 @@ SpaceLinemap {
 
   classvar
     <namings,
-    <namingClasses
+    <namingClasses,
+    <namingObjects
   ;
 
   var
@@ -49,10 +50,9 @@ SpaceLinemap {
       .allClasses
       .select({|class| class.name.asString.beginsWith(namingPrefix) })
       .reject({|class| class == SpaceNamingError })
-      .collect({|class| class.name.asString })
     ;
     namings = this.namingClasses
-      .collect({|name| name.copyRange(namingPrefix.size,name.size).toLower.asSymbol })
+      .collect({|class| this.namingFromClass(class) })
     ;
   }
 
@@ -71,7 +71,7 @@ SpaceLinemap {
     if (namingClass.isNil) {
       SpaceLinemapError(
         "Could not find naming class"
-        + this.namingClassName.asCompileString
+        + namingClass.asCompileString
         + "for naming"
         + naming.asCompileString
         ++ ".\nPlease make it available, or use one of:"
@@ -85,6 +85,11 @@ SpaceLinemap {
     arg naming;
     var str = naming.asString;
     ^(namingPrefix ++ str.removeAt(0).toUpper ++ str.toLower).asSymbol.asClass;
+  }
+
+  *namingFromClass{
+    arg class;
+    ^class.name.asString.copyRange(namingPrefix.size,class.name.asString.size).toLower.asSymbol;
   }
 
   convertToSymbolic {
@@ -175,11 +180,39 @@ SpaceLinemap {
 
   mapNumeric {
     arg line;
+    var note;
     if (namingMapper.respondsTo(\numbers)) {
       ^namingMapper.numbers(line);
     };
-    line[0] = namingMapper.number(line[0]);
+    note = namingMapper.number(line[0]);
+    if (line[0].isNil) {
+      SpaceNamingError("Could not find numeric value for note %".format(line[0])).throw;
+    };
+    line[0] = note;
     ^line;
+  }
+
+  *newFromExtension {
+    arg filename;
+    var naming = filename.splitext[1];
+    ^if(naming.isNil){nil}{this.new(naming)};
+  }
+
+  *newFromTree {
+    arg tree;
+    var ns, n;
+    ns = namingClasses.reject{|c|c.findMethod(\number).isNil}.collect{|c|c.new};
+    tree.parse {
+      arg line;
+      ns.do {|n|
+        if (line[2] != 0 && line[2].notNil) {
+          if (n.number(line[2]).notNil) {
+            ^this.new(this.namingFromClass(n.class));
+          }
+        }
+      }
+    };
+    ^nil;
   }
 }
 
