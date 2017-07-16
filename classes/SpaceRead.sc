@@ -241,9 +241,21 @@ SpaceRead {
     // end tag in the SpaceTracker file
     //this.recordTag(\end, length);
 
+    this.endPause;
+
     this.close;
   
     ^sounds;
+  }
+
+  endPause {
+    var d;
+    times.do {|t,i|
+      d = length - t;
+      if (d > 0) {
+        sounds[i].writeData(FloatArray.fill(sounds[i].numChannels, 0).put(0, d));
+      };
+    };
   }
 
   pad {
