@@ -4,6 +4,8 @@ SpaceTracker
 
 A human readable and writable plain-text format for musical notes and other performance control signals. 
 
+Implemented for SuperCollider.
+
 Install
 -----
 
@@ -18,6 +20,11 @@ Update
     cd $MY_SUPERCOLLIDER_EXTENSIONS_DIR/SpaceTracker
     git pull
     # restart language 
+
+Dependency
+----------
+
+The SpaceTracker implementation converts to timed buffers and audio files. To record these and play them back, TimedBufferUGens are required. See https://github.com/carlocapocasa/TimedBufferUGens
 
 Usage
 -----
