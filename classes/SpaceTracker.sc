@@ -59,22 +59,22 @@ SpaceTracker {
 
   *toSoundFile {
     arg treefile, soundfile;
-    ^this.newCopyArgs(soundfile).init(treefile).toSoundFile;
+    ^super.newCopyArgs(soundfile).init(treefile).toSoundFile;
   }
   
   *toBuffer {
     arg server, treefile;
-    ^this.new.init(treefile).toBuffer(server);
+    ^super.new.init(treefile).toBuffer(server);
   }
 
   *fromSoundFile {
     arg treefile, soundfile;
-    ^this.newCopyArgs(soundfile).init(treefile).fromSoundFile;
+    ^super.newCopyArgs(soundfile).init(treefile).fromSoundFile;
   }
   
   *fromBuffer {
     arg treefile, buffer, frames = nil;
-    ^this.new.init(treefile).fromBuffer(buffer, frames);
+    ^super.new.init(treefile).fromBuffer(buffer, frames);
   }
 
   init {
