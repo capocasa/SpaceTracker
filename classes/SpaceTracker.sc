@@ -263,9 +263,7 @@ SpaceTracker {
   fromBuffer {
     arg buffer, argFrames = nil;
     frames = argFrames;
-    if (buffer.first.isArray == false) {
-      buffer=[buffer];
-    };
+    buffer=buffer.asArray;
     forkIfNeeded {
       this.fromBufferInit(buffer);
       if (frames.asArray.every({|e|e==1})) {
