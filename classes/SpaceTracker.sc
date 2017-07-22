@@ -214,33 +214,6 @@ SpaceTracker {
     this.writeTree;
   }
 
-  // RecordBufS can never record a zero pause, because
-  // a trigger will always be at least one control period.
-  // DetectEndS finds the first zero pause, which marks
-  // then end of a recording.
-  autoframes {
-    arg buffer;
-    var path, responder, id, frames, cond;
-    cond = Condition.new;
-    id = 262144.rand;
-    path = '/finalFrameS';
-    responder = OSCFunc({|msg|
-      if (msg[2] == id) {
-        frames = msg[3..];
-        cond.test = true;
-        cond.signal;
-      };
-    }, path);
-    {
-      SendReply.kr(Impulse.kr, path, DetectEndS.kr(buffer), id);
-      FreeSelf.kr(Impulse.kr);
-    }.play(buffer[0].server.defaultGroup);
-    cond.test = false;
-    cond.wait;
-    responder.free;
-    ^frames;
-  }
-
   fromBufferInit {
     arg buffer;
     if (soundfile.isNil) {
@@ -249,7 +222,7 @@ SpaceTracker {
     };
     polyphony = buffer.size;
     if (frames.isNil) {
-      frames = this.autoframes(buffer);
+      frames = FinalFrameT.detect(buffer);
     };
     buffer.do {
       arg buffer, i;
