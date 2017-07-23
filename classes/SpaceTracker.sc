@@ -208,6 +208,8 @@ SpaceTracker {
 
     write = SpaceWrite(sounds, tree, linemap);
     write.analyze.apply;
+  
+    if (tmpFile) {this.soundFilesDo {|f|File.delete(f)}};
   }
   
   fromSoundFile {
