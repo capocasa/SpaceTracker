@@ -223,15 +223,11 @@ SpaceTracker {
       tmpFile = true;
     };
     polyphony = buffer.size;
-    if (frames.isNil) {
-      frames = FinalFrameT.detect(buffer);
-    };
     buffer.do {
       arg buffer, i;
-      var path, framesi;
-      framesi = if(frames.isArray) { frames[i]} {frames};
+      var path;
       path=this.soundFileName(i);
-      buffer.write(path, headerFormat, sampleFormat, framesi.asInteger); // asInteger for supernova, see https://github.com/supercollider/supercollider/issues/1827
+      buffer.writeTimed(path, headerFormat);
     };
   }
 
