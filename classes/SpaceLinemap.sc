@@ -92,6 +92,13 @@ SpaceLinemap {
     ^class.name.asString.copyRange(namingPrefix.size,class.name.asString.size).toLower.asSymbol;
   }
 
+  intifyIfPossible {
+    arg line;
+    ^line.collect({ |value|
+      if(value.frac == 0, value.asInteger, value)
+    })
+  }
+
   convertToSymbolic {
     arg line;
     var time, divisor;
@@ -115,6 +122,7 @@ SpaceLinemap {
     
     line=line.addFirst(divisor);
     line=line.addFirst(time);
+    line=this.intifyIfPossible(line);
 
     if (line.occurrencesOf(0) == line.size) {
       line = [0]; // Syntactic sugar: null line is a single zero
