@@ -241,7 +241,7 @@ SpaceRead {
     // end tag in the SpaceTracker file
     //this.recordTag(\end, length);
 
-    this.endPause;
+    // this.endPause;
 
     this.close;
   
@@ -249,6 +249,11 @@ SpaceRead {
   }
 
   endPause {
+    // seems unecessary, should be re-enabled if need to
+    // fill up all channels equally with pauses resurfaces.
+    // I think it was just a workaround for back when the
+    // ugen output last sample rather than zero if beyond length
+    // TODO: delete if no need comes up, or document the need
     var d;
     times.do {|t,i|
       d = length - t;
